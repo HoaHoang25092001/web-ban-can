@@ -1,0 +1,22 @@
+# Vercel Build Configuration
+# ==========================
+
+# Build command
+npm run build
+
+# Install command  
+npm install
+
+# Development command
+npm run dev
+
+# Environment Variables (add these to Vercel dashboard):
+# DATABASE_URL
+# NEXTAUTH_URL  
+# NEXTAUTH_SECRET
+# CLOUDINARY_CLOUD_NAME
+# CLOUDINARY_API_KEY
+# CLOUDINARY_API_SECRET
+
+# Node.js version
+node-version = "18.x"
