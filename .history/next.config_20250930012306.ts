@@ -3,20 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Production optimizations
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'readdy.ai',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-      },
-    ],
+    domains: ['res.cloudinary.com', 'readdy.ai', 'localhost'],
     formats: ['image/webp', 'image/avif'],
   },
   typescript: {
