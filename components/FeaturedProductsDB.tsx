@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import ProductDetail from './ProductDetail';
+import ProductCard from './ProductCard';
 
 interface Product {
   id: number;
@@ -15,6 +15,7 @@ interface Product {
   accuracy: string;
   price: string;
   image: string;
+  featured?: boolean;
 }
 
 interface CategoryWithProducts {
@@ -27,7 +28,6 @@ export default function FeaturedProducts() {
   const [categoriesWithProducts, setCategoriesWithProducts] = useState<CategoryWithProducts[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchFeaturedProductsByCategory = async () => {
@@ -153,58 +153,13 @@ export default function FeaturedProducts() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {category.products.map((product) => (
-                  <div key={product.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                    <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-gray-200">
-                      {product.image && product.image.trim() !== '' ? (
-                        <img
-                          src={product.image.startsWith('/') ? `http://localhost:3000${product.image}` : product.image}
-                          alt={product.name}
-                          className="w-full h-48 object-cover object-center group-hover:opacity-75"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = `https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=${encodeURIComponent(product.name.substring(0, 20))}`;
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-                          <i className="ri-image-line text-4xl text-gray-400"></i>
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-6">
-                      <div className="mb-2">
-                        <span className="inline-block px-2 py-1 text-xs font-semibold text-blue-600 bg-blue-100 rounded-full">
-                          Nổi bật
-                        </span>
-                      </div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-2">{product.name}</h4>
-                      <div className="space-y-1 text-sm text-gray-600 mb-4">
-                        <p><span className="font-medium">Khối lượng:</span> {product.capacity}</p>
-                        <p><span className="font-medium">Độ chính xác:</span> {product.accuracy}</p>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xl font-bold text-blue-600">Giá: {product.price}</span>
-                        <button 
-                          onClick={() => setSelectedProductId(product.id)}
-                          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-                        >
-                          Xem Chi Tiết
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Product Detail Modal */}
-      <ProductDetail 
-        productId={selectedProductId}
-        onClose={() => setSelectedProductId(null)}
-      />
     </section>
   );
 }

@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button, Input, Textarea } from '@/components/admin/FormComponents';
-import ImageUpload from '@/components/admin/ImageUpload';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -38,7 +37,6 @@ export default function EditCategoryPage() {
     name: '',
     description: '',
     icon: '',
-    image: '',
   });
 
   const fetchCategory = useCallback(async () => {
@@ -50,7 +48,6 @@ export default function EditCategoryPage() {
           name: data.name || '',
           description: data.description || '',
           icon: data.icon || '',
-          image: data.image || '',
         });
       } else {
         alert('Không tìm thấy danh mục');
@@ -157,12 +154,6 @@ export default function EditCategoryPage() {
                 ))}
               </select>
             </div>
-
-            <ImageUpload
-              label="Hình ảnh danh mục"
-              value={formData.image}
-              onChange={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
-            />
 
             <div className="flex justify-end space-x-4">
               <Link href="/admin/categories">

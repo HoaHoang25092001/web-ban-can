@@ -2,7 +2,6 @@
 
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import ProductDetail from '../../../components/ProductDetail';
 
 interface Product {
   id: number;
@@ -20,7 +19,6 @@ interface Category {
   name: string;
   description: string | null;
   icon: string | null;
-  image: string | null;
 }
 
 interface CategoryPageProps {
@@ -35,7 +33,6 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchCategoryAndProducts = async () => {
@@ -159,19 +156,12 @@ export default function CategoryPage({ params }: CategoryPageProps) {
 
           {/* Category Header */}
           <div className="flex items-start space-x-6">
-            {category.image && (
-              <div className="flex-shrink-0">
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="w-24 h-24 object-cover rounded-lg border"
-                />
-              </div>
-            )}
             <div className="flex-1">
               <div className="flex items-center mb-2">
                 {category.icon && (
-                  <i className={`${category.icon} text-3xl text-blue-600 mr-3`}></i>
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-lg mr-4">
+                    <i className={`${category.icon} text-3xl text-blue-600`}></i>
+                  </div>
                 )}
                 <h1 className="text-3xl font-bold text-gray-900">{category.name}</h1>
               </div>
@@ -205,40 +195,27 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                 key={product.id}
                 className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
               >
-                <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-gray-200">
+                <div className="relative w-full h-56 overflow-hidden bg-gray-100 group">
                   {product.image && product.image.trim() !== '' ? (
                     <img
                       src={product.image.startsWith('/') ? `http://localhost:3000${product.image}` : product.image}
                       alt={product.name}
-                      className="w-full h-48 object-cover object-center hover:opacity-75 transition-opacity"
+                      className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-300"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = `https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=${encodeURIComponent(product.name.substring(0, 20))}`;
                       }}
                     />
                   ) : (
-                    <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                    <div className="w-full h-full flex items-center justify-center">
                       <i className="ri-image-line text-4xl text-gray-400"></i>
                     </div>
                   )}
                 </div>
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     {product.name}
                   </h3>
-                  {product.description && (
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                      {product.description}
-                    </p>
-                  )}
-                  <div className="space-y-1 text-sm text-gray-600 mb-4">
-                    {product.capacity && (
-                      <p><span className="font-medium">Khối lượng:</span> {product.capacity}</p>
-                    )}
-                    {product.accuracy && (
-                      <p><span className="font-medium">Độ chính xác:</span> {product.accuracy}</p>
-                    )}
-                  </div>
                   <div className="flex items-center justify-between">
                     {product.price ? (
                       <span className="text-xl font-bold text-blue-600">
@@ -247,12 +224,12 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                     ) : (
                       <span className="text-gray-500">Liên hệ</span>
                     )}
-                    <button
-                      onClick={() => setSelectedProductId(product.id)}
+                    <Link
+                      href={`/product/${product.id}`}
                       className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
                     >
                       Xem Chi Tiết
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -260,12 +237,6 @@ export default function CategoryPage({ params }: CategoryPageProps) {
           </div>
         )}
       </div>
-
-      {/* Product Detail Modal */}
-      <ProductDetail 
-        productId={selectedProductId}
-        onClose={() => setSelectedProductId(null)}
-      />
     </div>
   );
 }

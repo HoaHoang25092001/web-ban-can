@@ -61,7 +61,8 @@ export async function GET(request: NextRequest) {
         pages: Math.ceil(total / limit),
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error fetching products:', error);
     return NextResponse.json(
       { error: 'Failed to fetch products' },
       { status: 500 }
@@ -73,7 +74,20 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, description, categoryId, capacity, accuracy, price, image, featured } = body;
+    const { 
+      name, 
+      description, 
+      categoryId, 
+      capacity, 
+      accuracy, 
+      price, 
+      image, 
+      featured,
+      dialSize,
+      scaleSize,
+      manufacturer,
+      origin
+    } = body;
 
     const product = await prisma.product.create({
       data: {
@@ -85,6 +99,10 @@ export async function POST(request: NextRequest) {
         price,
         image,
         featured: featured || false,
+        dialSize,
+        scaleSize,
+        manufacturer,
+        origin,
       },
       include: {
         category: true,
@@ -92,7 +110,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(product, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error creating product:', error);
     return NextResponse.json(
       { error: 'Failed to create product' },
       { status: 500 }

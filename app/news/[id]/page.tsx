@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import RichContentDisplay from '@/components/RichContentDisplay';
 
 interface NewsItem {
   id: number;
@@ -79,15 +80,6 @@ export default function NewsDetailPage() {
       return image.startsWith('/') ? `http://localhost:3000${image}` : image;
     }
     return `https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=${encodeURIComponent(title.substring(0, 30))}`;
-  };
-
-  const formatContent = (content: string) => {
-    // Convert line breaks to paragraphs
-    return content.split('\n').filter(p => p.trim()).map((paragraph, index) => (
-      <p key={index} className="mb-4 text-gray-700 leading-relaxed">
-        {paragraph}
-      </p>
-    ));
   };
 
   if (loading) {
@@ -187,9 +179,7 @@ export default function NewsDetailPage() {
 
           {/* Content */}
           <div className="px-8 py-8">
-            <div className="prose prose-lg max-w-none">
-              {formatContent(news.content)}
-            </div>
+            <RichContentDisplay content={news.content} className="prose-lg" />
           </div>
 
           {/* Share & Actions */}

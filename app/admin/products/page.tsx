@@ -5,6 +5,8 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import ProductFilter from '@/components/admin/ProductFilter';
 import { Table, TableRow, TableCell } from '@/components/admin/Table';
 import { Button } from '@/components/admin/FormComponents';
+import { useToast } from '@/components/Toast';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { Plus, Edit, Trash2, Star } from 'lucide-react';
 import Link from 'next/link';
 
@@ -30,8 +32,13 @@ interface FilterState {
 }
 
 export default function ProductsPage() {
+  const toast = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; productId: number | null }>({
+    isOpen: false,
+    productId: null,
+  });
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     categoryId: 'all',
@@ -88,7 +95,12 @@ export default function ProductsPage() {
   }, [searchTimeout, fetchProducts]);
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) return;
+    setDeleteConfirm({ isOpen: true, productId: id });
+  };
+
+  const confirmDelete = async () => {
+    const id = deleteConfirm.productId;
+    if (!id) return;
 
     try {
       const response = await fetch(`/api/products/${id}`, {
@@ -97,12 +109,16 @@ export default function ProductsPage() {
 
       if (response.ok) {
         setProducts(products.filter(product => product.id !== id));
+        toast.success('Xóa thành công!', 'Sản phẩm đã được xóa');
       } else {
         const error = await response.json();
-        alert(error.error || 'Có lỗi xảy ra khi xóa sản phẩm');
+        toast.error('Có lỗi xảy ra', error.error || 'Không thể xóa sản phẩm');
       }
     } catch (error) {
-      alert('Có lỗi xảy ra khi xóa sản phẩm');
+      console.error('Error deleting product:', error);
+      toast.error('Có lỗi xảy ra', 'Không thể kết nối đến server');
+    } finally {
+      setDeleteConfirm({ isOpen: false, productId: null });
     }
   };
 
@@ -265,6 +281,17 @@ export default function ProductsPage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Xác nhận xóa"
+        message="Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này không thể hoàn tác."
+        confirmText="Xóa"
+        cancelText="Hủy"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ isOpen: false, productId: null })}
+        variant="danger"
+      />
     </AdminLayout>
   );
 }

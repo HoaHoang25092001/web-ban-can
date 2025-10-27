@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Button, Input, Textarea, Select } from '@/components/admin/FormComponents';
+import { Button, Input, Select } from '@/components/admin/FormComponents';
+import TiptapEditor from '@/components/admin/TiptapEditor';
 import ImageUpload from '@/components/admin/ImageUpload';
+import { useToast } from '@/components/Toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -15,6 +17,7 @@ interface Category {
 
 export default function NewProductPage() {
   const router = useRouter();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
@@ -26,6 +29,10 @@ export default function NewProductPage() {
     price: '',
     image: '',
     featured: false,
+    dialSize: '',
+    scaleSize: '',
+    manufacturer: '',
+    origin: '',
   });
 
   useEffect(() => {
@@ -56,14 +63,15 @@ export default function NewProductPage() {
       });
 
       if (response.ok) {
+        toast.success('Thành công!', 'Sản phẩm đã được tạo thành công');
         router.push('/admin/products');
       } else {
         const error = await response.json();
-        alert(error.error || 'Có lỗi xảy ra khi tạo sản phẩm');
+        toast.error('Có lỗi xảy ra', error.error || 'Không thể tạo sản phẩm');
       }
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Có lỗi xảy ra khi tạo sản phẩm');
+      toast.error('Có lỗi xảy ra', 'Không thể kết nối đến server');
     } finally {
       setLoading(false);
     }
@@ -104,12 +112,12 @@ export default function NewProductPage() {
               />
             </div>
 
-            <Textarea
+            <TiptapEditor
               label="Mô tả sản phẩm"
               value={formData.description}
-              onChange={(value) => setFormData({ ...formData, description: value })}
+              onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
               placeholder="Nhập mô tả chi tiết về sản phẩm"
-              rows={4}
+              height={300}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -132,6 +140,36 @@ export default function NewProductPage() {
                 value={formData.price}
                 onChange={(value) => setFormData({ ...formData, price: value })}
                 placeholder="vd: 2,500,000"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Kích thước dia"
+                value={formData.dialSize}
+                onChange={(value) => setFormData({ ...formData, dialSize: value })}
+                placeholder="vd: Φ280mm"
+              />
+
+              <Input
+                label="Kích thước cân"
+                value={formData.scaleSize}
+                onChange={(value) => setFormData({ ...formData, scaleSize: value })}
+                placeholder="vd: 400x500mm"
+              />
+
+              <Input
+                label="Sản xuất"
+                value={formData.manufacturer}
+                onChange={(value) => setFormData({ ...formData, manufacturer: value })}
+                placeholder="vd: Nhà máy ABC"
+              />
+
+              <Input
+                label="Xuất xứ"
+                value={formData.origin}
+                onChange={(value) => setFormData({ ...formData, origin: value })}
+                placeholder="vd: Việt Nam, Nhật Bản"
               />
             </div>
 

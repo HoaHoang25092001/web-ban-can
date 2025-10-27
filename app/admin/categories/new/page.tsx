@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button, Input, Textarea } from '@/components/admin/FormComponents';
-import ImageUpload from '@/components/admin/ImageUpload';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -34,7 +33,6 @@ export default function NewCategoryPage() {
     name: '',
     description: '',
     icon: '',
-    image: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,12 +112,6 @@ export default function NewCategoryPage() {
                 ))}
               </select>
             </div>
-
-            <ImageUpload
-              label="Hình ảnh danh mục"
-              value={formData.image}
-              onChange={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
-            />
 
             <div className="flex justify-end space-x-4">
               <Link href="/admin/categories">

@@ -54,19 +54,19 @@ export default function FeaturedProducts() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {products.map((product) => (
             <div key={product.id} className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden group">
-              <div className="relative h-48 overflow-hidden">
+              <div className="relative h-56 overflow-hidden bg-gray-50 flex items-center justify-center">
                 {product.image && product.image.trim() !== '' ? (
                   <img
                     src={product.image.startsWith('/') ? `http://localhost:3000${product.image}` : product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
+                    className="max-w-full max-h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src = `https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=${encodeURIComponent(product.name.substring(0, 20))}`;
                     }}
                   />
                 ) : (
-                  <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <i className="ri-image-line text-4xl text-gray-400"></i>
                   </div>
                 )}

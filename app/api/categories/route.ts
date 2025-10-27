@@ -30,14 +30,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, description, icon, image } = body;
+    const { name, description, icon } = body;
 
     const category = await prisma.category.create({
       data: {
         name,
         description,
         icon,
-        image,
       },
     });
 

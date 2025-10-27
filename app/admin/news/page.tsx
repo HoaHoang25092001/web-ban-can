@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Table, TableRow, TableCell } from '@/components/admin/Table';
 import { Button } from '@/components/admin/FormComponents';
+import { useToast } from '@/components/Toast';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
@@ -19,8 +21,13 @@ interface News {
 }
 
 export default function NewsPage() {
+  const toast = useToast();
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; newsId: number | null }>({
+    isOpen: false,
+    newsId: null,
+  });
 
   useEffect(() => {
     fetchNews();
@@ -39,7 +46,12 @@ export default function NewsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa tin tức này?')) return;
+    setDeleteConfirm({ isOpen: true, newsId: id });
+  };
+
+  const confirmDelete = async () => {
+    const id = deleteConfirm.newsId;
+    if (!id) return;
 
     try {
       const response = await fetch(`/api/news/${id}`, {
@@ -48,13 +60,16 @@ export default function NewsPage() {
 
       if (response.ok) {
         setNews(news.filter(item => item.id !== id));
+        toast.success('Xóa thành công!', 'Tin tức đã được xóa');
       } else {
         const error = await response.json();
-        alert(error.error || 'Có lỗi xảy ra khi xóa tin tức');
+        toast.error('Có lỗi xảy ra', error.error || 'Không thể xóa tin tức');
       }
     } catch (error) {
       console.error('Error deleting news:', error);
-      alert('Có lỗi xảy ra khi xóa tin tức');
+      toast.error('Có lỗi xảy ra', 'Không thể kết nối đến server');
+    } finally {
+      setDeleteConfirm({ isOpen: false, newsId: null });
     }
   };
 
@@ -190,6 +205,17 @@ export default function NewsPage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Xác nhận xóa"
+        message="Bạn có chắc chắn muốn xóa tin tức này? Hành động này không thể hoàn tác."
+        confirmText="Xóa"
+        cancelText="Hủy"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ isOpen: false, newsId: null })}
+        variant="danger"
+      />
     </AdminLayout>
   );
 }

@@ -1,13 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_DATABASE_URL")
 }
 
@@ -17,26 +14,30 @@ model Category {
   description String?
   icon        String?
   image       String?
-  products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  products    Product[]
 
   @@map("categories")
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  categoryId  Int
-  capacity    String?
-  accuracy    String?
-  price       String?
-  image       String?
-  featured    Boolean  @default(false)
-  category    Category @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  name         String
+  description  String?
+  categoryId   Int
+  capacity     String?
+  accuracy     String?
+  price        String?
+  image        String?
+  featured     Boolean  @default(false)
+  dialSize     String?  // Kích thước dia
+  scaleSize    String?  // Kích thước cân
+  manufacturer String?  // Sản xuất
+  origin       String?  // Xuất xứ
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  category     Category @relation(fields: [categoryId], references: [id])
 
   @@map("products")
 }
@@ -61,7 +62,7 @@ model ContactRequest {
   email     String?
   product   String?
   message   String?
-  status    String   @default("new") // new, processing, resolved
+  status    String   @default("new")
   createdAt DateTime @default(now())
 
   @@map("contact_requests")

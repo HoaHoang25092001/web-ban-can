@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Pacifico } from "next/font/google";
 import SessionProvider from "../components/SessionProvider";
 import ConditionalLayout from "../components/ConditionalLayout";
+import { ToastProvider } from "../components/Toast";
 import "./globals.css";
 
 const pacifico = Pacifico({
@@ -43,9 +44,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased`}
       >
         <SessionProvider session={null}>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
+          <ToastProvider>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
+          </ToastProvider>
         </SessionProvider>
       </body>
     </html>

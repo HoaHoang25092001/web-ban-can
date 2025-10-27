@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Button, Input, Textarea, Select } from '@/components/admin/FormComponents';
+import { Button, Input, Select } from '@/components/admin/FormComponents';
+import TiptapEditor from '@/components/admin/TiptapEditor';
 import ImageUpload from '@/components/admin/ImageUpload';
+import { useToast } from '@/components/Toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -17,6 +19,7 @@ export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
+  const toast = useToast();
   
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
@@ -30,6 +33,10 @@ export default function EditProductPage() {
     price: '',
     image: '',
     featured: false,
+    dialSize: '',
+    scaleSize: '',
+    manufacturer: '',
+    origin: '',
   });
 
   useEffect(() => {
@@ -63,14 +70,18 @@ export default function EditProductPage() {
           price: data.price || '',
           image: data.image || '',
           featured: data.featured || false,
+          dialSize: data.dialSize || '',
+          scaleSize: data.scaleSize || '',
+          manufacturer: data.manufacturer || '',
+          origin: data.origin || '',
         });
       } else {
-        alert('Không tìm thấy sản phẩm');
+        toast.error('Không tìm thấy', 'Sản phẩm không tồn tại');
         router.push('/admin/products');
       }
     } catch (error) {
       console.error('Error fetching product:', error);
-      alert('Có lỗi xảy ra khi tải dữ liệu');
+      toast.error('Có lỗi xảy ra', 'Không thể tải dữ liệu sản phẩm');
     } finally {
       setFetchLoading(false);
     }
@@ -90,14 +101,15 @@ export default function EditProductPage() {
       });
 
       if (response.ok) {
+        toast.success('Cập nhật thành công!', 'Sản phẩm đã được cập nhật');
         router.push('/admin/products');
       } else {
         const error = await response.json();
-        alert(error.error || 'Có lỗi xảy ra khi cập nhật sản phẩm');
+        toast.error('Có lỗi xảy ra', error.error || 'Không thể cập nhật sản phẩm');
       }
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Có lỗi xảy ra khi cập nhật sản phẩm');
+      toast.error('Có lỗi xảy ra', 'Không thể kết nối đến server');
     } finally {
       setLoading(false);
     }
@@ -148,12 +160,12 @@ export default function EditProductPage() {
               />
             </div>
 
-            <Textarea
+            <TiptapEditor
               label="Mô tả sản phẩm"
               value={formData.description}
-              onChange={(value) => setFormData({ ...formData, description: value })}
+              onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
               placeholder="Nhập mô tả chi tiết về sản phẩm"
-              rows={4}
+              height={300}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -176,6 +188,36 @@ export default function EditProductPage() {
                 value={formData.price}
                 onChange={(value) => setFormData({ ...formData, price: value })}
                 placeholder="vd: 2,500,000"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Kích thước dia"
+                value={formData.dialSize}
+                onChange={(value) => setFormData({ ...formData, dialSize: value })}
+                placeholder="vd: Φ280mm"
+              />
+
+              <Input
+                label="Kích thước cân"
+                value={formData.scaleSize}
+                onChange={(value) => setFormData({ ...formData, scaleSize: value })}
+                placeholder="vd: 400x500mm"
+              />
+
+              <Input
+                label="Sản xuất"
+                value={formData.manufacturer}
+                onChange={(value) => setFormData({ ...formData, manufacturer: value })}
+                placeholder="vd: Nhà máy ABC"
+              />
+
+              <Input
+                label="Xuất xứ"
+                value={formData.origin}
+                onChange={(value) => setFormData({ ...formData, origin: value })}
+                placeholder="vd: Việt Nam, Nhật Bản"
               />
             </div>
 

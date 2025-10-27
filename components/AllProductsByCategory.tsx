@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import ProductDetail from './ProductDetail';
+import Link from 'next/link';
 
 interface Product {
   id: number;
@@ -19,7 +19,6 @@ interface Category {
   name: string;
   description: string | null;
   icon: string | null;
-  image: string | null;
   products: Product[];
 }
 
@@ -28,7 +27,6 @@ export default function AllProductsByCategory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchCategoriesWithProducts = async () => {
@@ -153,12 +151,12 @@ export default function AllProductsByCategory() {
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {category.products.map((product) => (
-                          <div key={product.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-                            <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-gray-200">
+                          <div key={product.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
+                            <div className="relative w-full h-56 overflow-hidden bg-gray-50">
                               <img
                                 src={product.image || getDefaultImage(product.name, category.name)}
                                 alt={product.name}
-                                className="w-full h-48 object-cover object-center"
+                                className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
                                   target.src = getDefaultImage(product.name, category.name);
@@ -194,12 +192,12 @@ export default function AllProductsByCategory() {
                                 ) : (
                                   <span className="text-sm text-gray-500">Liên hệ báo giá</span>
                                 )}
-                                <button 
-                                  onClick={() => setSelectedProductId(product.id)}
+                                <Link 
+                                  href={`/product/${product.id}`}
                                   className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
                                 >
                                   Chi tiết
-                                </button>
+                                </Link>
                               </div>
                             </div>
                           </div>
@@ -214,11 +212,6 @@ export default function AllProductsByCategory() {
         )}
       </div>
 
-      {/* Product Detail Modal */}
-      <ProductDetail 
-        productId={selectedProductId}
-        onClose={() => setSelectedProductId(null)}
-      />
     </section>
   );
 }

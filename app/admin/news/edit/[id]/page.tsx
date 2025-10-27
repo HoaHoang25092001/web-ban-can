@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button, Input, Textarea } from '@/components/admin/FormComponents';
+import TiptapEditor from '@/components/admin/TiptapEditor';
 import ImageUpload from '@/components/admin/ImageUpload';
+import { useToast } from '@/components/Toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -12,6 +14,7 @@ export default function EditNewsPage() {
   const router = useRouter();
   const params = useParams();
   const newsId = params.id as string;
+  const toast = useToast();
   
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
@@ -42,12 +45,12 @@ export default function EditNewsPage() {
           published: data.published || false,
         });
       } else {
-        alert('Không tìm thấy tin tức');
+        toast.error('Không tìm thấy', 'Tin tức không tồn tại');
         router.push('/admin/news');
       }
     } catch (error) {
       console.error('Error fetching news:', error);
-      alert('Có lỗi xảy ra khi tải dữ liệu');
+      toast.error('Có lỗi xảy ra', 'Không thể tải dữ liệu tin tức');
     } finally {
       setFetchLoading(false);
     }
@@ -72,14 +75,15 @@ export default function EditNewsPage() {
       });
 
       if (response.ok) {
+        toast.success('Cập nhật thành công!', 'Tin tức đã được cập nhật');
         router.push('/admin/news');
       } else {
         const error = await response.json();
-        alert(error.error || 'Có lỗi xảy ra khi cập nhật tin tức');
+        toast.error('Có lỗi xảy ra', error.error || 'Không thể cập nhật tin tức');
       }
     } catch (error) {
       console.error('Error updating news:', error);
-      alert('Có lỗi xảy ra khi cập nhật tin tức');
+      toast.error('Có lỗi xảy ra', 'Không thể kết nối đến server');
     } finally {
       setLoading(false);
     }
@@ -128,12 +132,12 @@ export default function EditNewsPage() {
               rows={3}
             />
 
-            <Textarea
+            <TiptapEditor
               label="Nội dung"
               value={formData.content}
-              onChange={(value) => setFormData({ ...formData, content: value })}
+              onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
               placeholder="Nhập nội dung chi tiết của tin tức"
-              rows={12}
+              height={500}
               required
             />
 

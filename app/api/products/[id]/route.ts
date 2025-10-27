@@ -24,7 +24,8 @@ export async function GET(
     }
 
     return NextResponse.json(product);
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error fetching product:', error);
     return NextResponse.json(
       { error: 'Failed to fetch product' },
       { status: 500 }
@@ -41,7 +42,20 @@ export async function PUT(
     const { id: idString } = await params;
     const id = parseInt(idString);
     const body = await request.json();
-    const { name, description, categoryId, capacity, accuracy, price, image, featured } = body;
+    const { 
+      name, 
+      description, 
+      categoryId, 
+      capacity, 
+      accuracy, 
+      price, 
+      image, 
+      featured,
+      dialSize,
+      scaleSize,
+      manufacturer,
+      origin
+    } = body;
 
     const product = await prisma.product.update({
       where: { id },
@@ -54,6 +68,10 @@ export async function PUT(
         price,
         image,
         featured,
+        dialSize,
+        scaleSize,
+        manufacturer,
+        origin,
       },
       include: {
         category: true,
@@ -61,7 +79,8 @@ export async function PUT(
     });
 
     return NextResponse.json(product);
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error updating product:', error);
     return NextResponse.json(
       { error: 'Failed to update product' },
       { status: 500 }
@@ -83,7 +102,8 @@ export async function DELETE(
     });
 
     return NextResponse.json({ message: 'Product deleted successfully' });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error deleting product:', error);
     return NextResponse.json(
       { error: 'Failed to delete product' },
       { status: 500 }

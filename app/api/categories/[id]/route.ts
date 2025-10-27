@@ -42,7 +42,7 @@ export async function PUT(
     const { id: idString } = await params;
     const id = parseInt(idString);
     const body = await request.json();
-    const { name, description, icon, image } = body;
+    const { name, description, icon } = body;
 
     const category = await prisma.category.update({
       where: { id },
@@ -50,7 +50,6 @@ export async function PUT(
         name,
         description,
         icon,
-        image,
       },
     });
 

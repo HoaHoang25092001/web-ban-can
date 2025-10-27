@@ -4,12 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button, Input, Textarea } from '@/components/admin/FormComponents';
+import TiptapEditor from '@/components/admin/TiptapEditor';
 import ImageUpload from '@/components/admin/ImageUpload';
+import { useToast } from '@/components/Toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export default function NewNewsPage() {
   const router = useRouter();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -33,14 +36,15 @@ export default function NewNewsPage() {
       });
 
       if (response.ok) {
+        toast.success('Thành công!', 'Tin tức đã được tạo thành công');
         router.push('/admin/news');
       } else {
         const error = await response.json();
-        alert(error.error || 'Có lỗi xảy ra khi tạo tin tức');
+        toast.error('Có lỗi xảy ra', error.error || 'Không thể tạo tin tức');
       }
     } catch (error) {
       console.error('Error creating news:', error);
-      alert('Có lỗi xảy ra khi tạo tin tức');
+      toast.error('Có lỗi xảy ra', 'Không thể kết nối đến server');
     } finally {
       setLoading(false);
     }
@@ -79,22 +83,14 @@ export default function NewNewsPage() {
               rows={3}
             />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nội dung <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                placeholder="Nhập nội dung chi tiết của tin tức"
-                rows={16}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y min-h-[400px]"
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                Chiều dài hiện tại: {formData.content.length} ký tự
-              </p>
-            </div>
+            <TiptapEditor
+              label="Nội dung"
+              value={formData.content}
+              onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+              placeholder="Nhập nội dung chi tiết của tin tức"
+              height={500}
+              required
+            />
 
             <ImageUpload
               label="Hình ảnh tin tức"
