@@ -114,10 +114,10 @@ export default function FeaturedProducts() {
 
   return (
     <section className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">Sản Phẩm Nổi Bật</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-4xl mx-auto">
             Những sản phẩm cân điện tử được khách hàng tin tưởng và lựa chọn nhiều nhất theo từng danh mục
           </p>
         </div>
@@ -151,7 +151,7 @@ export default function FeaturedProducts() {
                 </Link>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {category.products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

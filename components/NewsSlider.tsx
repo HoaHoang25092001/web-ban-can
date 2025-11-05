@@ -109,12 +109,12 @@ export default function NewsSlider() {
 
   return (
     <section className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4">
+      <div className="w-full">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-800 mb-4">
             Tin Tức Mới Nhất
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <p className="text-gray-600 max-w-3xl mx-auto">
             Cập nhật những thông tin mới nhất về sản phẩm và ngành hàng
           </p>
         </div>

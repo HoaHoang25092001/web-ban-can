@@ -190,101 +190,12 @@ export default function ProductDetailPage() {
             {/* Header */}
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">{product.name}</h3>
-              <div className="text-2xl font-bold text-blue-600 mb-6">
+              <div className="text-2xl font-bold text-blue-600 mb-2">
                 {formatPrice(product.price)}
               </div>
             </div>
 
-            {/* Specifications */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <Package className="w-5 h-5 mr-2 text-blue-600" />
-                Thông số kỹ thuật
-              </h3>
-              
-              <div className="space-y-2">
-                {product.capacity && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-600 font-medium flex items-center text-sm">
-                      <Scale className="w-4 h-4 mr-2" />
-                      Khối lượng cân tối đa:
-                    </span>
-                    <span className="text-gray-900 font-semibold bg-gray-50 px-3 py-1 rounded-lg text-sm">
-                      {product.capacity}
-                    </span>
-                  </div>
-                )}
-                
-                {product.accuracy && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-600 font-medium flex items-center text-sm">
-                      <Gauge className="w-4 h-4 mr-2" />
-                      Độ chính xác:
-                    </span>
-                    <span className="text-gray-900 font-semibold bg-gray-50 px-3 py-1 rounded-lg text-sm">
-                      {product.accuracy}
-                    </span>
-                  </div>
-                )}
-                
-                {product.dialSize && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-600 font-medium flex items-center text-sm">
-                      <Ruler className="w-4 h-4 mr-2" />
-                      Kích thước dia:
-                    </span>
-                    <span className="text-gray-900 font-semibold bg-gray-50 px-3 py-1 rounded-lg text-sm">
-                      {product.dialSize}
-                    </span>
-                  </div>
-                )}
-                
-                {product.scaleSize && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-600 font-medium flex items-center text-sm">
-                      <Ruler className="w-4 h-4 mr-2" />
-                      Kích thước cân:
-                    </span>
-                    <span className="text-gray-900 font-semibold bg-gray-50 px-3 py-1 rounded-lg text-sm">
-                      {product.scaleSize}
-                    </span>
-                  </div>
-                )}
-                
-                {product.manufacturer && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-600 font-medium flex items-center text-sm">
-                      <Factory className="w-4 h-4 mr-2" />
-                      Sản xuất:
-                    </span>
-                    <span className="text-gray-900 font-semibold bg-gray-50 px-3 py-1 rounded-lg text-sm">
-                      {product.manufacturer}
-                    </span>
-                  </div>
-                )}
-                
-                {product.origin && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-600 font-medium flex items-center text-sm">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      Xuất xứ:
-                    </span>
-                    <span className="text-gray-900 font-semibold bg-gray-50 px-3 py-1 rounded-lg text-sm">
-                      {product.origin}
-                    </span>
-                  </div>
-                )}
-                
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium text-sm">Danh mục:</span>
-                  <span className="text-blue-700 font-semibold bg-blue-50 px-3 py-1 rounded-lg text-sm">
-                    {product.category.name}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Contact Info */}
+            {/* Contact Info - Moved Up */}
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
               <h4 className="font-semibold text-gray-900 mb-4 text-lg">Thông tin liên hệ</h4>
               <div className="space-y-3">
@@ -317,6 +228,86 @@ export default function ProductDetailPage() {
                   <Phone className="w-5 h-5 mr-2" />
                   Liên hệ tư vấn
                 </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Specifications - Full Width Section Below */}
+        <div className="mt-12">
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <h3 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
+              <Package className="w-6 h-6 mr-3 text-blue-600" />
+              Thông số kỹ thuật
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {product.capacity && (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center mb-2">
+                    <Scale className="w-5 h-5 mr-2 text-blue-600" />
+                    <span className="text-gray-600 font-medium text-sm">Khối lượng cân tối đa:</span>
+                  </div>
+                  <span className="text-gray-900 font-bold text-lg">{product.capacity}</span>
+                </div>
+              )}
+              
+              {product.accuracy && (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center mb-2">
+                    <Gauge className="w-5 h-5 mr-2 text-blue-600" />
+                    <span className="text-gray-600 font-medium text-sm">Độ chính xác:</span>
+                  </div>
+                  <span className="text-gray-900 font-bold text-lg">{product.accuracy}</span>
+                </div>
+              )}
+              
+              {product.dialSize && (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center mb-2">
+                    <Ruler className="w-5 h-5 mr-2 text-blue-600" />
+                    <span className="text-gray-600 font-medium text-sm">Kích thước dia:</span>
+                  </div>
+                  <span className="text-gray-900 font-bold text-lg">{product.dialSize}</span>
+                </div>
+              )}
+              
+              {product.scaleSize && (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center mb-2">
+                    <Ruler className="w-5 h-5 mr-2 text-blue-600" />
+                    <span className="text-gray-600 font-medium text-sm">Kích thước cân:</span>
+                  </div>
+                  <span className="text-gray-900 font-bold text-lg">{product.scaleSize}</span>
+                </div>
+              )}
+              
+              {product.manufacturer && (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center mb-2">
+                    <Factory className="w-5 h-5 mr-2 text-blue-600" />
+                    <span className="text-gray-600 font-medium text-sm">Sản xuất:</span>
+                  </div>
+                  <span className="text-gray-900 font-bold text-lg">{product.manufacturer}</span>
+                </div>
+              )}
+              
+              {product.origin && (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center mb-2">
+                    <MapPin className="w-5 h-5 mr-2 text-blue-600" />
+                    <span className="text-gray-600 font-medium text-sm">Xuất xứ:</span>
+                  </div>
+                  <span className="text-gray-900 font-bold text-lg">{product.origin}</span>
+                </div>
+              )}
+              
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div className="flex items-center mb-2">
+                  <Package className="w-5 h-5 mr-2 text-blue-600" />
+                  <span className="text-gray-600 font-medium text-sm">Danh mục:</span>
+                </div>
+                <span className="text-blue-700 font-bold text-lg">{product.category.name}</span>
               </div>
             </div>
           </div>

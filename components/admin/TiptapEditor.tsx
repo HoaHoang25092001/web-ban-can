@@ -31,6 +31,7 @@ import {
   Link as LinkIcon,
   Image as ImageIcon,
   Smile,
+  Palette,
 } from 'lucide-react';
 
 interface TiptapEditorProps {
@@ -51,6 +52,7 @@ export default function TiptapEditor({
   height = 400,
 }: TiptapEditorProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -108,6 +110,21 @@ export default function TiptapEditor({
     '👍', '👎', '👌', '🤝', '👏', '🙌', '👐', '🤲', '🙏', '✌️',
     '🤞', '💪', '💯', '🔥', '⚡', '💥', '💫', '⭐', '🌟', '✨',
     '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
+  ];
+
+  const textColors = [
+    { name: 'Đen', color: '#000000' },
+    { name: 'Xám đậm', color: '#374151' },
+    { name: 'Xám', color: '#6B7280' },
+    { name: 'Đỏ', color: '#EF4444' },
+    { name: 'Cam', color: '#F97316' },
+    { name: 'Vàng', color: '#EAB308' },
+    { name: 'Xanh lá', color: '#22C55E' },
+    { name: 'Xanh dương', color: '#3B82F6' },
+    { name: 'Xanh da trời', color: '#06B6D4' },
+    { name: 'Tím', color: '#A855F7' },
+    { name: 'Hồng', color: '#EC4899' },
+    { name: 'Trắng', color: '#FFFFFF' },
   ];
 
   const insertEmoji = (emoji: string) => {
@@ -215,6 +232,67 @@ export default function TiptapEditor({
             >
               <Code size={18} />
             </ToolbarButton>
+          </div>
+
+          {/* Text Color */}
+          <div className="flex items-center gap-1 border-r border-gray-300 pr-2">
+            <div className="relative">
+              <ToolbarButton
+                onClick={() => setShowColorPicker(!showColorPicker)}
+                title="Màu chữ"
+              >
+                <Palette size={18} />
+              </ToolbarButton>
+              {showColorPicker && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-20 w-64">
+                  <div className="text-xs text-gray-500 mb-2 border-b pb-2">
+                    Chọn màu chữ
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {textColors.map((item) => (
+                      <button
+                        key={item.color}
+                        type="button"
+                        onClick={() => {
+                          editor.chain().focus().setColor(item.color).run();
+                          setShowColorPicker(false);
+                        }}
+                        className="flex flex-col items-center gap-1 p-2 hover:bg-gray-100 rounded transition-colors"
+                        title={item.name}
+                      >
+                        <div
+                          className="w-8 h-8 rounded border-2 border-gray-200"
+                          style={{
+                            backgroundColor: item.color,
+                            border: item.color === '#FFFFFF' ? '2px solid #E5E7EB' : 'none',
+                          }}
+                        />
+                        <span className="text-xs text-gray-600">{item.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        editor.chain().focus().unsetColor().run();
+                        setShowColorPicker(false);
+                      }}
+                      className="w-full px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                    >
+                      Xóa màu
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowColorPicker(false)}
+                    className="w-full mt-2 px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
+                  >
+                    Đóng
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Headings */}

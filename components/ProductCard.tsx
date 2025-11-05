@@ -67,7 +67,7 @@ export default function ProductCard({ product, showCategory = false }: ProductCa
         </div>
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold text-blue-600">
-            {product.price.includes('VNĐ') ? product.price : `${product.price} VNĐ`}
+            {product.price.includes('VNĐ') ? product.price : `${product.price}`}
           </span>
           <Link 
             href={`/product/${product.id}`}
