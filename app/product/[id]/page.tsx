@@ -6,6 +6,7 @@ import { ArrowLeft, Phone, Mail, Clock, Star, Package, Gauge, ZoomIn, X, Scale, 
 import Link from 'next/link';
 import Image from 'next/image';
 import RichContentDisplay from '@/components/RichContentDisplay';
+import ProductCategorySidebar from '@/components/ProductCategorySidebar';
 
 interface Product {
   id: number;
@@ -35,6 +36,7 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const productId = params.id as string;
   const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -48,6 +50,19 @@ export default function ProductDetailPage() {
         }
         const data = await response.json();
         setProduct(data);
+        
+        // Lấy sản phẩm liên quan cùng danh mục
+        if (data.category?.id) {
+          const relatedResponse = await fetch(`/api/products?categoryId=${data.category.id}&limit=6`);
+          if (relatedResponse.ok) {
+            const relatedData = await relatedResponse.json();
+            // Lọc bỏ sản phẩm hiện tại và chỉ lấy tối đa 4 sản phẩm
+            const filtered = relatedData.products
+              ?.filter((p: Product) => p.id !== data.id)
+              .slice(0, 4) || [];
+            setRelatedProducts(filtered);
+          }
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi');
       } finally {
@@ -130,17 +145,22 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back Button */}
-        <button
-          onClick={() => router.back()}
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Quay lại
-        </button>
+      <div className="flex gap-6 px-4 lg:px-6 py-8">
+        {/* Sidebar */}
+        <ProductCategorySidebar />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {/* Content */}
+        <div className="flex-1 w-full min-w-0">
+            {/* Back Button */}
+            <button
+              onClick={() => router.back()}
+              className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Quay lại
+            </button>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Product Image */}
           <div className="space-y-6">
             <div className="aspect-w-4 aspect-h-3 overflow-hidden rounded-xl bg-white shadow-lg">
@@ -230,12 +250,67 @@ export default function ProductDetailPage() {
                 </Link>
               </div>
             </div>
-          </div>
-        </div>
+              </div>
+            </div>
 
-        {/* Specifications - Full Width Section Below */}
-        <div className="mt-12">
-          <div className="bg-white rounded-xl shadow-lg p-8">
+            {/* Related Products Section */}
+            {relatedProducts.length > 0 && (
+              <div className="mt-12">
+                <div className="bg-white rounded-xl shadow-lg p-8">
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <Package className="w-6 h-6 mr-3 text-blue-600" />
+                    Sản phẩm liên quan
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {relatedProducts.map((relatedProduct) => (
+                      <Link 
+                        key={relatedProduct.id} 
+                        href={`/product/${relatedProduct.id}`}
+                        className="group bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300"
+                      >
+                        <div className="aspect-w-4 aspect-h-3 bg-gray-100">
+                          <Image
+                            src={relatedProduct.image || getDefaultImage(relatedProduct.name, relatedProduct.category.name)}
+                            alt={relatedProduct.name}
+                            width={300}
+                            height={225}
+                            className="w-full h-48 object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = getDefaultImage(relatedProduct.name, relatedProduct.category.name);
+                            }}
+                          />
+                        </div>
+                        
+                        <div className="p-4">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                            {relatedProduct.name}
+                          </h4>
+                          
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                              {relatedProduct.category.name}
+                            </span>
+                            {relatedProduct.featured && (
+                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                            )}
+                          </div>
+                          
+                          <div className="text-blue-600 font-bold text-sm">
+                            {formatPrice(relatedProduct.price)}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Specifications - Full Width Section Below */}
+            <div className="mt-12">
+              <div className="bg-white rounded-xl shadow-lg p-8">
             <h3 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
               <Package className="w-6 h-6 mr-3 text-blue-600" />
               Thông số kỹ thuật
@@ -309,24 +384,25 @@ export default function ProductDetailPage() {
                 </div>
                 <span className="text-blue-700 font-bold text-lg">{product.category.name}</span>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Description - Full Width Section */}
-        {product.description && (
-          <div className="mt-12">
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
-                <Package className="w-6 h-6 mr-3 text-blue-600" />
-                Mô tả sản phẩm
-              </h3>
-              <div className="max-w-none">
-                <RichContentDisplay content={product.description} />
+                </div>
               </div>
             </div>
-          </div>
-        )}
+
+            {/* Description - Full Width Section */}
+            {product.description && (
+              <div className="mt-12">
+                <div className="bg-white rounded-xl shadow-lg p-8">
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <Package className="w-6 h-6 mr-3 text-blue-600" />
+                    Mô tả sản phẩm
+                  </h3>
+                  <div className="max-w-none">
+                    <RichContentDisplay content={product.description} />
+                  </div>
+                </div>
+              </div>
+            )}
+        </div>
       </div>
 
       {/* Image Zoom Modal */}
@@ -347,9 +423,11 @@ export default function ProductDetailPage() {
           </button>
           
           <div className="max-w-7xl max-h-full flex items-center justify-center">
-            <img
+            <Image
               src={product.image || getDefaultImage(product.name, product.category.name)}
               alt={product.name}
+              width={1920}
+              height={1080}
               className="max-w-full max-h-[90vh] object-contain"
               onClick={(e) => e.stopPropagation()}
               onError={(e) => {

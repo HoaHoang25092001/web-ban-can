@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import RichContentDisplay from '@/components/RichContentDisplay';
+import ProductCategorySidebar from '@/components/ProductCategorySidebar';
 
 interface NewsItem {
   id: number;
@@ -107,7 +108,7 @@ export default function NewsDetailPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Breadcrumb */}
       <div className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex" aria-label="Breadcrumb">
             <ol className="inline-flex items-center space-x-1 md:space-x-3">
               <li className="inline-flex items-center">
@@ -137,9 +138,15 @@ export default function NewsDetailPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      {/* Main Content with Sidebar Layout */}
+      <div className="flex gap-6 px-4 lg:px-6 py-6">
+        {/* Fixed Sidebar - Categories */}
+        <ProductCategorySidebar />
+        
+        {/* Main Content Area */}
+        <div className="flex-1 w-full min-w-0">
+          <article className="max-w-4xl mx-auto py-6">
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           {/* Header */}
           <div className="px-8 pt-8 pb-6">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
@@ -214,7 +221,7 @@ export default function NewsDetailPage() {
 
       {/* Related News */}
       {relatedNews.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <section className="py-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
             Tin tức liên quan
           </h2>
@@ -259,6 +266,8 @@ export default function NewsDetailPage() {
           </div>
         </section>
       )}
+        </div>
+      </div>
     </div>
   );
 }

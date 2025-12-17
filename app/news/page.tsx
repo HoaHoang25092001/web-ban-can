@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import ProductCategorySidebar from '@/components/ProductCategorySidebar';
 
 interface NewsItem {
   id: number;
@@ -119,8 +120,13 @@ export default function NewsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {loading ? (
+      <div className="flex gap-6 px-4 lg:px-6 py-12">
+        {/* Sidebar */}
+        <ProductCategorySidebar />
+
+        {/* Content */}
+        <div className="flex-1 w-full min-w-0">
+            {loading ? (
           // Loading state
           <div className="flex justify-center items-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -259,7 +265,8 @@ export default function NewsPage() {
               Hiển thị {news.length} trên tổng số {pagination.total} bài viết
             </div>
           </>
-        )}
+            )}
+        </div>
       </div>
     </div>
   );
