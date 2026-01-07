@@ -21,19 +21,6 @@ export default function Home() {
         
         {/* Main Content Area */}
         <div className="flex-1 w-full min-w-0">
-          {/* Search Section */}
-          <section className="py-8 bg-gray-50 rounded-lg mb-6">
-            <div className="px-6 lg:px-8">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">Tìm kiếm sản phẩm</h2>
-                <p className="text-lg text-gray-600">
-                  Nhập tên sản phẩm bạn muốn tìm
-                </p>
-              </div>
-              <SearchProduct />
-            </div>
-          </section>
-
           {/* Featured Products */}
           <div className="mb-6">
             <FeaturedProductsDB />

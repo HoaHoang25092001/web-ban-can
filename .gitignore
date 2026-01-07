@@ -46,3 +46,6 @@ next-env.d.ts
 
 # Generated
 /app/generated/prisma
+
+# VS Code History
+.history/
