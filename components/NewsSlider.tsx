@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { Calendar, Clock, ArrowRight, ChevronLeft, ChevronRight, BookOpen, Newspaper } from 'lucide-react';
 
 interface News {
   id: number;
@@ -14,78 +15,148 @@ interface News {
   updatedAt: string;
 }
 
-export default function NewsSlider() {
-  const [news, setNews] = useState<News[]>([]);
-  const [loading, setLoading] = useState(true);
+interface NewsSliderProps {
+  initialNews?: News[];
+}
+
+export default function NewsSlider({ initialNews }: NewsSliderProps) {
+  const [news, setNews] = useState<News[]>(initialNews || []);
+  const [loading, setLoading] = useState(!initialNews);
   const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const isPausedRef = useRef(false);
 
   useEffect(() => {
+    if (initialNews) return;
+    
+    let cancelled = false;
+
     const fetchNews = async () => {
       try {
         const response = await fetch('/api/news?published=true&limit=6');
         if (!response.ok) {
-          throw new Error('Failed to fetch news');
+          if (!cancelled) {
+            setError('Không thể tải tin tức');
+            setLoading(false);
+          }
+          return;
         }
         const data = await response.json();
-        setNews(data.news || []);
-      } catch (error) {
-        console.error('Error fetching news:', error);
-        setError('Không thể tải tin tức');
+        if (!cancelled) {
+          setNews(data.news || []);
+        }
+      } catch (err) {
+        console.error('Error fetching news:', err);
+        if (!cancelled) setError('Không thể tải tin tức');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchNews();
-  }, []);
 
-  // Auto slide effect
+    return () => { cancelled = true; };
+  }, [initialNews]);
+
+  // Cuộn mượt đến slide chỉ định
+  const scrollToSlide = (index: number) => {
+    if (sliderRef.current) {
+      const container = sliderRef.current;
+      const card = container.querySelector('.snap-start');
+      if (card) {
+        const cardWidth = card.getBoundingClientRect().width;
+        const gap = 24; // gap-6 trong Tailwind là 24px
+        container.scrollTo({
+          left: index * (cardWidth + gap),
+          behavior: 'smooth'
+        });
+        setCurrentSlide(index);
+      }
+    }
+  };
+
+  // Auto slide hiệu ứng
   useEffect(() => {
     if (news.length === 0) return;
 
     const slideInterval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % news.length);
-    }, 4000); // Chuyển slide mỗi 4 giây
+      if (!isPausedRef.current) {
+        setCurrentSlide(prev => {
+          const nextIndex = (prev + 1) % news.length;
+          scrollToSlide(nextIndex);
+          return nextIndex;
+        });
+      }
+    }, 5000); // Chuyển slide mỗi 5 giây
 
     return () => clearInterval(slideInterval);
   }, [news.length]);
 
-  // Smooth scroll to current slide
-  useEffect(() => {
+  // Lắng nghe hành vi cuộn tự nhiên (swipe trên mobile hoặc scroll chuột) để cập nhật Dot tương ứng
+  const handleScroll = () => {
     if (sliderRef.current) {
-      const slideWidth = sliderRef.current.scrollWidth / news.length;
-      sliderRef.current.scrollTo({
-        left: slideWidth * currentSlide,
-        behavior: 'smooth'
-      });
+      const container = sliderRef.current;
+      const scrollLeft = container.scrollLeft;
+      const card = container.querySelector('.snap-start');
+      if (card) {
+        const cardWidth = card.getBoundingClientRect().width;
+        const gap = 24;
+        const index = Math.round(scrollLeft / (cardWidth + gap));
+        if (index >= 0 && index < news.length && index !== currentSlide) {
+          setCurrentSlide(index);
+        }
+      }
     }
-  }, [currentSlide, news.length]);
+  };
+
+  const handlePrev = () => {
+    const nextIndex = currentSlide === 0 ? news.length - 1 : currentSlide - 1;
+    scrollToSlide(nextIndex);
+  };
+
+  const handleNext = () => {
+    const nextIndex = (currentSlide + 1) % news.length;
+    scrollToSlide(nextIndex);
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN', {
       year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      month: '2-digit',
+      day: '2-digit'
     });
   };
 
   const truncateText = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
-    return text.substr(0, maxLength) + '...';
+    return text.substring(0, maxLength) + '...';
+  };
+
+  const estimateReadTime = (content: string) => {
+    return Math.max(1, Math.ceil(content.replace(/<[^>]+>/g, '').length / 1000));
+  };
+
+  // Hàm tự động phân tích category dựa trên tiêu đề bài viết
+  const getCategoryTag = (title: string) => {
+    const lowercaseTitle = title.toLowerCase();
+    if (lowercaseTitle.includes('hướng dẫn') || lowercaseTitle.includes('cách') || lowercaseTitle.includes('sử dụng')) {
+      return 'Cẩm nang';
+    }
+    if (lowercaseTitle.includes('công nghệ') || lowercaseTitle.includes('kỹ thuật') || lowercaseTitle.includes('tiêu chuẩn')) {
+      return 'Kỹ thuật';
+    }
+    return 'Tin tức';
   };
 
   if (loading) {
     return (
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gradient-to-b from-slate-50/50 to-white rounded-3xl border border-slate-100/80 shadow-sm relative overflow-hidden">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
-            Tin Tức Mới Nhất
-          </h2>
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
+            <p className="text-slate-500 text-sm font-medium animate-pulse">Đang tải tin tức mới nhất...</p>
           </div>
         </div>
       </section>
@@ -94,13 +165,11 @@ export default function NewsSlider() {
 
   if (error || news.length === 0) {
     return (
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gradient-to-b from-slate-50/50 to-white rounded-3xl border border-slate-100/80 shadow-sm relative overflow-hidden">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
-            Tin Tức Mới Nhất
-          </h2>
-          <div className="text-center text-gray-600">
-            {error || 'Chưa có tin tức nào được đăng tải.'}
+          <div className="text-center py-16 text-slate-500">
+            <Newspaper className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+            <p className="font-medium">{error || 'Chưa có tin tức nào được đăng tải.'}</p>
           </div>
         </div>
       </section>
@@ -108,22 +177,48 @@ export default function NewsSlider() {
   }
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section 
+      className="py-12 bg-gradient-to-b from-slate-50/50 to-white rounded-3xl border border-slate-100/80 shadow-sm relative overflow-hidden"
+      onMouseEnter={() => { isPausedRef.current = true; }}
+      onMouseLeave={() => { isPausedRef.current = false; }}
+    >
+      {/* Các hình tròn màu mờ trang trí phía sau (Subtle glow) */}
+      <div className="absolute top-0 right-0 w-80 h-80 bg-blue-50/40 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-50/40 rounded-full blur-3xl pointer-events-none -z-10" />
+
       <div className="w-full">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Tin Tức Mới Nhất
-          </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto">
-            Cập nhật những thông tin mới nhất về sản phẩm và ngành hàng
-          </p>
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 px-6 sm:px-8 gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-600 text-xs font-bold px-3 py-1 rounded-full mb-3 uppercase tracking-wider">
+              <BookOpen className="w-3.5 h-3.5" />
+              Góc chia sẻ & tin tức
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight leading-tight">
+              Tin Tức Mới Nhất
+            </h2>
+            <p className="text-sm sm:text-base text-slate-500 mt-2 max-w-2xl leading-relaxed">
+              Cập nhật kiến thức đo lường, cẩm nang sử dụng cân điện tử và các tin tức sự kiện mới nhất từ chúng tôi.
+            </p>
+          </div>
+          <div className="hidden md:block">
+            <Link
+              href="/news"
+              className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 text-sm font-bold rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
+            >
+              Xem tất cả tin tức
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
         </div>
 
-        <div className="relative">
-          {/* Slider Container */}
+        {/* Slider Wrapper */}
+        <div className="relative group/slider px-4 sm:px-6">
+          {/* Slider Container (CSS Snap) */}
           <div 
             ref={sliderRef}
-            className="flex overflow-x-hidden scroll-smooth gap-4 md:gap-6"
+            onScroll={handleScroll}
+            className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory gap-6 pb-6 scrollbar-none"
             style={{ 
               scrollbarWidth: 'none',
               msOverflowStyle: 'none'
@@ -132,141 +227,118 @@ export default function NewsSlider() {
             {news.map((newsItem) => (
               <div
                 key={newsItem.id}
-                className="flex-shrink-0 w-72 sm:w-80 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
+                className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[350px] snap-start bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col group overflow-hidden"
               >
                 {/* News Image */}
-                <div className="h-40 sm:h-48 bg-gray-200 rounded-t-lg overflow-hidden">
+                <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden flex-shrink-0">
                   {newsItem.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={newsItem.image}
                       alt={newsItem.title}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200">
-                      <svg
-                        className="w-16 h-16 text-blue-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                        />
-                      </svg>
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                      <Newspaper className="w-12 h-12 text-white/30" />
                     </div>
                   )}
+                  {/* Category Pill Tag */}
+                  <div className="absolute top-4 left-4">
+                    <span className="inline-flex items-center gap-1 bg-white/90 backdrop-blur-md text-slate-800 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+                      {getCategoryTag(newsItem.title)}
+                    </span>
+                  </div>
                 </div>
 
-                {/* News Content */}
-                <div className="p-4 sm:p-6">
-                  <div className="text-sm text-blue-600 font-medium mb-2">
-                    {formatDate(newsItem.createdAt)}
+                {/* News Content Body */}
+                <div className="p-5 flex flex-col flex-1">
+                  {/* Meta Data */}
+                  <div className="flex items-center gap-3 text-[11px] text-slate-400 font-semibold mb-3">
+                    <span className="inline-flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                      {formatDate(newsItem.createdAt)}
+                    </span>
+                    <span>·</span>
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                      {estimateReadTime(newsItem.content)} phút đọc
+                    </span>
                   </div>
                   
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 leading-tight">
-                    {truncateText(newsItem.title, 60)}
-                  </h3>
+                  {/* Title */}
+                  <Link href={`/news/${newsItem.id}`}>
+                    <h3 className="text-base font-extrabold text-slate-800 leading-snug line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
+                      {newsItem.title}
+                    </h3>
+                  </Link>
                   
-                  <p className="text-sm sm:text-base text-gray-600 mb-4 leading-relaxed">
+                  {/* Excerpt */}
+                  <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 mb-4 flex-grow">
                     {newsItem.excerpt 
                       ? truncateText(newsItem.excerpt, 100)
                       : truncateText(newsItem.content.replace(/<[^>]*>/g, ''), 100)
                     }
                   </p>
                   
-                  <Link
-                    href={`/news/${newsItem.id}`}
-                    className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
-                  >
-                    Đọc thêm
-                    <svg
-                      className="w-4 h-4 ml-1 transition-transform duration-200 group-hover:translate-x-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  {/* Action link */}
+                  <div className="mt-auto pt-2">
+                    <Link
+                      href={`/news/${newsItem.id}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors group/link"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </Link>
+                      Đọc chi tiết
+                      <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform duration-300" />
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Slide Indicators */}
-          <div className="flex justify-center mt-8 space-x-2">
-            {news.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`w-3 h-3 rounded-full transition-colors duration-200 ${
-                  currentSlide === index ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'
-                }`}
-                aria-label={`Slide ${index + 1}`}
-              />
-            ))}
-          </div>
-
           {/* Navigation Arrows */}
           <button
-            onClick={() => setCurrentSlide(prev => prev === 0 ? news.length - 1 : prev - 1)}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 sm:-translate-x-4 bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-shadow duration-200 text-gray-600 hover:text-blue-600"
+            onClick={handlePrev}
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 bg-white/90 hover:bg-blue-600 hover:text-white backdrop-blur-md rounded-full p-2.5 shadow-md border border-slate-200/50 transition-all duration-300 text-slate-600 hover:scale-105 z-10 opacity-0 group-hover/slider:opacity-100 cursor-pointer"
             aria-label="Previous slide"
           >
-            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
 
           <button
-            onClick={() => setCurrentSlide(prev => (prev + 1) % news.length)}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 sm:translate-x-4 bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-shadow duration-200 text-gray-600 hover:text-blue-600"
+            onClick={handleNext}
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 bg-white/90 hover:bg-blue-600 hover:text-white backdrop-blur-md rounded-full p-2.5 shadow-md border border-slate-200/50 transition-all duration-300 text-slate-600 hover:scale-105 z-10 opacity-0 group-hover/slider:opacity-100 cursor-pointer"
             aria-label="Next slide"
           >
-            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
-        {/* View All News Link */}
-        <div className="text-center mt-8 sm:mt-12">
+        {/* Slide Indicators / Dots */}
+        <div className="flex justify-center mt-6 space-x-2">
+          {news.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => scrollToSlide(index)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                currentSlide === index ? 'w-6 bg-blue-600' : 'w-2 bg-slate-200 hover:bg-slate-300'
+              }`}
+              aria-label={`Slide ${index + 1}`}
+            />
+          ))}
+        </div>
+
+        {/* Mobile View All Link */}
+        <div className="text-center mt-8 md:hidden px-6">
           <Link
             href="/news"
-            className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm sm:text-base"
+            className="inline-flex items-center justify-center w-full px-5 py-2.5 bg-slate-50 border border-slate-200 text-slate-600 font-bold rounded-xl text-sm transition-all"
           >
-            Xem Tất Cả Tin Tức
-            <svg
-              className="w-5 h-5 ml-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 7l5 5m0 0l-5 5m5-5H6"
-              />
-            </svg>
+            Xem tất cả tin tức
+            <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
         </div>
       </div>
-
-      <style jsx>{`
-        .flex::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </section>
   );
 }

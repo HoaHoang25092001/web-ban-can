@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [products, total] = await Promise.all([
+    const [products, total, allProductsStats] = await Promise.all([
       prisma.product.findMany({
         where,
         include: {
@@ -50,7 +50,17 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
       }),
       prisma.product.count({ where }),
+      prisma.product.findMany({
+        select: {
+          featured: true,
+          images: true,
+        },
+      }),
     ]);
+
+    const totalProductsCount = allProductsStats.length;
+    const totalFeatured = allProductsStats.filter(p => p.featured).length;
+    const totalMultiImage = allProductsStats.filter(p => p.images && p.images.length > 1).length;
 
     return NextResponse.json({
       products,
@@ -59,6 +69,11 @@ export async function GET(request: NextRequest) {
         limit,
         total,
         pages: Math.ceil(total / limit),
+      },
+      stats: {
+        totalProducts: totalProductsCount,
+        featuredProducts: totalFeatured,
+        multiImageProducts: totalMultiImage,
       },
     });
   } catch (error: any) {
@@ -82,12 +97,16 @@ export async function POST(request: NextRequest) {
       accuracy, 
       price, 
       image, 
+      images,
       featured,
       dialSize,
       scaleSize,
       manufacturer,
       origin
     } = body;
+
+    // Nếu images được cung cấp, dùng ảnh đầu tiên làm image chính
+    const primaryImage = image || (images && images.length > 0 ? images[0] : null);
 
     const product = await prisma.product.create({
       data: {
@@ -97,7 +116,8 @@ export async function POST(request: NextRequest) {
         capacity,
         accuracy,
         price,
-        image,
+        image: primaryImage,
+        images: images || [],
         featured: featured || false,
         dialSize,
         scaleSize,

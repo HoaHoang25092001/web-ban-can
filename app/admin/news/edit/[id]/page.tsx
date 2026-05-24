@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button, Input, Textarea } from '@/components/admin/FormComponents';
 import TiptapEditor from '@/components/admin/TiptapEditor';
 import ImageUpload from '@/components/admin/ImageUpload';
 import { useToast } from '@/components/Toast';
-import { ArrowLeft } from 'lucide-react';
+import {
+  ArrowLeft, FileText, Image as ImageIcon,
+  Eye, EyeOff, Send, Save, Loader2
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function EditNewsPage() {
@@ -15,9 +18,10 @@ export default function EditNewsPage() {
   const params = useParams();
   const newsId = params.id as string;
   const toast = useToast();
-  
+
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
+  const [publishMode, setPublishMode] = useState<'draft' | 'publish' | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -27,9 +31,7 @@ export default function EditNewsPage() {
   });
 
   useEffect(() => {
-    if (newsId) {
-      fetchNews();
-    }
+    if (newsId) fetchNews();
   }, [newsId]);
 
   const fetchNews = async () => {
@@ -45,55 +47,56 @@ export default function EditNewsPage() {
           published: data.published || false,
         });
       } else {
-        toast.error('Không tìm thấy', 'Tin tức không tồn tại');
+        toast.error('Không tìm thấy', 'Bài viết không tồn tại');
         router.push('/admin/news');
       }
-    } catch (error) {
-      console.error('Error fetching news:', error);
+    } catch {
       toast.error('Có lỗi xảy ra', 'Không thể tải dữ liệu tin tức');
     } finally {
       setFetchLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent, publish?: boolean) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleSubmit = async (published: boolean) => {
+    if (!formData.title.trim()) {
+      toast.error('Thiếu tiêu đề', 'Vui lòng nhập tiêu đề bài viết');
+      return;
+    }
 
-    const submitData = { 
-      ...formData, 
-      published: publish !== undefined ? publish : formData.published 
-    };
+    setPublishMode(published ? 'publish' : 'draft');
+    setLoading(true);
 
     try {
       const response = await fetch(`/api/news/${newsId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submitData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, published }),
       });
 
       if (response.ok) {
-        toast.success('Cập nhật thành công!', 'Tin tức đã được cập nhật');
+        toast.success(
+          published ? 'Đã cập nhật & xuất bản!' : 'Đã lưu nháp!',
+          published ? 'Bài viết hiện đang hiển thị trên website' : 'Bài viết đã được lưu nháp'
+        );
         router.push('/admin/news');
       } else {
         const error = await response.json();
         toast.error('Có lỗi xảy ra', error.error || 'Không thể cập nhật tin tức');
       }
-    } catch (error) {
-      console.error('Error updating news:', error);
+    } catch {
       toast.error('Có lỗi xảy ra', 'Không thể kết nối đến server');
     } finally {
       setLoading(false);
+      setPublishMode(null);
     }
   };
 
   if (fetchLoading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-gray-600">Đang tải...</div>
+        <div className="flex items-center justify-center min-h-[60vh] flex-col gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-gray-500 text-sm">Đang tải dữ liệu bài viết...</p>
         </div>
       </AdminLayout>
     );
@@ -101,86 +104,199 @@ export default function EditNewsPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
+      <div className="space-y-6 max-w-5xl">
+        {/* Header */}
+        <div className="flex items-center gap-4">
           <Link href="/admin/news">
-            <button className="text-gray-600 hover:text-gray-900">
+            <button className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all">
               <ArrowLeft className="h-5 w-5" />
             </button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Chỉnh sửa tin tức</h1>
-            <p className="text-gray-600">Cập nhật nội dung tin tức</p>
+            <h1 className="text-2xl font-bold text-gray-900">Chỉnh sửa bài viết</h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              ID: <span className="font-mono text-blue-600">#{newsId}</span> ·{' '}
+              <span className={`font-medium ${formData.published ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {formData.published ? 'Đã xuất bản' : 'Bản nháp'}
+              </span>
+            </p>
           </div>
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              label="Tiêu đề"
-              value={formData.title}
-              onChange={(value) => setFormData({ ...formData, title: value })}
-              placeholder="Nhập tiêu đề tin tức"
-              required
-            />
-
-            <Textarea
-              label="Tóm tắt"
-              value={formData.excerpt}
-              onChange={(value) => setFormData({ ...formData, excerpt: value })}
-              placeholder="Nhập tóm tắt ngắn gọn về tin tức"
-              rows={3}
-            />
-
-            <TiptapEditor
-              label="Nội dung"
-              value={formData.content}
-              onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
-              placeholder="Nhập nội dung chi tiết của tin tức"
-              height={500}
-              required
-            />
-
-            <ImageUpload
-              label="Hình ảnh tin tức"
-              value={formData.image}
-              onChange={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
-            />
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="published"
-                checked={formData.published}
-                onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+        <div className="space-y-6">
+          {/* Section 1: Nội dung */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <FileText className="h-4 w-4 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900">Nội dung bài viết</h2>
+                <p className="text-xs text-gray-500">Tiêu đề, tóm tắt và nội dung chi tiết</p>
+              </div>
+            </div>
+            <div className="p-6 space-y-5">
+              <Input
+                label="Tiêu đề bài viết"
+                value={formData.title}
+                onChange={(value) => setFormData({ ...formData, title: value })}
+                placeholder="Nhập tiêu đề hấp dẫn cho bài viết"
+                required
               />
-              <label htmlFor="published" className="ml-2 block text-sm text-gray-900">
-                Xuất bản ngay lập tức
-              </label>
-            </div>
 
-            <div className="flex justify-end space-x-4">
-              <Link href="/admin/news">
-                <Button variant="secondary">Hủy</Button>
-              </Link>
-              <Button 
-                type="button" 
-                disabled={loading}
-                onClick={() => handleSubmit(new Event('submit') as any, false)}
+              <Textarea
+                label="Tóm tắt"
+                value={formData.excerpt}
+                onChange={(value) => setFormData({ ...formData, excerpt: value })}
+                placeholder="Mô tả ngắn gọn (hiển thị trong danh sách bài viết)"
+                rows={3}
+              />
+
+              <TiptapEditor
+                label="Nội dung chi tiết"
+                value={formData.content}
+                onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+                placeholder="Nhập nội dung chi tiết của tin tức..."
+                height={480}
+              />
+            </div>
+          </div>
+
+          {/* Section 2: Hình ảnh bìa */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <ImageIcon className="h-4 w-4 text-purple-600" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900">Hình ảnh bìa</h2>
+                <p className="text-xs text-gray-500">Ảnh hiển thị đại diện cho bài viết</p>
+              </div>
+            </div>
+            <div className="p-6">
+              <ImageUpload
+                label="Tải lên hình ảnh bìa"
+                value={formData.image}
+                onChange={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
+              />
+            </div>
+          </div>
+
+          {/* Section 3: Trạng thái */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+              <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <Eye className="h-4 w-4 text-emerald-600" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900">Trạng thái xuất bản</h2>
+                <p className="text-xs text-gray-500">Kiểm soát trạng thái hiển thị bài viết</p>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Draft */}
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, published: false }))}
+                  className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+                    !formData.published
+                      ? 'border-amber-400 bg-amber-50'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    !formData.published ? 'bg-amber-200' : 'bg-gray-100'
+                  }`}>
+                    <EyeOff className={`h-5 w-5 ${!formData.published ? 'text-amber-700' : 'text-gray-400'}`} />
+                  </div>
+                  <div>
+                    <div className={`text-sm font-semibold ${!formData.published ? 'text-amber-800' : 'text-gray-700'}`}>
+                      Lưu nháp
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">Chỉ admin mới thấy</div>
+                  </div>
+                  {!formData.published && (
+                    <div className="ml-auto w-4 h-4 bg-amber-400 rounded-full flex-shrink-0" />
+                  )}
+                </button>
+
+                {/* Published */}
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, published: true }))}
+                  className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+                    formData.published
+                      ? 'border-emerald-400 bg-emerald-50'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    formData.published ? 'bg-emerald-200' : 'bg-gray-100'
+                  }`}>
+                    <Eye className={`h-5 w-5 ${formData.published ? 'text-emerald-700' : 'text-gray-400'}`} />
+                  </div>
+                  <div>
+                    <div className={`text-sm font-semibold ${formData.published ? 'text-emerald-800' : 'text-gray-700'}`}>
+                      Xuất bản
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">Hiển thị trên website</div>
+                  </div>
+                  {formData.published && (
+                    <div className="ml-auto w-4 h-4 bg-emerald-400 rounded-full flex-shrink-0" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-between pt-2 pb-6">
+            <Link href="/admin/news">
+              <Button variant="secondary">Hủy bỏ</Button>
+            </Link>
+            <div className="flex gap-3">
+              <Button
                 variant="secondary"
-              >
-                {loading ? 'Đang lưu...' : 'Lưu nháp'}
-              </Button>
-              <Button 
-                type="button" 
                 disabled={loading}
-                onClick={() => handleSubmit(new Event('submit') as any, true)}
+                onClick={() => handleSubmit(false)}
               >
-                {loading ? 'Đang cập nhật...' : 'Cập nhật & Xuất bản'}
+                {loading && publishMode === 'draft' ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Đang lưu...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Save className="h-4 w-4" />
+                    Lưu nháp
+                  </span>
+                )}
+              </Button>
+              <Button
+                disabled={loading}
+                onClick={() => handleSubmit(true)}
+              >
+                {loading && publishMode === 'publish' ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Đang cập nhật...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Send className="h-4 w-4" />
+                    Cập nhật & Xuất bản
+                  </span>
+                )}
               </Button>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </AdminLayout>

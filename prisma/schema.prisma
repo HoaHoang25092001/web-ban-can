@@ -30,6 +30,7 @@ model Product {
   accuracy     String?
   price        String?
   image        String?
+  images       String[] @default([]) // Gallery ảnh sản phẩm (nhiều ảnh)
   featured     Boolean  @default(false)
   dialSize     String?  // Kích thước dia
   scaleSize    String?  // Kích thước cân
@@ -77,4 +78,16 @@ model Admin {
   updatedAt DateTime @updatedAt
 
   @@map("admins")
+}
+
+model Review {
+  id           Int      @id @default(autoincrement())
+  reviewerName String
+  content      String
+  rating       Int      @default(5) // 1-5 sao
+  isVisible    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("reviews")
 }

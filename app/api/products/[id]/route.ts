@@ -49,13 +49,17 @@ export async function PUT(
       capacity, 
       accuracy, 
       price, 
-      image, 
+      image,
+      images,
       featured,
       dialSize,
       scaleSize,
       manufacturer,
       origin
     } = body;
+
+    // Tự động set image chính từ images nếu image trống
+    const primaryImage = image || (images && images.length > 0 ? images[0] : undefined);
 
     const product = await prisma.product.update({
       where: { id },
@@ -66,7 +70,8 @@ export async function PUT(
         capacity,
         accuracy,
         price,
-        image,
+        image: primaryImage,
+        images: images !== undefined ? images : undefined,
         featured,
         dialSize,
         scaleSize,

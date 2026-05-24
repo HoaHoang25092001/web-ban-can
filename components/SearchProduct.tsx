@@ -3,7 +3,12 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function SearchProduct() {
+interface SearchProductProps {
+  /** Compact mode: no suggestions, smaller padding – dùng trong Header */
+  compact?: boolean;
+}
+
+export default function SearchProduct({ compact = false }: SearchProductProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
@@ -13,6 +18,28 @@ export default function SearchProduct() {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
+
+  if (compact) {
+    return (
+      <form onSubmit={handleSearch} className="flex items-center w-full">
+        <div className="flex w-full border-2 border-gray-300 rounded-lg overflow-hidden focus-within:border-blue-500 transition-colors">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Tìm kiếm sản phẩm..."
+            className="flex-1 px-3 py-1.5 text-sm text-gray-800 outline-none bg-white"
+          />
+          <button
+            type="submit"
+            className="px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center"
+          >
+            <i className="ri-search-line text-base"></i>
+          </button>
+        </div>
+      </form>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto mb-12">
@@ -37,7 +64,7 @@ export default function SearchProduct() {
           </button>
         </div>
       </form>
-      
+
       {/* Quick search suggestions */}
       <div className="mt-4 flex flex-wrap gap-2">
         <span className="text-sm text-gray-600">Gợi ý:</span>

@@ -1,91 +1,45 @@
-'use client';
-
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
+import { Metadata } from 'next';
 
-interface Product {
-  id: number;
-  name: string;
-  category: {
-    id: number;
-    name: string;
-  };
-  capacity: string;
-  accuracy: string;
-  price: string;
-  image: string;
-  featured?: boolean;
+export const dynamic = 'force-dynamic';
+
+interface SearchPageProps {
+  searchParams: Promise<{
+    q?: string;
+    page?: string;
+  }>;
 }
 
-interface Pagination {
-  page: number;
-  limit: number;
-  total: number;
-  pages: number;
-}
+export const metadata: Metadata = {
+  title: 'Tìm Kiếm Sản Phẩm - Vạn Thịnh Phát',
+  description: 'Tìm kiếm nhanh các thiết bị cân điện tử chính hãng từ thương hiệu uy tín chất lượng cao.',
+};
 
-function SearchResults() {
-  const searchParams = useSearchParams();
-  const query = searchParams.get('q') || '';
-  const [products, setProducts] = useState<Product[]>([]);
-  const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const query = resolvedSearchParams.q || '';
+  const currentPage = parseInt(resolvedSearchParams.page || '1');
+  const limit = 12;
+  const skip = (currentPage - 1) * limit;
 
-  useEffect(() => {
-    const fetchSearchResults = async () => {
-      if (!query.trim()) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await fetch(
-          `/api/products?search=${encodeURIComponent(query)}&page=${currentPage}&limit=12`
-        );
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch search results');
-        }
-
-        const data = await response.json();
-        setProducts(data.products || []);
-        setPagination(data.pagination);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSearchResults();
-  }, [query, currentPage]);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
+  // Nếu không có từ khóa, hiển thị trang tìm kiếm trống
   if (!query.trim()) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-24">
+      <div className="min-h-screen bg-gray-50 pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <i className="ri-search-line text-6xl text-gray-400 mb-4"></i>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          <div className="text-center bg-white p-12 rounded-2xl border shadow-sm max-w-xl mx-auto">
+            <i className="ri-search-line text-6xl text-slate-300 mb-4 block"></i>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Tìm kiếm sản phẩm
             </h1>
-            <p className="text-gray-600 mb-8">
-              Vui lòng nhập từ khóa tìm kiếm để bắt đầu
+            <p className="text-gray-550 text-slate-500 mb-8">
+              Vui lòng nhập từ khóa tìm kiếm trên thanh tìm kiếm để bắt đầu tìm sản phẩm.
             </p>
             <Link
               href="/"
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md transition-all active:scale-95"
             >
               <i className="ri-home-line mr-2"></i>
               Về trang chủ
@@ -96,150 +50,167 @@ function SearchResults() {
     );
   }
 
+  // Cấu hình điều kiện tìm kiếm bằng Prisma
+  const where: any = {
+    OR: [
+      {
+        name: {
+          contains: query.trim(),
+          mode: 'insensitive',
+        },
+      },
+      {
+        description: {
+          contains: query.trim(),
+          mode: 'insensitive',
+        },
+      },
+    ],
+  };
+
+  // Thực hiện song song truy vấn lấy sản phẩm và tổng đếm từ DB trên Server
+  const [productsRaw, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      include: {
+        category: true,
+      },
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.product.count({ where }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  // Chuẩn hóa dữ liệu sang client-safe format
+  const products = productsRaw.map(p => ({
+    ...p,
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+    category: {
+      id: p.category.id,
+      name: p.category.name,
+    },
+    capacity: p.capacity ?? '',
+    accuracy: p.accuracy ?? '',
+    price: p.price ?? '',
+    image: p.image ?? '',
+  }));
+
   return (
-    <div className="min-h-screen bg-gray-50 pt-24">
+    <div className="min-h-screen bg-gray-50 pt-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Search Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-2">
             Kết quả tìm kiếm
           </h1>
-          <p className="text-gray-600">
-            Từ khóa: <span className="font-semibold text-gray-900">&quot;{query}&quot;</span>
+          <p className="text-gray-650 text-slate-500 font-medium text-sm">
+            Từ khóa: <span className="font-extrabold text-blue-600">&quot;{query}&quot;</span>
           </p>
-          {pagination && (
-            <p className="text-gray-600 mt-2">
-              Tìm thấy <span className="font-semibold text-blue-600">{pagination.total}</span> sản phẩm
-            </p>
-          )}
+          <p className="text-xs text-slate-500 font-bold bg-blue-50 border border-blue-100 rounded-full px-3 py-1 inline-block mt-3 uppercase tracking-wider">
+            Tìm thấy <span className="text-blue-700">{total}</span> sản phẩm phù hợp
+          </p>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-            <p className="text-gray-600">Đang tìm kiếm...</p>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <i className="ri-error-warning-line text-4xl text-red-500 mb-4"></i>
-            <p className="text-red-700 mb-4">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Thử lại
-            </button>
-          </div>
-        )}
-
         {/* No Results */}
-        {!loading && !error && products.length === 0 && (
-          <div className="text-center py-20">
-            <i className="ri-search-line text-6xl text-gray-400 mb-4"></i>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        {products.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-2xl border shadow-sm max-w-xl mx-auto">
+            <i className="ri-search-line text-6xl text-gray-300 mb-4 block"></i>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
               Không tìm thấy sản phẩm
             </h2>
-            <p className="text-gray-600 mb-8">
-              Không có sản phẩm nào phù hợp với từ khóa &quot;{query}&quot;
+            <p className="text-gray-500 mb-8 max-w-xs mx-auto">
+              Không có sản phẩm nào phù hợp với từ khóa &quot;{query}&quot;. Vui lòng thử lại với từ khóa khác.
             </p>
-            <div className="space-y-4">
-              <p className="text-gray-600">Gợi ý:</p>
-              <ul className="text-gray-600 space-y-2">
-                <li>• Kiểm tra lại chính tả của từ khóa</li>
-                <li>• Thử sử dụng từ khóa khác hoặc ngắn gọn hơn</li>
-                <li>• Sử dụng các từ khóa chung hơn</li>
+            <div className="space-y-3 bg-slate-50 p-5 rounded-xl text-left border text-sm text-slate-650 max-w-sm mx-auto">
+              <p className="font-bold text-slate-700">Gợi ý tìm kiếm:</p>
+              <ul className="space-y-1.5 text-xs text-slate-500 font-medium">
+                <li>• Kiểm tra kỹ chính tả từ khóa.</li>
+                <li>• Sử dụng các từ khóa ngắn gọn, thông dụng (VD: &quot;cân bàn&quot;, &quot;tanita&quot;).</li>
+                <li>• Thử tìm kiếm theo hãng sản xuất hoặc danh mục.</li>
               </ul>
             </div>
             <Link
               href="/"
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors mt-8"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md transition-all active:scale-95 mt-8"
             >
               <i className="ri-home-line mr-2"></i>
               Về trang chủ
             </Link>
           </div>
-        )}
-
-        {/* Products Grid */}
-        {!loading && !error && products.length > 0 && (
+        ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+            {/* Products Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-12">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} showCategory={true} />
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
 
             {/* Pagination */}
-            {pagination && pagination.pages > 1 && (
-              <div className="flex justify-center items-center gap-2">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <i className="ri-arrow-left-line"></i>
-                </button>
-
-                {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`px-4 py-2 rounded-lg transition-colors ${
-                      currentPage === page
-                        ? 'bg-blue-600 text-white'
-                        : 'border border-gray-300 hover:bg-gray-50'
-                    }`}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                {currentPage === 1 ? (
+                  <span className="px-4 py-2 border rounded-lg text-slate-350 bg-slate-100/50 cursor-not-allowed select-none text-xs md:text-sm font-bold">
+                    <i className="ri-arrow-left-line"></i>
+                  </span>
+                ) : (
+                  <Link
+                    href={`/search?q=${encodeURIComponent(query)}&page=${currentPage - 1}`}
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-xs md:text-sm font-bold text-slate-700 bg-white"
                   >
-                    {page}
-                  </button>
+                    <i className="ri-arrow-left-line"></i>
+                  </Link>
+                )}
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <div key={page}>
+                    {currentPage === page ? (
+                      <span className="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs md:text-sm font-bold shadow-md select-none">
+                        {page}
+                      </span>
+                    ) : (
+                      <Link
+                        href={`/search?q=${encodeURIComponent(query)}&page=${page}`}
+                        className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-55 bg-white text-xs md:text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        {page}
+                      </Link>
+                    )}
+                  </div>
                 ))}
 
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === pagination.pages}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <i className="ri-arrow-right-line"></i>
-                </button>
+                {currentPage === totalPages ? (
+                  <span className="px-4 py-2 border rounded-lg text-slate-350 bg-slate-100/50 cursor-not-allowed select-none text-xs md:text-sm font-bold">
+                    <i className="ri-arrow-right-line"></i>
+                  </span>
+                ) : (
+                  <Link
+                    href={`/search?q=${encodeURIComponent(query)}&page=${currentPage + 1}`}
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-xs md:text-sm font-bold text-slate-700 bg-white"
+                  >
+                    <i className="ri-arrow-right-line"></i>
+                  </Link>
+                )}
               </div>
             )}
           </>
         )}
 
         {/* Back to Home */}
-        {!loading && (
-          <div className="text-center mt-12">
-            <Link
-              href="/"
-              className="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold"
-            >
-              <i className="ri-arrow-left-line mr-2"></i>
-              Quay lại trang chủ
-            </Link>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default function SearchPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 pt-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-            <p className="text-gray-600">Đang tải...</p>
-          </div>
+        <div className="text-center mt-16 border-t pt-8">
+          <Link
+            href="/"
+            className="inline-flex items-center text-sm font-extrabold text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            <i className="ri-arrow-left-line mr-2"></i>
+            Quay lại trang chủ
+          </Link>
         </div>
       </div>
-    }>
-      <SearchResults />
-    </Suspense>
+    </div>
   );
 }

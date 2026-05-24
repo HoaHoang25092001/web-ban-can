@@ -9,7 +9,8 @@ import {
   Tags, 
   Newspaper, 
   MessageSquare, 
-  LogOut 
+  LogOut,
+  Star
 } from 'lucide-react';
 
 const menuItems = [
@@ -17,6 +18,7 @@ const menuItems = [
   { href: '/admin/categories', label: 'Danh mục sản phẩm', icon: Tags },
   { href: '/admin/products', label: 'Sản phẩm', icon: Package },
   { href: '/admin/news', label: 'Tin tức', icon: Newspaper },
+  { href: '/admin/reviews', label: 'Đánh giá KH', icon: Star },
   { href: '/admin/contacts', label: 'Liên hệ', icon: MessageSquare },
 ];
 

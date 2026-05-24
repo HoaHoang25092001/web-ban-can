@@ -5,8 +5,14 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
+        // UploadThing CDN (UFS — UploadThing File Storage)
         protocol: 'https',
-        hostname: 'res.cloudinary.com',
+        hostname: 'utfs.io',
+      },
+      {
+        // UploadThing public files
+        protocol: 'https',
+        hostname: '*.ufs.sh',
       },
       {
         protocol: 'https',

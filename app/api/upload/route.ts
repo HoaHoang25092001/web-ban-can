@@ -1,62 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import { UTApi } from 'uploadthing/server';
+
+// Chỉ cho phép các định dạng ảnh
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_SIZE = 4 * 1024 * 1024; // 4MB
+
+export const runtime = 'nodejs';
+
+// Lazy init: UTApi sẽ throw nếu apiKey không hợp lệ khi module load trước khi env được đọc
+// Dùng getter để tạo instance chỉ khi cần thiết (env đã sẵn sàng)
+function getUTApi() {
+  const secret = process.env.UPLOADTHING_TOKEN || process.env.UPLOADTHING_SECRET;
+  if (!secret) {
+    throw new Error('UPLOADTHING_TOKEN hoặc UPLOADTHING_SECRET chưa được cấu hình trong .env');
+  }
+  return new UTApi({ token: secret });
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.formData();
-    const file: File | null = data.get('file') as unknown as File;
+    const formData = await request.formData();
+    const file = formData.get('file') as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+      return NextResponse.json({ error: 'Không có file được gửi lên' }, { status: 400 });
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
+    // Kiểm tra loại file
+    if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Invalid file type. Only JPEG, PNG, and WebP are allowed.' },
+        { error: 'Chỉ hỗ trợ: JPG, PNG, WebP, GIF' },
         { status: 400 }
       );
     }
 
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
+    // Kiểm tra kích thước
+    if (file.size > MAX_SIZE) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 5MB.' },
+        { error: 'File quá lớn, tối đa 4MB' },
         { status: 400 }
       );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // Upload lên UploadThing cloud via UTApi
+    const utapi = getUTApi();
+    const response = await utapi.uploadFiles(file);
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads');
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
+    if (response.error) {
+      console.error('UTApi error:', response.error);
+      return NextResponse.json(
+        { error: `Upload thất bại: ${response.error.message}` },
+        { status: 500 }
+      );
     }
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const fileExtension = file.name.split('.').pop();
-    const filename = `${timestamp}-${Math.random().toString(36).substring(2)}.${fileExtension}`;
-    const filepath = join(uploadsDir, filename);
+    const url = response.data?.url;
+    if (!url) {
+      return NextResponse.json({ error: 'Không nhận được URL từ UploadThing' }, { status: 500 });
+    }
 
-    // Write file
-    await writeFile(filepath, buffer);
-
-    // Return the public URL
-    const imageUrl = `/uploads/${filename}`;
-
-    return NextResponse.json({ imageUrl }, { status: 200 });
+    console.log('Upload thành công:', url);
+    return NextResponse.json({ url });
   } catch (error) {
-    console.error('Error uploading file:', error);
-    return NextResponse.json(
-      { error: 'Failed to upload file' },
-      { status: 500 }
-    );
+    console.error('Upload error:', error);
+    const message = error instanceof Error ? error.message : 'Lỗi không xác định';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

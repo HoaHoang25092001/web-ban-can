@@ -1,2 +1,2 @@
-import CloudinaryUpload from './CloudinaryUpload';
-export default CloudinaryUpload;
+import UploadThingUpload from './UploadThingUpload';
+export default UploadThingUpload;

@@ -1,25 +1,9 @@
-'use client';
-
-import { useState, useEffect, use } from 'react';
+import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
+import ProductCard from '../../../components/ProductCard';
+import { Metadata } from 'next';
 
-interface Product {
-  id: number;
-  name: string;
-  description: string | null;
-  capacity: string | null;
-  accuracy: string | null;
-  price: string | null;
-  image: string | null;
-  featured: boolean;
-}
-
-interface Category {
-  id: number;
-  name: string;
-  description: string | null;
-  icon: string | null;
-}
+export const dynamic = 'force-dynamic';
 
 interface CategoryPageProps {
   params: Promise<{
@@ -27,82 +11,38 @@ interface CategoryPageProps {
   }>;
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
-  const { id } = use(params);
-  const [category, setCategory] = useState<Category | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchCategoryAndProducts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Fetch category details
-        const categoryResponse = await fetch(`/api/categories/${id}`);
-        
-        if (!categoryResponse.ok) {
-          const errorText = await categoryResponse.text();
-          throw new Error(`Failed to fetch category: ${categoryResponse.status} - ${errorText}`);
-        }
-        
-        const categoryData = await categoryResponse.json();
-        setCategory(categoryData);
-
-        // Fetch products in this category
-        const productsResponse = await fetch(`/api/products?categoryId=${id}`);
-        
-        if (!productsResponse.ok) {
-          const errorText = await productsResponse.text();
-          throw new Error(`Failed to fetch products: ${productsResponse.status} - ${errorText}`);
-        }
-        
-        const productsData = await productsResponse.json();
-        setProducts(productsData.products || []);
-
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
-      }
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const category = await prisma.category.findUnique({
+      where: { id: parseInt(id) }
+    });
+    if (!category) return { title: 'Không tìm thấy danh mục - Vạn Thịnh Phát' };
+    return {
+      title: `${category.name} - Cân điện tử chất lượng cao`,
+      description: category.description || `Mua cân điện tử chính hãng thuộc danh mục ${category.name} uy tín, chính xác cao.`
     };
-
-    if (id) {
-      fetchCategoryAndProducts();
-    }
-  }, [id]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
-        </div>
-      </div>
-    );
+  } catch {
+    return { title: 'Danh mục sản phẩm - Vạn Thịnh Phát' };
   }
+}
 
-  if (error) {
+export default async function CategoryPage({ params }: CategoryPageProps) {
+  const { id } = await params;
+  const categoryId = parseInt(id);
+
+  if (isNaN(categoryId)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center bg-white p-8 rounded-2xl shadow-md border max-w-md">
           <div className="text-red-500 mb-4">
             <i className="ri-error-warning-line text-6xl"></i>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Lỗi khi tải danh mục</h2>
-          <p className="text-gray-600 mb-4">
-            Chi tiết lỗi: {error}
-          </p>
-          <p className="text-gray-500 mb-4 text-sm">
-            Category ID: {id}
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">ID danh mục không hợp lệ</h2>
+          <p className="text-gray-600 mb-6">Vui lòng quay lại trang chủ và thử lại.</p>
           <Link
             href="/"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md transition-all active:scale-95"
           >
             <i className="ri-home-line mr-2"></i>
             Về trang chủ
@@ -112,23 +52,30 @@ export default function CategoryPage({ params }: CategoryPageProps) {
     );
   }
 
+  // Tải trực tiếp dữ liệu từ Database thông qua Prisma
+  const [category, products] = await Promise.all([
+    prisma.category.findUnique({
+      where: { id: categoryId }
+    }),
+    prisma.product.findMany({
+      where: { categoryId: categoryId },
+      orderBy: { createdAt: 'desc' }
+    })
+  ]);
+
   if (!category) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center bg-white p-8 rounded-2xl shadow-md border max-w-md">
           <div className="text-red-500 mb-4">
             <i className="ri-error-warning-line text-6xl"></i>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Không thể tải danh mục</h2>
-          <p className="text-gray-600 mb-4">
-            Danh mục không tồn tại hoặc đã bị xóa
-          </p>
-          <p className="text-gray-500 mb-4 text-sm">
-            Category ID: {id}
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy danh mục</h2>
+          <p className="text-gray-600 mb-4">Danh mục không tồn tại hoặc đã bị xóa khỏi hệ thống.</p>
+          <p className="text-gray-400 mb-6 text-xs">ID danh mục: {id}</p>
           <Link
             href="/"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md transition-all active:scale-95"
           >
             <i className="ri-home-line mr-2"></i>
             Về trang chủ
@@ -144,14 +91,14 @@ export default function CategoryPage({ params }: CategoryPageProps) {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Breadcrumb */}
-          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-            <Link href="/" className="hover:text-blue-600">
+          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4 font-medium">
+            <Link href="/" className="hover:text-blue-600 transition-colors">
               Trang chủ
             </Link>
-            <i className="ri-arrow-right-s-line"></i>
-            <span>Danh mục sản phẩm</span>
-            <i className="ri-arrow-right-s-line"></i>
-            <span className="text-gray-900 font-medium">{category.name}</span>
+            <i className="ri-arrow-right-s-line text-gray-400"></i>
+            <span className="text-gray-400">Danh mục sản phẩm</span>
+            <i className="ri-arrow-right-s-line text-gray-400"></i>
+            <span className="text-gray-900 font-semibold">{category.name}</span>
           </nav>
 
           {/* Category Header */}
@@ -159,16 +106,16 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             <div className="flex-1">
               <div className="flex items-center mb-2">
                 {category.icon && (
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-lg mr-4">
-                    <i className={`${category.icon} text-3xl text-blue-600`}></i>
+                  <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-50 text-blue-600 rounded-xl mr-4 shadow-sm border border-blue-100">
+                    <i className={`${category.icon} text-2xl`}></i>
                   </div>
                 )}
-                <h1 className="text-3xl font-bold text-gray-900">{category.name}</h1>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">{category.name}</h1>
               </div>
               {category.description && (
-                <p className="text-lg text-gray-600">{category.description}</p>
+                <p className="text-base text-gray-600 leading-relaxed max-w-4xl mt-2">{category.description}</p>
               )}
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-xs text-slate-500 font-bold bg-slate-100 border rounded-full px-3 py-1 inline-block mt-3 uppercase tracking-wider">
                 {products.length} sản phẩm có sẵn
               </p>
             </div>
@@ -177,62 +124,33 @@ export default function CategoryPage({ params }: CategoryPageProps) {
       </div>
 
       {/* Products Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {products.length === 0 ? (
-          <div className="text-center py-12">
-            <i className="ri-inbox-line text-6xl text-gray-400 mb-4"></i>
-            <h3 className="text-xl font-medium text-gray-900 mb-2">
+          <div className="text-center py-20 bg-white rounded-2xl border shadow-sm">
+            <i className="ri-inbox-line text-6xl text-gray-300 mb-4 block"></i>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
               Chưa có sản phẩm nào
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-500 max-w-sm mx-auto">
               Danh mục này hiện tại chưa có sản phẩm nào. Vui lòng quay lại sau.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {products.map((product) => (
-              <div
+              <ProductCard
                 key={product.id}
-                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
-              >
-                <div className="relative w-full h-56 overflow-hidden bg-gray-100 group">
-                  {product.image && product.image.trim() !== '' ? (
-                    <img
-                      src={product.image.startsWith('/') ? `http://localhost:3000${product.image}` : product.image}
-                      alt={product.name}
-                      className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-300"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = `https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=${encodeURIComponent(product.name.substring(0, 20))}`;
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <i className="ri-image-line text-4xl text-gray-400"></i>
-                    </div>
-                  )}
-                </div>
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-center justify-between">
-                    {product.price ? (
-                      <span className="text-xl font-bold text-blue-600">
-                        {product.price} 
-                      </span>
-                    ) : (
-                      <span className="text-gray-500">Liên hệ</span>
-                    )}
-                    <Link
-                      href={`/product/${product.id}`}
-                      className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                      Xem Chi Tiết
-                    </Link>
-                  </div>
-                </div>
-              </div>
+                product={{
+                  id: product.id,
+                  name: product.name,
+                  category: { id: categoryId, name: category.name },
+                  capacity: product.capacity ?? '',
+                  accuracy: product.accuracy ?? '',
+                  price: product.price ?? '',
+                  image: product.image ?? '',
+                  featured: product.featured,
+                }}
+              />
             ))}
           </div>
         )}

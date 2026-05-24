@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import Header from './Header';
 import Footer from './Footer';
+import CategoryNavBar from './CategoryNavBar';
 
 export default function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -46,6 +47,8 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+      {/* CategoryNavBar – hiển thị trên mọi trang public */}
+      <CategoryNavBar />
       <main className="flex-1">
         {children}
       </main>

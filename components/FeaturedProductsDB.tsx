@@ -24,12 +24,18 @@ interface CategoryWithProducts {
   products: Product[];
 }
 
-export default function FeaturedProducts() {
-  const [categoriesWithProducts, setCategoriesWithProducts] = useState<CategoryWithProducts[]>([]);
-  const [loading, setLoading] = useState(true);
+interface FeaturedProductsProps {
+  initialData?: CategoryWithProducts[];
+}
+
+export default function FeaturedProducts({ initialData }: FeaturedProductsProps) {
+  const [categoriesWithProducts, setCategoriesWithProducts] = useState<CategoryWithProducts[]>(initialData || []);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialData) return;
+    
     const fetchFeaturedProductsByCategory = async () => {
       try {
         const response = await fetch('/api/products?featured=true');
@@ -99,13 +105,11 @@ export default function FeaturedProducts() {
 
   if (loading) {
     return (
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Sản Phẩm Nổi Bật</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Đang tải sản phẩm...
-            </p>
+      <section className="py-4 bg-white">
+        <div className="w-full">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Sản Phẩm Nổi Bật</h2>
+            <p className="text-base text-gray-500">Đang tải sản phẩm...</p>
           </div>
         </div>
       </section>
@@ -113,45 +117,45 @@ export default function FeaturedProducts() {
   }
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-4 bg-white">
       <div className="w-full">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Sản Phẩm Nổi Bật</h2>
-          <p className="text-xl text-gray-600 max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Sản Phẩm Nổi Bật</h2>
+          <p className="text-base text-gray-500 max-w-2xl mx-auto">
             Những sản phẩm cân điện tử được khách hàng tin tưởng và lựa chọn nhiều nhất theo từng danh mục
           </p>
         </div>
 
         {error && (
-          <div className="mb-8 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+          <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded text-sm">
             Lưu ý: Đang hiển thị dữ liệu mẫu. API chưa kết nối database.
           </div>
         )}
 
-        <div className="space-y-12">
+        <div className="space-y-8">
           {categoriesWithProducts.map((category) => (
-            <div key={category.id} className="bg-gray-50 rounded-lg p-8">
-              <div className="flex items-center justify-between mb-8">
+            <div key={category.id} className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-xl font-bold text-gray-900">
                     {category.name}
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-sm text-gray-500">
                     {category.products.length} sản phẩm nổi bật
                   </p>
                 </div>
                 <Link
                   href={`/category/${category.id}`}
-                  className="inline-flex items-center px-4 py-2 border border-blue-600 text-blue-600 bg-white rounded-md hover:bg-blue-50 transition-colors text-sm font-medium"
+                  className="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 bg-white rounded-md hover:bg-blue-50 transition-colors text-sm font-medium"
                 >
                   Xem tất cả
-                  <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="ml-1.5 w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </Link>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {category.products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
