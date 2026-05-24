@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ArrowLeft, Phone, Mail, Star, Package, Gauge, 
@@ -56,6 +56,27 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   });
   const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
   const [quoteStatus, setQuoteStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  // Khóa cuộn trang khi mở modal và bắt sự kiện bàn phím Escape để đóng modal
+  useEffect(() => {
+    if (showImageModal) {
+      // Khóa cuộn body
+      document.body.style.overflow = 'hidden';
+
+      // Lắng nghe phím Esc
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setShowImageModal(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.overflow = '';
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [showImageModal]);
 
   const getDefaultImage = (productName: string, categoryName: string) => {
     const query = encodeURIComponent(`${productName} ${categoryName} electronic scale weighing equipment professional`);
@@ -791,7 +812,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
       </div>
 
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-45 bg-white border-t border-slate-200 p-2.5 flex gap-2.5 shadow-[0_-5px_15px_rgba(0,0,0,0.08)]">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[45] bg-white border-t border-slate-200 p-2.5 flex gap-2.5 shadow-[0_-5px_15px_rgba(0,0,0,0.08)]">
         <a
           href="tel:0326711476"
           className="flex-1 inline-flex items-center justify-center py-2.5 px-3 bg-red-600 active:scale-95 text-white text-xs font-bold rounded-xl transition-all gap-1.5 shadow-md shadow-red-500/10"
@@ -821,16 +842,22 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
       {showImageModal && (
         <div 
-          className="fixed inset-0 bg-black/95 z-55 flex flex-col justify-between p-4 animate-scale-in"
+          className="fixed inset-0 bg-black/95 z-[100] flex flex-col justify-between p-4 animate-scale-in cursor-zoom-out"
           onClick={() => setShowImageModal(false)}
         >
-          <div className="flex items-center justify-between w-full p-2" onClick={e => e.stopPropagation()}>
-            <span className="text-white font-bold text-xs md:text-sm bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm">
+          <div className="flex items-center justify-between w-full p-2">
+            <span 
+              className="text-white font-bold text-xs md:text-sm bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm cursor-default"
+              onClick={e => e.stopPropagation()}
+            >
               Hình ảnh {activeImageIndex + 1} / {allImages.length}
             </span>
             <button
-              onClick={() => setShowImageModal(false)}
-              className="p-2.5 bg-white/10 hover:bg-white/20 active:scale-90 text-white rounded-full transition-all"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowImageModal(false);
+              }}
+              className="p-2.5 bg-white/10 hover:bg-white/20 active:scale-90 text-white rounded-full transition-all cursor-pointer"
               aria-label="Đóng"
             >
               <X className="w-6 h-6" />
@@ -840,20 +867,21 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
           <div className="flex-1 flex items-center justify-center relative max-h-[80vh]">
             <button
               onClick={handlePrevImage}
-              className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm active:scale-90 transition-all z-10"
+              className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm active:scale-90 transition-all z-10 cursor-pointer"
               aria-label="Ảnh trước"
               onClickCapture={e => e.stopPropagation()}
             >
               <ChevronLeft className="w-7 h-7" />
             </button>
 
-            <div className="max-w-7xl max-h-full flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
+            <div className="max-w-7xl max-h-full flex items-center justify-center p-2">
               <Image
                 src={allImages[activeImageIndex]}
                 alt={product.name}
                 width={1920}
                 height={1080}
-                className="max-w-full max-h-[75vh] object-contain rounded-lg"
+                className="max-w-full max-h-[75vh] object-contain rounded-lg cursor-default"
+                onClick={e => e.stopPropagation()}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = getDefaultImage(product.name, product.category.name);
@@ -863,7 +891,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
             <button
               onClick={handleNextImage}
-              className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm active:scale-90 transition-all z-10"
+              className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm active:scale-90 transition-all z-10 cursor-pointer"
               aria-label="Ảnh tiếp theo"
               onClickCapture={e => e.stopPropagation()}
             >
@@ -871,14 +899,20 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
             </button>
           </div>
 
-          <div className="w-full flex flex-col items-center gap-3 py-2" onClick={e => e.stopPropagation()}>
+          <div className="w-full flex flex-col items-center gap-3 py-2">
             {allImages.length > 1 && (
-              <div className="flex gap-2 max-w-full overflow-x-auto px-4 py-1">
+              <div 
+                className="flex gap-2 max-w-full overflow-x-auto px-4 py-1 scrollable-content"
+                onClick={e => e.stopPropagation()}
+              >
                 {allImages.map((img, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setActiveImageIndex(idx)}
-                    className={`relative flex-shrink-0 w-16 h-12 bg-white/10 border rounded-lg overflow-hidden transition-all ${
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveImageIndex(idx);
+                    }}
+                    className={`relative flex-shrink-0 w-16 h-12 bg-white/10 border rounded-lg overflow-hidden transition-all cursor-pointer ${
                       idx === activeImageIndex
                         ? 'border-blue-500 ring-2 ring-blue-500 scale-105'
                         : 'border-white/20 hover:border-white/50 opacity-60 hover:opacity-100'
@@ -899,7 +933,10 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 ))}
               </div>
             )}
-            <p className="text-white/40 text-[11px] font-semibold">
+            <p 
+              className="text-white/40 text-[11px] font-semibold cursor-default"
+              onClick={e => e.stopPropagation()}
+            >
               Click ngoài vùng ảnh hoặc bấm nút X để đóng chế độ phóng to
             </p>
           </div>
