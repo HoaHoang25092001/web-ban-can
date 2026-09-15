@@ -30,7 +30,7 @@ export const BUSINESS = {
    * Số đầu tiên là hotline chính, dùng cho nút gọi nổi bật và Zalo.
    * 0911.093.511 là số duy nhất được công bố trên canvanthinhphat.com.
    */
-  phones: ['0911.093.511', '0326.711.476', '0923.051.134'],
+  phones: ['0911.093.511', '0923.051.134'],
 
   email: 'canvanthinhphat@gmail.com',
 
@@ -40,8 +40,16 @@ export const BUSINESS = {
   ],
 
   social: {
-    facebook: 'https://www.facebook.com/datmaphihi',
+    facebook: 'https://www.facebook.com/share/199wuzrdpL/?mibextid=wwXIfr',
   },
+
+  /**
+   * Mã QR Zalo trỏ tới hotline chính.
+   * File tĩnh sinh sẵn bằng `node scripts/gen-zalo-qr.mjs` — không gọi dịch
+   * vụ QR bên ngoài lúc chạy nên không phụ thuộc mạng bên thứ ba (tiêu chí 7).
+   * Chạy lại script này mỗi khi đổi hotline chính.
+   */
+  zaloQr: '/zalo-qr.svg',
 
   maps: {
     embed:
@@ -100,7 +108,7 @@ export const PRIMARY_PHONE = BUSINESS.phones[0];
 /** Link chat Zalo dựng từ hotline chính. */
 export const ZALO_URL = `https://zalo.me/${PRIMARY_PHONE.replace(/\./g, '')}`;
 
-/** Chuyển "0326.711.476" thành "0326711476" để dùng trong href="tel:". */
+/** Chuyển "0911.093.511" thành "0911093511" để dùng trong href="tel:". */
 export function telHref(phone: string): string {
   return `tel:${phone.replace(/\./g, '')}`;
 }

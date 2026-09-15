@@ -151,7 +151,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
     if (!quoteForm.phone.trim()) {
       nextErrors.phone = 'Vui lòng nhập số điện thoại để chúng tôi gọi lại.';
     } else if (!/^(\+?84|0)\d{9,10}$/.test(phone)) {
-      nextErrors.phone = 'Số điện thoại chưa đúng. Ví dụ hợp lệ: 0326711476.';
+      nextErrors.phone = 'Số điện thoại chưa đúng. Ví dụ hợp lệ: 0912345678.';
     }
 
     setQuoteErrors(nextErrors);
@@ -767,7 +767,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                       setQuoteForm({ ...quoteForm, phone: e.target.value });
                       if (quoteErrors.phone) setQuoteErrors({ ...quoteErrors, phone: undefined });
                     }}
-                    placeholder="Ví dụ: 0326711476"
+                    placeholder="Ví dụ: 0912345678"
                     aria-invalid={quoteErrors.phone ? true : undefined}
                     aria-describedby={quoteErrors.phone ? 'quote-phone-error' : undefined}
                     className={`w-full px-4 py-2.5 min-h-touch bg-slate-50 rounded-xl focus:bg-white focus:border-blue-600 text-sm font-semibold transition-all border ${

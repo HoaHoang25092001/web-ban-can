@@ -92,7 +92,7 @@ export default function Header() {
             <Logo size="sm" />
           </Link>
 
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <a
               href={PHONE_HREF}
               className="inline-flex items-center justify-center gap-1.5 min-h-touch px-3 rounded-control bg-accent-600 text-white font-semibold text-sm"

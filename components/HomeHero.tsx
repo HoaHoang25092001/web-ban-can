@@ -215,7 +215,7 @@ export default function HomeHero({ categories }: HomeHeroProps) {
 
             {/* Chấm chỉ báo */}
             {/* Chấm chỉ báo canh trái, cùng lề với nội dung chữ phía trên */}
-            <div className="absolute bottom-4 left-5 sm:left-8 lg:left-10 z-20 flex gap-1">
+            <div className="absolute bottom-4 left-5 sm:left-8 lg:left-10 z-20 flex gap-2">
               {slides.map((slide, idx) => (
                 <button
                   key={slide.id}
