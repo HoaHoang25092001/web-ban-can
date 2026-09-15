@@ -14,7 +14,13 @@ interface TableProps {
  */
 export function Table({ headers, children, caption }: TableProps) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+    <div className="relative">
+    <div
+      tabIndex={0}
+      role="region"
+      aria-label={caption ? `${caption} (cuộn ngang để xem đủ cột)` : 'Bảng dữ liệu, cuộn ngang để xem đủ cột'}
+      className="overflow-x-auto rounded-lg border border-gray-200 bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+    >
       <table className="min-w-full divide-y divide-gray-200">
         {caption && <caption className="sr-only-text">{caption}</caption>}
         <thead className="bg-gray-50">
@@ -33,6 +39,9 @@ export function Table({ headers, children, caption }: TableProps) {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">{children}</tbody>
       </table>
+    </div>
+    {/* Gợi ý còn nội dung bên phải, chỉ hiện trên màn hình hẹp. */}
+    <div className="md:hidden pointer-events-none absolute inset-y-0 right-0 w-10 rounded-r-lg bg-gradient-to-l from-white to-transparent" />
     </div>
   );
 }

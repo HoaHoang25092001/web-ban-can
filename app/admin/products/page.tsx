@@ -41,6 +41,12 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+
+  // Màn hình hẹp: mở dạng thẻ thay vì bảng. Đặt trong effect để HTML dựng trên
+  // server và trên trình duyệt khớp nhau, tránh lỗi hydration.
+  useEffect(() => {
+    if (window.matchMedia('(max-width: 767px)').matches) setViewMode('grid');
+  }, []);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; productId: number | null }>({
     isOpen: false,
     productId: null,
@@ -479,14 +485,14 @@ export default function ProductsPage() {
                     {/* Action overlay */}
                     <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3 gap-2">
                       <Link href={`/admin/products/edit/${product.id}`}>
-                        <button className="bg-white text-blue-600 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-1">
+                        <button className="bg-white text-blue-600 text-sm font-medium px-4 min-h-touch inline-flex items-center justify-center gap-1 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-1">
                           <Edit className="h-3 w-3" />
                           Sửa
                         </button>
                       </Link>
                       <button
                         onClick={() => handleDelete(product.id)}
-                        className="bg-white text-red-500 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-1"
+                        className="bg-white text-red-500 text-sm font-medium px-4 min-h-touch inline-flex items-center justify-center gap-1 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-1"
                       >
                         <Trash2 className="h-3 w-3" />
                         Xóa
