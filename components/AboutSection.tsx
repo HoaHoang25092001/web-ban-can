@@ -1,65 +1,125 @@
+import Link from 'next/link';
+import { BUSINESS } from '@/lib/site';
 
-'use client';
+// Server Component – nội dung tĩnh, không cần JS phía trình duyệt.
 
 const features = [
   {
     icon: 'ri-shield-check-line',
     title: 'Sản phẩm chính hãng',
-    description: 'Đảm bảo 100% sản phẩm chính hãng từ các thương hiệu uy tín'
+    description: 'Đầy đủ giấy tờ nhập khẩu và tem kiểm định của cơ quan đo lường',
   },
   {
     icon: 'ri-tools-line',
     title: 'Lắp đặt tận nơi',
-    description: 'Đội ngũ kỹ thuật giàu kinh nghiệm hỗ trợ lắp đặt tại nhà'
+    description: 'Kỹ thuật viên giao, lắp và hiệu chuẩn tại địa chỉ của khách hàng',
   },
   {
     icon: 'ri-customer-service-2-line',
-    title: 'Hỗ trợ 24/7',
-    description: 'Dịch vụ chăm sóc khách hàng và hỗ trợ kỹ thuật nhanh chóng'
+    title: 'Hỗ trợ kỹ thuật',
+    description: 'Tư vấn chọn cân và xử lý sự cố qua điện thoại trong ngày làm việc',
   },
   {
     icon: 'ri-award-line',
-    title: 'Bảo hành dài hạn',
-    description: 'Cam kết bảo hành dài hạn và sửa chữa miễn phí'
-  }
+    title: 'Bảo hành 12 tháng',
+    description: 'Sửa chữa miễn phí lỗi kỹ thuật trong thời gian bảo hành',
+  },
+];
+
+/**
+ * Chỉ nêu số liệu kiểm chứng được.
+ * Bản trước ghi "10+ năm kinh nghiệm" và "2.000+ khách hàng" — cả hai đều không
+ * khớp với thông tin công ty công bố (hơn 4 năm hoạt động) và không có căn cứ.
+ * Số liệu phóng đại làm mất niềm tin khi khách đối chiếu (tiêu chí 9).
+ */
+const stats = [
+  { value: `${BUSINESS.yearsInBusiness}+`, label: 'Năm hoạt động' },
+  { value: '12', label: 'Tháng bảo hành' },
+  { value: 'VAT', label: 'Xuất hóa đơn đầy đủ' },
 ];
 
 export default function AboutSection() {
   return (
-    <section className="py-20 bg-blue-50">
-      <div className="w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">Về Cân Vạn Thịnh Phát</h2>
-            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-              Vạn Thịnh Phát là đơn vị chuyên cung cấp các thiết bị cân điện tử chính hãng từ các thương hiệu nổi tiếng. 
-              Với nhiều năm kinh nghiệm trong lĩnh vực thiết bị đo lường, chúng tôi cam kết mang đến cho khách hàng 
-              những sản phẩm chất lượng cao và dịch vụ tốt nhất.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {features.map((feature, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div className="bg-blue-600 text-white p-2 rounded-lg flex-shrink-0">
-                    <i className={`${feature.icon} w-5 h-5 flex items-center justify-center`}></i>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-1">{feature.title}</h3>
-                    <p className="text-sm text-gray-600">{feature.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+    <section className="py-12" aria-labelledby="about-heading">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+        <div>
+          <h2 id="about-heading" className="section-title">
+            Về Cân Vạn Thịnh Phát
+          </h2>
+          {/* max-w-prose giữ độ dài dòng 50–75 ký tự (tiêu chí 2) */}
+          <p className="mt-4 text-lg text-slate-600 leading-relaxed max-w-prose">
+            Chúng tôi sản xuất, nhập khẩu và sửa chữa cân điện tử cùng thiết bị đo lường,
+            phục vụ nhà máy, xí nghiệp và cửa hàng trên toàn quốc. Mỗi sản phẩm đều có tem
+            kiểm định, được lắp đặt tận nơi và bảo hành 12 tháng.
+          </p>
+
+          {/* Số liệu cụ thể tăng độ tin cậy (tiêu chí 9) */}
+          <dl className="mt-8 grid grid-cols-3 gap-4 border-y border-surface-border py-5">
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                <dt className="sr-only-text">{stat.label}</dt>
+                <dd>
+                  <span className="block text-2xl font-bold text-brand-700">{stat.value}</span>
+                  <span className="block text-xs text-slate-500 mt-0.5 leading-snug">
+                    {stat.label}
+                  </span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {features.map((feature) => (
+              <li key={feature.title} className="flex items-start gap-3">
+                <span className="bg-brand-600 text-white w-9 h-9 rounded-control flex items-center justify-center flex-shrink-0">
+                  <i className={feature.icon} aria-hidden="true"></i>
+                </span>
+                <span>
+                  <span className="block font-semibold text-slate-900 mb-0.5">
+                    {feature.title}
+                  </span>
+                  <span className="block text-sm text-slate-600 leading-relaxed">
+                    {feature.description}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          {/* Một CTA chính cho khối này (tiêu chí 8) */}
+          <div className="mt-8">
+            <Link href="/contact" className="btn-primary">
+              <i className="ri-phone-line" aria-hidden="true"></i>
+              Nhận tư vấn chọn cân
+            </Link>
           </div>
-          <div className="relative">
-            <img
-              src="https://readdy.ai/api/search-image?query=professional%20team%20of%20technicians%20working%20with%20precision%20weighing%20equipment%20in%20modern%20industrial%20facility%2C%20engineers%20calibrating%20digital%20scales%2C%20professional%20workplace%20with%20blue%20and%20white%20theme&width=600&height=500&seq=about-img&orientation=landscape"
-              alt="Đội ngũ kỹ thuật Vạn Thịnh Phát"
-              className="w-full rounded-xl shadow-lg object-cover object-top"
-            />
-            <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-xl shadow-lg">
-              <div className="text-3xl font-bold text-blue-600 mb-1">10+</div>
-              <div className="text-sm text-gray-600">Năm kinh nghiệm</div>
-            </div>
+        </div>
+
+        {/* Khối cam kết thay cho ảnh stock sinh từ API bên thứ ba:
+            không phụ thuộc mạng ngoài, tải tức thì và không gây CLS. */}
+        <div className="relative">
+          <div className="rounded-card bg-brand-700 text-white p-8 shadow-card-hover">
+            <p className="text-sm uppercase tracking-wide text-brand-200 font-semibold">
+              Cam kết với khách hàng
+            </p>
+            <ul className="mt-6 space-y-4">
+              {[
+                'Báo giá rõ ràng, không phát sinh chi phí ẩn',
+                'Giao và lắp đặt trong 24–48 giờ tại TP. Hồ Chí Minh',
+                'Hướng dẫn sử dụng và hiệu chuẩn trực tiếp khi bàn giao',
+                'Hỗ trợ kiểm định lại định kỳ theo quy định',
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  {/* Cam đậm trên nền xanh đậm chỉ đạt 2,4:1 nên dùng tông sáng
+                      để icon vẫn rõ với người thị lực kém (tiêu chí 5). */}
+                  <i
+                    className="ri-checkbox-circle-fill text-brand-200 text-xl flex-shrink-0 mt-0.5"
+                    aria-hidden="true"
+                  ></i>
+                  <span className="text-brand-50 leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>

@@ -120,11 +120,9 @@ export default function NewsPage() {
             <h1 className="text-2xl font-bold text-gray-900">Quản lý tin tức</h1>
             <p className="text-sm text-gray-500 mt-1">Quản lý tất cả bài viết và tin tức</p>
           </div>
-          <Link href="/admin/news/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Viết tin tức mới
-            </Button>
+          <Link href="/admin/news/new" className="inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Viết tin tức mới
           </Link>
         </div>
 
@@ -243,11 +241,9 @@ export default function NewsPage() {
                 ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm'
                 : 'Bắt đầu bằng cách viết bài đầu tiên'}
             </p>
-            <Link href="/admin/news/new">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Viết tin tức đầu tiên
-              </Button>
+            <Link href="/admin/news/new" className="inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Viết tin tức đầu tiên
             </Link>
           </div>
         ) : viewMode === 'table' ? (
@@ -275,6 +271,9 @@ export default function NewsPage() {
                               <img
                                 src={item.image}
                                 alt={item.title}
+                                width={80}
+                                height={56}
+                                loading="lazy"
                                 className="h-14 w-20 object-cover rounded-xl border border-gray-100 shadow-sm"
                                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                               />
@@ -335,10 +334,13 @@ export default function NewsPage() {
                       {/* Actions */}
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-1.5">
-                          <Link href={`/admin/news/edit/${item.id}`}>
-                            <button className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-all" title="Chỉnh sửa">
-                              <Edit className="h-4 w-4" />
-                            </button>
+                          <Link
+                            href={`/admin/news/edit/${item.id}`}
+                            className="w-9 h-9 flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-all"
+                            title="Chỉnh sửa"
+                            aria-label={`Chỉnh sửa bài viết ${item.title}`}
+                          >
+                            <Edit className="h-4 w-4" aria-hidden="true" />
                           </Link>
                           <button
                             onClick={() => handleDelete(item.id)}
@@ -393,11 +395,13 @@ export default function NewsPage() {
                     {item.published ? 'Xuất bản' : 'Nháp'}
                   </span>
                   {/* Hover actions */}
-                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3 gap-2">
-                    <Link href={`/admin/news/edit/${item.id}`}>
-                      <button className="bg-white text-blue-600 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-1">
-                        <Edit className="h-3 w-3" /> Sửa
-                      </button>
+                  <div className="absolute inset-x-0 bottom-0 pt-8 bg-gradient-to-t from-black/70 to-transparent flex items-end justify-center pb-3 gap-2">
+                    <Link
+                      href={`/admin/news/edit/${item.id}`}
+                      className="bg-white text-blue-600 text-xs font-medium min-h-[36px] px-3 rounded-lg hover:bg-blue-50 transition-colors inline-flex items-center gap-1"
+                      aria-label={`Chỉnh sửa bài viết ${item.title}`}
+                    >
+                      <Edit className="h-3 w-3" aria-hidden="true" /> Sửa
                     </Link>
                     <button
                       onClick={() => togglePublished(item.id, item.published)}

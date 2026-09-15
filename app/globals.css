@@ -1,20 +1,159 @@
-@import url('https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Design tokens – đồng bộ với tailwind.config.js (tiêu chí 2)
+   Tỷ lệ màu 60 / 30 / 10: nền trung tính / cấu trúc thương hiệu / nhấn hành động
+   ────────────────────────────────────────────────────────────────────────── */
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
-  
-  body {
-    overflow-x: hidden;
+  :root {
+    --brand-600: #1565C0;
+    --brand-700: #0D47A1;
+    --brand-800: #0D3B6E;
+    --accent-600: #EA580C;
+    --surface-muted: #F8FAFC;
+    --surface-border: #E2E8F0;
+
+    /* Lưới 8px */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-12: 3rem;
+
+    color-scheme: light;
   }
 
-  /* Prevent Cloudinary from locking scroll */
-  body:not(.cloudinary-widget-open) {
-    overflow-y: auto !important;
+  html {
+    scroll-behavior: smooth;
+    /* Chừa chỗ cho header sticky khi nhảy tới anchor */
+    scroll-padding-top: 6rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    overflow-x: hidden;
+    background-color: #fff;
+    color: #0f172a;
+    /* Tiêu chí 2: body >= 16px */
+    font-size: 1rem;
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ── Tiêu chí 5: Điều hướng bàn phím – focus luôn nhìn thấy ─────────────── */
+  :focus-visible {
+    outline: 3px solid var(--accent-600);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  /* Không hiện outline khi click chuột, chỉ khi dùng bàn phím */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Link "Bỏ qua tới nội dung chính" cho người dùng bàn phím/screen reader */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: 0.75rem 1.25rem;
+    background: var(--brand-700);
+    color: #fff;
+    font-weight: 700;
+    border-radius: 0 0 0.5rem 0;
+  }
+  .skip-link:focus {
+    left: 0;
+  }
+
+  /* Ảnh không bao giờ tràn và luôn giữ tỷ lệ (giảm CLS – tiêu chí 7) */
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Heading kế thừa nhịp dọc nhất quán */
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Components dùng lại – nhất quán kích thước/bo góc/trạng thái (tiêu chí 2)
+   ────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  /* Nút: mọi biến thể cùng chiều cao 44px = vùng chạm tối thiểu (tiêu chí 5) */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 min-h-touch px-5 rounded-control
+           font-semibold text-sm whitespace-nowrap transition-colors
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
+  }
+  /* CTA chính – màu nhấn 10%, chỉ dùng cho hành động quan trọng nhất màn hình */
+  .btn-primary {
+    @apply btn bg-accent-600 text-white shadow-control hover:bg-accent-700 active:bg-accent-700;
+  }
+  .btn-secondary {
+    @apply btn bg-brand-600 text-white shadow-control hover:bg-brand-700 active:bg-brand-700;
+  }
+  .btn-outline {
+    @apply btn border-2 border-brand-600 text-brand-700 bg-white hover:bg-brand-50;
+  }
+  .btn-ghost {
+    @apply btn text-slate-700 hover:bg-surface-sunken;
+  }
+  .btn-sm {
+    @apply min-h-[36px] px-3 text-sm;
+  }
+
+  /* Card: một định nghĩa duy nhất cho mọi card sản phẩm/tin tức/đánh giá */
+  .card {
+    @apply bg-white rounded-card border border-surface-border shadow-card
+           transition-shadow duration-200;
+  }
+  .card-interactive {
+    @apply card hover:shadow-card-hover hover:border-brand-300;
+  }
+
+  /* Input + label đi đôi với nhau (tiêu chí 8) */
+  .field-label {
+    @apply block text-sm font-semibold text-slate-700 mb-1.5;
+  }
+  .field-input {
+    @apply w-full min-h-touch px-3 py-2 text-base text-slate-900 bg-white
+           border-2 border-surface-border rounded-control
+           placeholder:text-slate-400
+           focus:border-brand-600 focus:outline-none
+           transition-colors;
+  }
+  .field-input-error {
+    @apply border-red-500 focus:border-red-600;
+  }
+  .field-error {
+    @apply mt-1.5 flex items-start gap-1.5 text-sm font-medium text-red-600;
+  }
+  .field-hint {
+    @apply mt-1.5 text-sm text-slate-500;
+  }
+
+  /* Tiêu đề section – phân cấp thị giác nhất quán (tiêu chí 3) */
+  .section-title {
+    @apply text-2xl md:text-3xl font-bold text-slate-900 tracking-tight;
+  }
+  .section-subtitle {
+    @apply mt-2 text-base text-slate-600 max-w-prose;
+  }
+
+  /* Khối nội dung chuẩn của site */
+  .shell {
+    @apply max-w-shell mx-auto px-4 sm:px-6 lg:px-8;
   }
 }
 
@@ -40,10 +179,31 @@
     -webkit-line-clamp: 3;
   }
 
+  .line-clamp-4 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+  }
+
+  /* Chỉ hiển thị cho screen reader – dùng cho nhãn icon-only (tiêu chí 5) */
+  .sr-only-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
   .scrollable-content {
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgb(156 163 175) transparent;
+    scrollbar-color: rgb(148 163 184) transparent;
+    overscroll-behavior: contain;
   }
 
   .scrollable-content::-webkit-scrollbar {
@@ -55,60 +215,17 @@
   }
 
   .scrollable-content::-webkit-scrollbar-thumb {
-    background-color: rgb(156 163 175);
+    background-color: rgb(148 163 184);
     border-radius: 3px;
   }
 
   .scrollable-content::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(107 114 128);
+    background-color: rgb(100 116 139);
   }
 
-  /* Override any cloudinary scroll locks */
-  .cloudinary-widget-override {
-    overflow: auto !important;
-  }
-
-  /* Toast Animation */
-  @keyframes slide-in-right {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  .animate-slide-in-right {
-    animation: slide-in-right 0.3s ease-out;
-  }
-
-  @keyframes scale-in {
-    from {
-      transform: scale(0.95);
-      opacity: 0;
-    }
-    to {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
-
-  .animate-scale-in {
-    animation: scale-in 0.2s ease-out;
-  }
-
-  /* Custom Scrollbar for Sidebar */
+  /* Scrollbar sidebar admin */
   .scrollbar-thin {
     scrollbar-width: thin;
-  }
-
-  .scrollbar-thumb-blue-400 {
-    scrollbar-color: rgb(96 165 250) transparent;
-  }
-
-  .scrollbar-track-blue-700 {
     scrollbar-color: rgb(96 165 250) rgb(29 78 216);
   }
 
@@ -128,9 +245,35 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background-color: rgb(59 130 246);
   }
+
+  /* Ẩn scrollbar ngang cho hàng cuộn ngang trên mobile */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-/* Tiptap Editor Styles */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Tiêu chí 7: tôn trọng prefers-reduced-motion – tắt mọi chuyển động tự động
+   ────────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Tiptap Editor (trang quản trị) ──────────────────────────────────────── */
 .ProseMirror {
   outline: none;
 }

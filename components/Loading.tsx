@@ -10,7 +10,7 @@ export function Spinner({ text = 'Đang tải dữ liệu...', className = '' }:
   return (
     <div className={`flex flex-col items-center justify-center min-h-[200px] p-6 ${className}`}>
       <div className="relative w-12 h-12">
-        <div className="absolute top-0 left-0 w-full h-full border-4 border-blue-155/20 border-slate-205 rounded-full"></div>
+        <div className="absolute top-0 left-0 w-full h-full border-4 border-slate-200 rounded-full"></div>
         <div className="absolute top-0 left-0 w-full h-full border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
       {text && <p className="mt-4 text-sm font-semibold text-slate-500 animate-pulse">{text}</p>}
@@ -41,7 +41,7 @@ export function SkeletonCard({ count = 4 }: { count?: number }) {
 export function SkeletonDetail() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full animate-pulse space-y-8">
-      <div className="h-6 bg-slate-250 bg-slate-200 rounded w-1/4"></div>
+      <div className="h-6 bg-slate-200 rounded w-1/4"></div>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         <div className="lg:col-span-7 space-y-4">
           <div className="aspect-[4/3] bg-slate-200 rounded-2xl w-full"></div>

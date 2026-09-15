@@ -1,5 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
+
+const MAX_LIMIT = 60;
 
 // GET /api/products - Lấy danh sách sản phẩm
 export async function GET(request: NextRequest) {
@@ -8,59 +11,77 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get('categoryId');
     const featured = searchParams.get('featured');
     const search = searchParams.get('search');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    // Thống kê chỉ cần cho trang admin — mặc định không tính để API public nhẹ
+    const withStats = searchParams.get('withStats') === 'true';
+
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
+    // Chặn limit quá lớn để một request không kéo cả bảng về
+    const limit = Math.min(
+      MAX_LIMIT,
+      Math.max(1, parseInt(searchParams.get('limit') || '10') || 10)
+    );
     const skip = (page - 1) * limit;
 
-    const where: any = {};
-    
+    const where: Prisma.ProductWhereInput = {};
+
     if (categoryId && categoryId !== 'all') {
-      where.categoryId = parseInt(categoryId);
+      const parsed = parseInt(categoryId);
+      if (!Number.isNaN(parsed)) where.categoryId = parsed;
     }
-    
+
     if (featured === 'true') {
       where.featured = true;
     }
 
     if (search && search.trim() !== '') {
       where.OR = [
-        {
-          name: {
-            contains: search.trim(),
-            mode: 'insensitive',
-          },
-        },
-        {
-          description: {
-            contains: search.trim(),
-            mode: 'insensitive',
-          },
-        },
+        { name: { contains: search.trim(), mode: 'insensitive' } },
+        { description: { contains: search.trim(), mode: 'insensitive' } },
       ];
     }
 
-    const [products, total, allProductsStats] = await Promise.all([
+    const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
-        include: {
-          category: true,
-        },
+        include: { category: true },
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
       prisma.product.count({ where }),
-      prisma.product.findMany({
-        select: {
-          featured: true,
-          images: true,
-        },
-      }),
     ]);
 
-    const totalProductsCount = allProductsStats.length;
-    const totalFeatured = allProductsStats.filter(p => p.featured).length;
-    const totalMultiImage = allProductsStats.filter(p => p.images && p.images.length > 1).length;
+    /**
+     * Trước đây phần thống kê gọi findMany() lấy TOÀN BỘ bảng products rồi
+     * đếm trong JavaScript — mỗi request public đều kéo cả bảng về, chậm dần
+     * theo số sản phẩm. Nay dùng count() ở tầng database và chỉ tính khi được
+     * yêu cầu rõ ràng.
+     */
+    let stats;
+    if (withStats) {
+      /*
+       * Gộp cả 3 con số vào MỘT truy vấn.
+       *
+       * Bản trước chạy 3 lệnh count riêng. Mỗi lệnh chỉ mất ~0,02s ở database
+       * nhưng phải đi vòng tới Neon (đặt tại Mỹ) mất ~0,5s độ trễ mạng — nên
+       * tổng thời gian gần như bằng 3 lần độ trễ chứ không phải do đếm chậm.
+       * Một truy vấn duy nhất chỉ tốn một lần đi-về.
+       */
+      const [row] = await prisma.$queryRaw<Array<{
+        total: bigint; featured: bigint; multi_image: bigint;
+      }>>`
+        SELECT
+          COUNT(*)::bigint AS total,
+          COUNT(*) FILTER (WHERE featured)::bigint AS featured,
+          COUNT(*) FILTER (WHERE array_length(images, 1) > 1)::bigint AS multi_image
+        FROM products
+      `;
+      stats = {
+        totalProducts: Number(row?.total ?? 0),
+        featuredProducts: Number(row?.featured ?? 0),
+        multiImageProducts: Number(row?.multi_image ?? 0),
+      };
+    }
 
     return NextResponse.json({
       products,
@@ -70,16 +91,12 @@ export async function GET(request: NextRequest) {
         total,
         pages: Math.ceil(total / limit),
       },
-      stats: {
-        totalProducts: totalProductsCount,
-        featuredProducts: totalFeatured,
-        multiImageProducts: totalMultiImage,
-      },
+      ...(stats ? { stats } : {}),
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch products' },
+      { error: 'Không tải được danh sách sản phẩm' },
       { status: 500 }
     );
   }
@@ -89,14 +106,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { 
-      name, 
-      description, 
-      categoryId, 
-      capacity, 
-      accuracy, 
-      price, 
-      image, 
+    const {
+      name,
+      description,
+      categoryId,
+      capacity,
+      accuracy,
+      price,
+      image,
       images,
       featured,
       dialSize,
@@ -105,14 +122,23 @@ export async function POST(request: NextRequest) {
       origin
     } = body;
 
+    // Kiểm tra dữ liệu bắt buộc trước khi ghi (tránh lỗi 500 khó hiểu)
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+      return NextResponse.json({ error: 'Tên sản phẩm là bắt buộc' }, { status: 400 });
+    }
+    const parsedCategoryId = parseInt(categoryId);
+    if (Number.isNaN(parsedCategoryId)) {
+      return NextResponse.json({ error: 'Danh mục không hợp lệ' }, { status: 400 });
+    }
+
     // Nếu images được cung cấp, dùng ảnh đầu tiên làm image chính
     const primaryImage = image || (images && images.length > 0 ? images[0] : null);
 
     const product = await prisma.product.create({
       data: {
-        name,
+        name: name.trim(),
         description,
-        categoryId: parseInt(categoryId),
+        categoryId: parsedCategoryId,
         capacity,
         accuracy,
         price,
@@ -130,10 +156,10 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(product, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error creating product:', error);
     return NextResponse.json(
-      { error: 'Failed to create product' },
+      { error: 'Không tạo được sản phẩm' },
       { status: 500 }
     );
   }

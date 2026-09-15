@@ -63,7 +63,9 @@ export default function NewNewsPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 max-w-5xl">
+      {/* Canh giữa: form tin tức chủ yếu là một trình soạn thảo dài, kéo
+          rộng hết màn hình sẽ khiến dòng chữ quá dài, khó đọc (tiêu chí 2). */}
+      <div className="space-y-6 max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Link href="/admin/news">

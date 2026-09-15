@@ -1,94 +1,157 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import SearchProduct from './SearchProduct';
+import Logo from './Logo';
+import { PRIMARY_PHONE, telHref } from '@/lib/site';
+
+const PHONE_DISPLAY = PRIMARY_PHONE;
+const PHONE_HREF = telHref(PRIMARY_PHONE);
+
+const navLinks = [
+  { label: 'Trang chủ', href: '/' },
+  { label: 'Giới thiệu', href: '/introduce' },
+  { label: 'Hướng dẫn mua hàng', href: '/huong-dan-mua-hang' },
+  { label: 'Bảo hành & đổi trả', href: '/chinh-sach' },
+  { label: 'Câu hỏi thường gặp', href: '/cau-hoi-thuong-gap' },
+  { label: 'Tin tức', href: '/news' },
+  { label: 'Liên hệ', href: '/contact' },
+];
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Đóng menu khi chuyển trang – tránh menu treo lơ lửng sau khi điều hướng
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+
+  // Đóng menu bằng phím Esc (tiêu chí 5: điều hướng bàn phím)
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isMenuOpen]);
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
-      <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16">
-        {/* Desktop layout: Search | Logo (center) | Phone */}
-        <div className="hidden md:grid grid-cols-3 items-center h-16 gap-4">
-          {/* Left: Search Bar */}
+    <header className="bg-white border-b border-surface-border sticky top-0 z-50">
+      <div className="max-w-shell mx-auto px-4 sm:px-6 lg:px-8">
+        {/* ── Desktop: Tìm kiếm | Logo | Hotline ── */}
+        {/* Bố cục 3 cột (tìm kiếm | logo | hotline) cần ~792px. Trước đây bật từ
+            `md` (768px) nên ở đúng khổ tablet 768px nút hotline bị đẩy tràn ra
+            ngoài mép phải 24px. Nay bật từ `lg` (1024px); khổ tablet dùng bố
+            cục mobile vốn đã xếp gọn (tiêu chí 6). */}
+        <div className="hidden lg:grid grid-cols-[1fr_auto_1fr] items-center gap-6 h-20">
           <div className="flex items-center">
-            <div className="w-full max-w-xs">
+            <div className="w-full max-w-sm">
               <SearchProduct compact />
             </div>
           </div>
 
-          {/* Center: Logo */}
-          <div className="flex justify-center">
-            <Link href="/" className="flex items-center">
-              <div
-                className="text-2xl font-bold text-blue-600 whitespace-nowrap"
-                style={{ fontFamily: 'var(--font-pacifico)' }}
-              >
-                Cân Vạn Thịnh Phát
-              </div>
-            </Link>
-          </div>
+          <Link
+            href="/"
+            className="flex flex-col items-center justify-center text-center rounded-control px-2 py-1"
+            aria-label="Cân Vạn Thịnh Phát – về trang chủ"
+          >
+            {/* Tiêu chí 1: tên kèm dòng mô tả nói rõ bán gì */}
+            <Logo size="md" withTagline />
+          </Link>
 
-          {/* Right: Phone with pill border */}
           <div className="flex justify-end items-center">
+            {/* Hotline là hành động chính của site → dùng màu nhấn (10%) */}
             <a
-              href="tel:0326711476"
-              className="flex items-center gap-2 border-2 border-blue-600 text-blue-600 font-bold px-4 py-1.5 rounded-full hover:bg-blue-600 hover:text-white transition-colors text-sm whitespace-nowrap"
+              href={PHONE_HREF}
+              className="btn-primary"
             >
-              <i className="ri-phone-fill text-base"></i>
-              <span>0326.711.476</span>
+              <i className="ri-phone-fill text-base" aria-hidden="true"></i>
+              <span>
+                <span className="sr-only-text">Gọi hotline </span>
+                {PHONE_DISPLAY}
+              </span>
             </a>
           </div>
         </div>
 
-        {/* Mobile layout */}
-        <div className="md:hidden flex justify-between items-center h-14">
-          <Link href="/" className="flex items-center">
-            <div
-              className="text-xl font-bold text-blue-600"
-              style={{ fontFamily: 'var(--font-pacifico)' }}
-            >
-              Cân Vạn Thịnh Phát
-            </div>
+        {/* ── Mobile ── */}
+        <div className="lg:hidden flex justify-between items-center gap-2 h-16">
+          <Link
+            href="/"
+            className="flex items-center min-h-touch min-w-0 pr-2"
+            aria-label="Cân Vạn Thịnh Phát – về trang chủ"
+          >
+            <Logo size="sm" />
           </Link>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-1 flex-shrink-0">
             <a
-              href="tel:0326711476"
-              className="flex items-center gap-1 border-2 border-blue-600 text-blue-600 font-bold px-3 py-1 rounded-full text-xs"
+              href={PHONE_HREF}
+              className="inline-flex items-center justify-center gap-1.5 min-h-touch px-3 rounded-control bg-accent-600 text-white font-semibold text-sm"
             >
-              <i className="ri-phone-fill"></i>
-              <span>0326.711.476</span>
+              <i className="ri-phone-fill" aria-hidden="true"></i>
+              <span className="sr-only-text">Gọi hotline {PHONE_DISPLAY}</span>
+              <span aria-hidden="true">Gọi</span>
             </a>
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 text-gray-700 hover:text-blue-600 cursor-pointer"
+              ref={menuButtonRef}
+              type="button"
+              onClick={() => setIsMenuOpen((open) => !open)}
+              /* Vùng chạm 44×44px + trạng thái được công bố cho screen reader */
+              className="inline-flex items-center justify-center min-w-touch min-h-touch rounded-control text-slate-700 hover:bg-surface-sunken transition-colors"
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-nav"
+              aria-label={isMenuOpen ? 'Đóng menu' : 'Mở menu'}
             >
-              <i className={`ri-${isMenuOpen ? 'close' : 'menu'}-line text-xl`}></i>
+              <i
+                className={`ri-${isMenuOpen ? 'close' : 'menu'}-line text-2xl`}
+                aria-hidden="true"
+              ></i>
             </button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Thanh tìm kiếm mobile – luôn hiện, vì tìm kiếm là tác vụ chính */}
+        <div className="md:hidden pb-3">
+          <SearchProduct compact />
+        </div>
+
+        {/* ── Mobile navigation ── */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 py-3">
-            <nav className="flex flex-col space-y-3">
-              <Link href="/" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                Trang chủ
-              </Link>
-              <Link href="/introduce" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                Giới thiệu
-              </Link>
-              <Link href="/news" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                Tin tức
-              </Link>
-              <Link href="/contact" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                Liên hệ
-              </Link>
-            </nav>
-          </div>
+          <nav
+            id="mobile-nav"
+            aria-label="Điều hướng chính"
+            className="md:hidden border-t border-surface-border py-2 animate-fade-up"
+          >
+            <ul className="flex flex-col">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`flex items-center min-h-touch px-2 rounded-control font-medium transition-colors ${
+                        isActive
+                          ? 'text-brand-700 bg-brand-50'
+                          : 'text-slate-700 hover:bg-surface-sunken'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
         )}
       </div>
     </header>

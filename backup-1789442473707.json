@@ -1,0 +1,189 @@
+{
+  "exportedAt": "2026-09-15T03:21:08.977Z",
+  "categories": [
+    {
+      "id": 1,
+      "name": "Cân xe",
+      "description": "Cân xe",
+      "icon": "ri-truck-line",
+      "image": null,
+      "createdAt": "2026-05-23T02:03:29.905Z",
+      "updatedAt": "2026-05-23T02:03:29.905Z"
+    },
+    {
+      "id": 2,
+      "name": "Cân siêu thị",
+      "description": "Cân phục vụ cho siêu thị",
+      "icon": "ri-shopping-cart-line",
+      "image": null,
+      "createdAt": "2026-05-24T04:12:14.886Z",
+      "updatedAt": "2026-05-24T04:12:14.886Z"
+    },
+    {
+      "id": 3,
+      "name": "Cân động vật",
+      "description": "Cân heo, gà, ...",
+      "icon": "ri-bear-smile-line",
+      "image": null,
+      "createdAt": "2026-05-24T04:13:02.389Z",
+      "updatedAt": "2026-05-24T04:13:02.389Z"
+    },
+    {
+      "id": 4,
+      "name": "Cân thủy sản",
+      "description": "Cân tôm, cá, ....",
+      "icon": "ri-ship-line",
+      "image": null,
+      "createdAt": "2026-05-24T04:13:18.399Z",
+      "updatedAt": "2026-05-24T04:13:18.399Z"
+    },
+    {
+      "id": 5,
+      "name": "Cân vàng",
+      "description": "Cân phục vụ cho tiệm vàng",
+      "icon": "ri-medal-line",
+      "image": null,
+      "createdAt": "2026-05-24T04:13:54.902Z",
+      "updatedAt": "2026-05-24T04:13:54.902Z"
+    },
+    {
+      "id": 6,
+      "name": "Cân nông sản",
+      "description": "Cân lúa, cà phê, ...",
+      "icon": "ri-plant-line",
+      "image": null,
+      "createdAt": "2026-05-24T04:14:20.094Z",
+      "updatedAt": "2026-05-24T04:14:20.094Z"
+    },
+    {
+      "id": 7,
+      "name": "Cân treo điện tử",
+      "description": "Cân treo điện tử\n",
+      "icon": "ri-hang-line",
+      "image": null,
+      "createdAt": "2026-05-24T13:59:35.746Z",
+      "updatedAt": "2026-05-24T13:59:35.746Z"
+    },
+    {
+      "id": 8,
+      "name": "Cân ghế điện tử ",
+      "description": "Cân ghế điện tử ",
+      "icon": "ri-armchair-line",
+      "image": null,
+      "createdAt": "2026-05-24T14:57:13.909Z",
+      "updatedAt": "2026-05-24T14:57:13.909Z"
+    },
+    {
+      "id": 9,
+      "name": "Cân y tế",
+      "description": "Cân y tế",
+      "icon": "ri-flask-line",
+      "image": null,
+      "createdAt": "2026-05-24T15:09:53.703Z",
+      "updatedAt": "2026-05-24T15:09:53.703Z"
+    },
+    {
+      "id": 10,
+      "name": "Cân thú cưng",
+      "description": "Cân thú cưng",
+      "icon": "ri-bear-smile-line",
+      "image": null,
+      "createdAt": "2026-05-24T15:17:08.070Z",
+      "updatedAt": "2026-05-24T15:17:08.070Z"
+    },
+    {
+      "id": 11,
+      "name": "Cân nhà bếp",
+      "description": "Cân nhà bếp",
+      "icon": "ri-restaurant-line",
+      "image": null,
+      "createdAt": "2026-05-24T15:17:31.873Z",
+      "updatedAt": "2026-05-24T15:17:31.873Z"
+    }
+  ],
+  "products": [
+    {
+      "id": 7,
+      "name": "Cân Tính Tiền",
+      "description": "<h3><span style=\"color: rgb(0, 0, 255);\">Cân Bàn Điện Tử RECOOL</span></h3><p></p><img class=\"max-w-full h-auto rounded\" src=\"https://canvanthinhphat.com/wp-content/uploads/2025/10/C%C3%A2n-b%C3%A0n-%C4%91i%E1%BB%87n-t%E1%BB%AD-ricool-225x300.jpg\" alt=\"\" width=\"225\" height=\"300\"><h3><span style=\"color: rgb(153, 51, 0);\">Thông Tin Chi Tiết :</span></h3><p>Cân Điện Tử Chính Hãng Technology</p><p>Cung Cấp COCQ Nguồn Gốc Xuất Xứ Theo Yêu Cầu Khách Hàng</p><p>Làm Bảng Báo Giá Theo Yêu Cầu Khách Hàng.</p><p>Nhân Viên Công Ty Cân Điện Tử Sẽ Hướng Dẫn Trực Tiếp Cách Sử Dụng Cũng Như Hết Tất Cả Các Chức Năng Sản Phẩm Để Qúy Khách Hàng Có Thể Trải Nghiệm Sản Phẩm Tốt Nhất.</p><p>Kiểm Định, Hiệu Chuẩn Bởi Trung Tâm Đo Lường (Tùy Theo Yêu Cầu Khách Hàng).</p><p>Truyền Tín Hiệu Kết Nối Máy Tính Và Máy In, Chế Độ Truyền 9600.</p><p>Cân Điện Tử Công Nghiệp Hiện Đại Có Xuất Tín Hiệu RELAY Và Tín Hiệu HI LOW OK, Báo Thiếu, Báo Đủ, Báo Thừa, Dựa Vào Nguyên Lý Đó Các Chuyên Viên Ký Thuật Có Thể Áp Dụng Vào Trong Công Nghiệp Sản Xuất.</p><h3><span style=\"color: rgb(0, 0, 255);\"><u>Thông Số Kỹ Thuật :</u></span></h3><p>– Model : RICOOL</p><p>– Nhà Sản Xuất : Technology OEM</p><p>– Mức Cân : 40kg/ 50kg/ 60kg/ 100kg/ 120kg/ 150kg/ 200kg/ 250kg/ 300kg/ 350kg.</p><p>– Sai Số Bước Nhảy : 5g, 10g, 20g, 50g, 100g, 200g, 500g, 1kg.</p><p>– Độ Ổn Định Min = e =20 ,40 d.</p><h3><span style=\"color: rgb(0, 0, 255);\"><u>1.Tính Năng Của Cân Điện Tử:</u></span></h3><p>– Chính xác cao (độ phân giải bên trong:1/10,000).</p><p>– Màn hình hiển thị số to LED và LCD số rõ dể đọc.</p><p>– Chức năng tự kiểm tra pin.</p><p>– Cân điện tử được thiết kế vững chắc, cứng cáp, bền bỉ, an toàn, hiện đại, đa dạng mẫu mã cho nhiều lĩnh vực.</p><p>– Đơn vị của cân điện tử : Kg/ g/ Lb/ Oz.</p><p>– Màn hình hiển thị có trục đứng có thể xoay 360 độ.</p><h3><span style=\"color: rgb(0, 0, 255);\"><u>2. Các Tính Năng Tổng Quát Cân Điện Tử :</u></span></h3><p>– Thiết kế đạt tiêu chuẩn cấp III theo tiêu chuẩn OIML.</p><p>– Chuẩn chính xác cấp độ 3.</p><p>– Độ phẩn giải nội cao, tốc độ xử lý nhanh.</p><p>– Thiết kế chống bụi, chống ẩm, chống con trùng, cũng như sự ảnh hưởng môi trường.</p><p>– Người sử dụng có thể lựa chọn các đơn vị khác nhau kg, g, theo yêu cầu riêng.</p><p>– Tính năng trừ bì cộng trọng lượng, chuyển đơn vị, kiểm tra pin, cân trọng lượng.</p><p>– Thiết kế theo kiểu dạng công nghiệp : cứng cáp, bền bỉ, chuẩn xác, ổn định, đa dạng hiện đại.</p><h3><span style=\"color: rgb(0, 0, 255);\"><u>3.Các Chức Năng &amp; Chế Độ Hoạt Động Cân Điện Tử :</u></span></h3><p>– Chức năng: cân, trừ bì và thông báo chế độ trừ bì hiện hành.</p><p>– Chế độ thông báo tình trạng ổn định của cân.</p><p>– Cân có chức năng báo hiệu cân gần hết Pin.</p><p>– Chế độ tắt cân tự động (Automatic shut-off) giúp tiết kiệm năng lượng pin.</p><p>– Phương thức định lượng cảm biến (load cell).</p><p>– Nguồn điện 220V/50Hz / Pin Sạc (80 Giờ).</p><p>– Kích Thước khung cân : 400mmX500mm, 500mmX600mm, 600mmX800mm.</p><h3><span style=\"color: rgb(0, 0, 255);\"><u>4.Bảo Quản :</u></span></h3><h3>Lưu ý:&nbsp;Tránh bị chai bình và làm hỏng mạch xạc, tuyệt đối không được dùng hết sạch bình accu rồi mới cắm xạc, khi xạc đầy thì phải rút nguồn xạc. Sử dụng đúng sạc theo cân, không cắm xạc liên tục khi bình đã đầy, khi không sử dụng cân trong thời gian dài thì nên xạc định kỳ mổi tháng ít nhất một lần.<br>Vệ sinh bảo trì định kỳ cân.<br>Ngắt nguồn điện trước khi vệ sinh cân, chắc chắn không có chất lỏng bên trong, vệ sinh cân bằng khăn ẩm hoặc sử dụng các chất tẩy rửa nhẹ. Không sử dụng&nbsp;cân trong môi trường dung môi, hóa chất khắc nghiệt.</h3><h3><strong>Liên hệ mua hàng thảm khảo báo giá tư vấn kỹ thuật ♥MR Thịnh: 0911093511 Giá Ưu Đãi Ngay Hôm Này (Có Chiết Khấu Cao Khi Đặt Hàng).&nbsp;</strong></h3><h3><strong>CÔNG TY TNHH SẢN XUẤT THƯƠNG MẠI DỊCH VỤ CÂN ĐIỆN TỬ VẠN THỊNH PHÁT</strong></h3><p><strong>Website: </strong><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-blue-600 underline\" href=\"http://canvanthinhphat.com\"><strong>canvanthinhphat.com</strong></a><br><strong>Điện Thoại : 0911.093.511</strong><br><strong>Za.lo : 0911.093.511</strong></p><p><strong>Từ khóa :&nbsp;</strong><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-blue-600 underline\" href=\"https://canvanthinhphat.com/\">canbandientu#can40kg#can50kg#can60#can100kg#can120kg#can150kg#can200kg#can250kg#can300kg#can350kg.</a><span style=\"color: rgb(0, 0, 255);\">Cân Bàn Điện Tử RECOOL</span></p><p></p><img class=\"max-w-full h-auto rounded\" src=\"https://canvanthinhphat.com/wp-content/uploads/2025/10/C%C3%A2n-b%C3%A0n-%C4%91i%E1%BB%87n-t%E1%BB%AD-ricool-225x300.jpg\" alt=\"\" width=\"225\" height=\"300\"><h3><span style=\"color: rgb(153, 51, 0);\">Thông Tin Chi Tiết :</span></h3><p>Cân Điện Tử Chính Hãng Technology</p><p>Cung Cấp COCQ Nguồn Gốc Xuất Xứ Theo Yêu Cầu Khách Hàng</p><p>Làm Bảng Báo Giá Theo Yêu Cầu Khách Hàng.</p><p>Nhân Viên Công Ty Cân Điện Tử Sẽ Hướng Dẫn Trực Tiếp Cách Sử Dụng Cũng Như Hết Tất Cả Các Chức Năng Sản Phẩm Để Qúy Khách Hàng Có Thể Trải Nghiệm Sản Phẩm Tốt Nhất.</p><p>Kiểm Định, Hiệu Chuẩn Bởi Trung Tâm Đo Lường (Tùy Theo Yêu Cầu Khách Hàng).</p><p>Truyền Tín Hiệu Kết Nối Máy Tính Và Máy In, Chế Độ Truyền 9600.</p><p>Cân Điện Tử Công Nghiệp Hiện Đại Có Xuất Tín Hiệu RELAY Và Tín Hiệu HI LOW OK, Báo Thiếu, Báo Đủ, Báo Thừa, Dựa Vào Nguyên Lý Đó Các Chuyên Viên Ký Thuật Có Thể Áp Dụng Vào Trong Công Nghiệp Sản Xuất.</p><h3><span style=\"color: rgb(0, 0, 255);\"><u>Thông Số Kỹ Thuật :</u></span></h3><p>– Model : RICOOL</p><p>– Nhà Sản Xuất : Technology OEM</p><p>– Mức Cân : 40kg/ 50kg/ 60kg/ 100kg/ 120kg/ 150kg/ 200kg/ 250kg/ 300kg/ 350kg.</p><p>– Sai Số Bước Nhảy : 5g, 10g, 20g, 50g, 100g, 200g, 500g, 1kg.</p><p>– Độ Ổn Định Min = e =20 ,40 d.</p><h3><span style=\"color: rgb(0, 0, 255);\"><u>1.Tính Năng Của Cân Điện Tử:</u></span></h3><p>– Chính xác cao (độ phân giải bên trong:1/10,000).</p><p>– Màn hình hiển thị số to LED và LCD số rõ dể đọc.</p><p>– Chức năng tự kiểm tra pin.</p><p>– Cân điện tử được thiết kế vững chắc, cứng cáp, bền bỉ, an toàn, hiện đại, đa dạng mẫu mã cho nhiều lĩnh vực.</p><p>– Đơn vị của cân điện tử : Kg/ g/ Lb/ Oz.</p><p>– Màn hình hiển thị có trục đứng có thể xoay 360 độ.</p><h3><span style=\"color: rgb(0, 0, 255);\"><u>2. Các Tính Năng Tổng Quát Cân Điện Tử :</u></span></h3><p>– Thiết kế đạt tiêu chuẩn cấp III theo tiêu chuẩn OIML.</p><p>– Chuẩn chính xác cấp độ 3.</p><p>– Độ phẩn giải nội cao, tốc độ xử lý nhanh.</p><p>– Thiết kế chống bụi, chống ẩm, chống con trùng, cũng như sự ảnh hưởng môi trường.</p><p>– Người sử dụng có thể lựa chọn các đơn vị khác nhau kg, g, theo yêu cầu riêng.</p><p>– Tính năng trừ bì cộng trọng lượng, chuyển đơn vị, kiểm tra pin, cân trọng lượng.</p><p>– Thiết kế theo kiểu dạng công nghiệp : cứng cáp, bền bỉ, chuẩn xác, ổn định, đa dạng hiện đại.</p><h3><span style=\"color: rgb(0, 0, 255);\"><u>3.Các Chức Năng &amp; Chế Độ Hoạt Động Cân Điện Tử :</u></span></h3><p>– Chức năng: cân, trừ bì và thông báo chế độ trừ bì hiện hành.</p><p>– Chế độ thông báo tình trạng ổn định của cân.</p><p>– Cân có chức năng báo hiệu cân gần hết Pin.</p><p>– Chế độ tắt cân tự động (Automatic shut-off) giúp tiết kiệm năng lượng pin.</p><p>– Phương thức định lượng cảm biến (load cell).</p><p>– Nguồn điện 220V/50Hz / Pin Sạc (80 Giờ).</p><p>– Kích Thước khung cân : 400mmX500mm, 500mmX600mm, 600mmX800mm.</p><h3><span style=\"color: rgb(0, 0, 255);\"><u>4.Bảo Quản :</u></span></h3><h3>Lưu ý:&nbsp;Tránh bị chai bình và làm hỏng mạch xạc, tuyệt đối không được dùng hết sạch bình accu rồi mới cắm xạc, khi xạc đầy thì phải rút nguồn xạc. Sử dụng đúng sạc theo cân, không cắm xạc liên tục khi bình đã đầy, khi không sử dụng cân trong thời gian dài thì nên xạc định kỳ mổi tháng ít nhất một lần.<br>Vệ sinh bảo trì định kỳ cân.<br>Ngắt nguồn điện trước khi vệ sinh cân, chắc chắn không có chất lỏng bên trong, vệ sinh cân bằng khăn ẩm hoặc sử dụng các chất tẩy rửa nhẹ. Không sử dụng&nbsp;cân trong môi trường dung môi, hóa chất khắc nghiệt.</h3><h3><strong>Liên hệ mua hàng thảm khảo báo giá tư vấn kỹ thuật ♥MR Thịnh: 0911093511 Giá Ưu Đãi Ngay Hôm Này (Có Chiết Khấu Cao Khi Đặt Hàng).&nbsp;</strong></h3><h3><strong>CÔNG TY TNHH SẢN XUẤT THƯƠNG MẠI DỊCH VỤ CÂN ĐIỆN TỬ VẠN THỊNH PHÁT</strong></h3><p><strong>Website: </strong><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-blue-600 underline\" href=\"http://canvanthinhphat.com\"><strong>canvanthinhphat.com</strong></a><br><strong>Điện Thoại : 0911.093.511</strong><br><strong>Za.lo : 0911.093.511</strong></p><p><strong>Từ khóa :&nbsp;</strong><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-blue-600 underline\" href=\"https://canvanthinhphat.com/\">canbandientu#can40kg#can50kg#can60#can100kg#can120kg#can150kg#can200kg#can250kg#can300kg#can350kg.</a></p>",
+      "categoryId": 2,
+      "capacity": "14kg",
+      "accuracy": "0.01KG",
+      "price": "1800000",
+      "image": "https://k9e6sv0nmg.ufs.sh/f/JiYIPra08Tjv0ptbiVyS01uvkjzQexqtCX9KB6aUVyoTrA5L",
+      "images": [
+        "https://k9e6sv0nmg.ufs.sh/f/JiYIPra08Tjv0ptbiVyS01uvkjzQexqtCX9KB6aUVyoTrA5L",
+        "https://k9e6sv0nmg.ufs.sh/f/JiYIPra08TjvmlVGg3f0d6qaUZKsLTFQ3bwPYpnkAthiWr2G"
+      ],
+      "featured": false,
+      "dialSize": "23",
+      "scaleSize": "15",
+      "manufacturer": "OEM",
+      "origin": "Taiwan",
+      "createdAt": "2026-08-27T04:57:51.510Z",
+      "updatedAt": "2026-08-27T08:10:56.165Z"
+    }
+  ],
+  "news": [
+    {
+      "id": 1,
+      "title": "a",
+      "content": "<p>a</p>",
+      "excerpt": "aaaa",
+      "image": "https://k9e6sv0nmg.ufs.sh/f/JiYIPra08Tjv7AbztewfqWsKoTRHlkpz85mLXcyGQSV9iE2Z",
+      "published": false,
+      "createdAt": "2026-05-24T02:59:32.018Z",
+      "updatedAt": "2026-09-10T07:36:54.060Z"
+    }
+  ],
+  "reviews": [
+    {
+      "id": 1,
+      "reviewerName": "Trần Quang Đạt",
+      "content": "Đỉnh cao",
+      "rating": 5,
+      "isVisible": true,
+      "createdAt": "2026-05-24T03:50:03.363Z",
+      "updatedAt": "2026-05-24T03:50:03.363Z"
+    },
+    {
+      "id": 4,
+      "reviewerName": "Trần Trọng Nghĩa (Chủ vựa hải sản)",
+      "content": "Cân uy tín, chính xác",
+      "rating": 5,
+      "isVisible": true,
+      "createdAt": "2026-05-24T03:58:55.912Z",
+      "updatedAt": "2026-05-24T03:58:55.912Z"
+    },
+    {
+      "id": 3,
+      "reviewerName": "Trần Mạnh Cường (Chủ hồ cá)",
+      "content": "Nhận cân chưa biết sử dụng, bên công ty hướng dẫn nhiệt tình thật",
+      "rating": 5,
+      "isVisible": true,
+      "createdAt": "2026-05-24T03:51:04.082Z",
+      "updatedAt": "2026-05-24T04:03:14.554Z"
+    },
+    {
+      "id": 2,
+      "reviewerName": "Hòa Hoàng (Cửa hàng rau)",
+      "content": "Đặt hàng buổi sáng, buổi chiều đã có người giao tới. Chuyên nghiệp, nhiệt tình, chu đáo",
+      "rating": 5,
+      "isVisible": true,
+      "createdAt": "2026-05-24T03:50:42.315Z",
+      "updatedAt": "2026-05-24T04:04:12.616Z"
+    }
+  ],
+  "contacts": [
+    {
+      "id": 1,
+      "name": "a",
+      "phone": "a",
+      "email": "admin@webcancban.com",
+      "product": "c",
+      "message": "aaa",
+      "status": "new",
+      "createdAt": "2026-05-24T11:11:32.396Z"
+    }
+  ]
+}

@@ -85,12 +85,16 @@ export default function ProductFilter({ onFilterChange, initialFilters }: Produc
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-gray-400" />
           </div>
+          <label htmlFor="product-search" className="sr-only">
+            Tìm kiếm sản phẩm theo tên
+          </label>
           <input
-            type="text"
+            id="product-search"
+            type="search"
             placeholder="Tìm kiếm theo tên sản phẩm..."
             value={filters.search}
             onChange={handleSearchChange}
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="block w-full min-h-touch pl-10 pr-3 py-2 border-2 border-gray-300 rounded-lg bg-white text-base sm:text-sm placeholder-gray-400 focus:outline-none focus:border-blue-600 transition-colors"
           />
         </div>
 
@@ -98,10 +102,14 @@ export default function ProductFilter({ onFilterChange, initialFilters }: Produc
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
             <Filter className="h-4 w-4 text-gray-400" />
+            <label htmlFor="product-category-filter" className="sr-only">
+              Lọc theo danh mục
+            </label>
             <select
+              id="product-category-filter"
               value={filters.categoryId}
               onChange={handleCategoryChange}
-              className="block py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="block min-h-touch py-2 px-3 border-2 border-gray-300 bg-white rounded-lg text-base sm:text-sm focus:outline-none focus:border-blue-600 transition-colors"
             >
               <option value="all">Tất cả danh mục</option>
               {categories.map((category) => (

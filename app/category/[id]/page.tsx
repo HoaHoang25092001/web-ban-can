@@ -1,22 +1,57 @@
+import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import ProductCard from '../../../components/ProductCard';
 import { Metadata } from 'next';
 
-export const dynamic = 'force-dynamic';
+// Cache 5 phút: danh sách sản phẩm theo danh mục thay đổi không thường xuyên,
+// không cần truy vấn lại database ở mỗi lượt xem (tiêu chí 7).
+export const revalidate = 300;
 
 interface CategoryPageProps {
   params: Promise<{
     id: string;
   }>;
+  searchParams: Promise<{ page?: string }>;
 }
+
+/**
+ * Số sản phẩm mỗi trang.
+ * Danh mục lớn nhất có hơn 1.100 sản phẩm — tải hết một lần sẽ mất nhiều giây
+ * và tạo ra trang nặng hàng chục MB (tiêu chí 7). 24 sản phẩm chia hết cho lưới
+ * 2/3/4 cột nên hàng cuối luôn đầy, không bị lẻ.
+ */
+const PER_PAGE = 24;
+
+/**
+ * Tra cứu danh mục, dùng chung cho generateMetadata và thân trang.
+ *
+ * Next.js gọi generateMetadata và component như hai lượt riêng, nên bản trước
+ * truy vấn `category.findUnique` HAI LẦN cho mỗi lượt xem. `cache` của React
+ * gộp lại thành một lần trong cùng một request (tiêu chí 7).
+ */
+const getCategory = cache((id: number) =>
+  prisma.category.findUnique({ where: { id } })
+);
+
+/**
+ * Đếm số sản phẩm trong danh mục.
+ *
+ * Phép đếm phải quét toàn bộ hàng của danh mục — danh mục lớn nhất có hơn 1.100
+ * sản phẩm — mà chỉ dùng để tính số trang. Con số đó gần như không đổi, nên
+ * cache riêng 1 giờ thay vì quét lại mỗi 5 phút cùng danh sách sản phẩm.
+ */
+const getCount = unstable_cache(
+  (id: number) => prisma.product.count({ where: { categoryId: id } }),
+  ['category-product-count'],
+  { revalidate: 3600, tags: ['products'] }
+);
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { id } = await params;
   try {
-    const category = await prisma.category.findUnique({
-      where: { id: parseInt(id) }
-    });
+    const category = await getCategory(parseInt(id));
     if (!category) return { title: 'Không tìm thấy danh mục - Vạn Thịnh Phát' };
     return {
       title: `${category.name} - Cân điện tử chất lượng cao`,
@@ -27,9 +62,11 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   }
 }
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
+export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { id } = await params;
+  const { page: pageParam } = await searchParams;
   const categoryId = parseInt(id);
+  const currentPage = Math.max(1, parseInt(pageParam || '1') || 1);
 
   if (isNaN(categoryId)) {
     return (
@@ -53,15 +90,32 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   }
 
   // Tải trực tiếp dữ liệu từ Database thông qua Prisma
-  const [category, products] = await Promise.all([
-    prisma.category.findUnique({
-      where: { id: categoryId }
-    }),
+  const [category, products, totalProducts] = await Promise.all([
+    getCategory(categoryId),
     prisma.product.findMany({
       where: { categoryId: categoryId },
-      orderBy: { createdAt: 'desc' }
-    })
+      // Chỉ lấy các cột cần cho card, không kéo cả mô tả dài về
+      select: {
+        id: true, name: true, capacity: true, accuracy: true,
+        price: true, image: true, featured: true,
+      },
+      /*
+       * Sản phẩm CÓ ẢNH lên trước.
+       * 52/3.226 sản phẩm không lấy được ảnh từ web cũ; nếu chỉ sắp theo ngày
+       * tạo thì chúng dồn lên đầu trang 1 — khách mở danh mục ra thấy toàn ô
+       * xám trống, tưởng website hỏng (tiêu chí 3 & 9).
+       * Postgres xếp NULL sau cùng khi dùng 'desc' với nulls last.
+       */
+      orderBy: [
+        { image: { sort: 'desc', nulls: 'last' } },
+        { createdAt: 'desc' },
+      ],
+      skip: (currentPage - 1) * PER_PAGE,
+      take: PER_PAGE,
+    }),
+    getCount(categoryId),
   ]);
+  const totalPages = Math.max(1, Math.ceil(totalProducts / PER_PAGE));
 
   if (!category) {
     return (
@@ -92,7 +146,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Breadcrumb */}
           <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4 font-medium">
-            <Link href="/" className="hover:text-blue-600 transition-colors">
+            <Link href="/" className="hover:text-blue-600 transition-colors inline-flex items-center min-h-touch">
               Trang chủ
             </Link>
             <i className="ri-arrow-right-s-line text-gray-400"></i>
@@ -116,7 +170,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 <p className="text-base text-gray-600 leading-relaxed max-w-4xl mt-2">{category.description}</p>
               )}
               <p className="text-xs text-slate-500 font-bold bg-slate-100 border rounded-full px-3 py-1 inline-block mt-3 uppercase tracking-wider">
-                {products.length} sản phẩm có sẵn
+                {totalProducts.toLocaleString('vi-VN')} sản phẩm
+                {totalPages > 1 && ` · trang ${currentPage}/${totalPages}`}
               </p>
             </div>
           </div>
@@ -140,6 +195,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             {products.map((product) => (
               <ProductCard
                 key={product.id}
+                headingLevel={2}
                 product={{
                   id: product.id,
                   name: product.name,
@@ -154,7 +210,108 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             ))}
           </div>
         )}
+
+        {/* ── Phân trang ── */}
+        {totalPages > 1 && (
+          <nav aria-label="Phân trang sản phẩm" className="mt-10 flex flex-col items-center gap-3">
+            <ul className="flex items-center gap-1 flex-wrap justify-center">
+              {/* Trang trước */}
+              <li>
+                {currentPage > 1 ? (
+                  <Link
+                    href={`/category/${categoryId}?page=${currentPage - 1}`}
+                    rel="prev"
+                    aria-label="Trang trước"
+                    className="inline-flex items-center gap-1 min-h-touch px-3 rounded-control border border-surface-border bg-white text-slate-700 hover:bg-brand-50 hover:text-brand-700 transition-colors"
+                  >
+                    <i className="ri-arrow-left-s-line" aria-hidden="true"></i>
+                    <span className="hidden sm:inline">Trước</span>
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1 min-h-touch px-3 rounded-control border border-surface-border bg-slate-50 text-slate-400 cursor-not-allowed">
+                    <i className="ri-arrow-left-s-line" aria-hidden="true"></i>
+                    <span className="hidden sm:inline">Trước</span>
+                  </span>
+                )}
+              </li>
+
+              {/* Dãy số trang: luôn hiện trang đầu, trang cuối và lân cận trang
+                  hiện tại; phần bị lược bỏ thay bằng dấu … (tiêu chí 4) */}
+              {buildPageList(currentPage, totalPages).map((item, idx) =>
+                item === 'gap' ? (
+                  <li key={`gap-${idx}`} aria-hidden="true" className="px-2 text-slate-400">
+                    …
+                  </li>
+                ) : (
+                  <li key={item}>
+                    <Link
+                      href={`/category/${categoryId}?page=${item}`}
+                      aria-label={`Trang ${item}`}
+                      aria-current={item === currentPage ? 'page' : undefined}
+                      className={`inline-flex items-center justify-center min-w-touch min-h-touch px-3 rounded-control border transition-colors tabular-nums ${
+                        item === currentPage
+                          ? 'bg-brand-600 text-white border-brand-600 font-semibold'
+                          : 'bg-white text-slate-700 border-surface-border hover:bg-brand-50 hover:text-brand-700'
+                      }`}
+                    >
+                      {item}
+                    </Link>
+                  </li>
+                )
+              )}
+
+              {/* Trang sau */}
+              <li>
+                {currentPage < totalPages ? (
+                  <Link
+                    href={`/category/${categoryId}?page=${currentPage + 1}`}
+                    rel="next"
+                    aria-label="Trang sau"
+                    className="inline-flex items-center gap-1 min-h-touch px-3 rounded-control border border-surface-border bg-white text-slate-700 hover:bg-brand-50 hover:text-brand-700 transition-colors"
+                  >
+                    <span className="hidden sm:inline">Sau</span>
+                    <i className="ri-arrow-right-s-line" aria-hidden="true"></i>
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1 min-h-touch px-3 rounded-control border border-surface-border bg-slate-50 text-slate-400 cursor-not-allowed">
+                    <span className="hidden sm:inline">Sau</span>
+                    <i className="ri-arrow-right-s-line" aria-hidden="true"></i>
+                  </span>
+                )}
+              </li>
+            </ul>
+
+            <p className="text-sm text-slate-500">
+              Trang {currentPage} / {totalPages} · {totalProducts.toLocaleString('vi-VN')} sản phẩm
+            </p>
+          </nav>
+        )}
       </div>
     </div>
   );
+}
+
+/**
+ * Dựng dãy số trang rút gọn: 1 … 4 5 [6] 7 8 … 42
+ * Danh mục lớn nhất có tới 47 trang — hiện hết số trang sẽ tràn màn hình và
+ * không ai bấm nổi trang giữa.
+ */
+function buildPageList(current: number, total: number): (number | 'gap')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const pages = new Set<number>([1, total, current]);
+  for (let d = 1; d <= 1; d++) {
+    if (current - d > 1) pages.add(current - d);
+    if (current + d < total) pages.add(current + d);
+  }
+  const sorted = [...pages].sort((a, b) => a - b);
+
+  const out: (number | 'gap')[] = [];
+  let prev = 0;
+  for (const p of sorted) {
+    if (prev && p - prev > 1) out.push('gap');
+    out.push(p);
+    prev = p;
+  }
+  return out;
 }

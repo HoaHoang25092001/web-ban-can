@@ -1,29 +1,37 @@
-'use client';
-
 interface TableProps {
   headers: string[];
   children: React.ReactNode;
+  /** Mô tả bảng cho screen reader, ví dụ "Danh sách sản phẩm". */
+  caption?: string;
 }
 
-export function Table({ headers, children }: TableProps) {
+/**
+ * Bảng dữ liệu trang quản trị.
+ *
+ * Bản trước dùng `overflow-hidden` ở khung ngoài: trên màn hình hẹp, các cột
+ * bên phải bị cắt và KHÔNG thể cuộn tới. Nay dùng `overflow-x-auto` để bảng tự
+ * cuộn ngang trong khung riêng, không làm cả trang bị cuộn ngang (tiêu chí 6).
+ */
+export function Table({ headers, children, caption }: TableProps) {
   return (
-    <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-      <table className="min-w-full divide-y divide-gray-300">
+    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+      <table className="min-w-full divide-y divide-gray-200">
+        {caption && <caption className="sr-only-text">{caption}</caption>}
         <thead className="bg-gray-50">
           <tr>
             {headers.map((header, index) => (
               <th
                 key={index}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                /* scope="col" cho screen reader biết đây là tiêu đề của cột */
+                scope="col"
+                className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap"
               >
                 {header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {children}
-        </tbody>
+        <tbody className="bg-white divide-y divide-gray-200">{children}</tbody>
       </table>
     </div>
   );
@@ -34,7 +42,7 @@ interface TableRowProps {
 }
 
 export function TableRow({ children }: TableRowProps) {
-  return <tr className="hover:bg-gray-50">{children}</tr>;
+  return <tr className="hover:bg-gray-50 transition-colors">{children}</tr>;
 }
 
 interface TableCellProps {
@@ -44,7 +52,7 @@ interface TableCellProps {
 
 export function TableCell({ children, className = '' }: TableCellProps) {
   return (
-    <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${className}`}>
+    <td className={`px-4 sm:px-6 py-4 text-sm text-gray-900 ${className}`}>
       {children}
     </td>
   );

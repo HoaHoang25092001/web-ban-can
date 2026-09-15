@@ -2,8 +2,9 @@
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Package, Tags, Newspaper, MessageSquare } from 'lucide-react';
+import { Package, Tags, Newspaper, MessageSquare, Star, Plus } from 'lucide-react';
 
 interface Stats {
   products: number;
@@ -21,15 +22,22 @@ export default function AdminDashboard() {
     contacts: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchStats = async () => {
       try {
+        // limit=1 vì chỉ cần con số tổng trong `pagination.total`, không cần
+        // danh sách bản ghi. Bản trước gọi mặc định (10 bản ghi mỗi API kèm cả
+        // quan hệ) chỉ để đếm — tải thừa dữ liệu ở mọi lần mở trang.
+        const opts = { signal: controller.signal };
         const [productsRes, categoriesRes, newsRes, contactsRes] = await Promise.all([
-          fetch('/api/products'),
-          fetch('/api/categories'),
-          fetch('/api/news'),
-          fetch('/api/contacts'),
+          fetch('/api/products?limit=1', opts),
+          fetch('/api/categories', opts),
+          fetch('/api/news?limit=1', opts),
+          fetch('/api/contacts?limit=1', opts),
         ]);
 
         const [products, categories, news, contacts] = await Promise.all([
@@ -40,156 +48,121 @@ export default function AdminDashboard() {
         ]);
 
         setStats({
-          products: products.pagination?.total || products.products?.length || 0,
-          categories: categories.categories?.length || 0,
-          news: news.pagination?.total || news.news?.length || 0,
-          contacts: contacts.pagination?.total || contacts.contacts?.length || 0,
+          products: products.pagination?.total ?? 0,
+          categories: categories.categories?.length ?? 0,
+          news: news.pagination?.total ?? 0,
+          contacts: contacts.pagination?.total ?? 0,
         });
-      } catch (error) {
-        console.error('Error fetching stats:', error);
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return;
+        console.error('Error fetching stats:', err);
+        setError(true);
       } finally {
         setLoading(false);
       }
     };
 
     fetchStats();
+    return () => controller.abort();
   }, []);
 
   const statCards = [
-    {
-      title: 'Sản phẩm',
-      value: stats.products,
-      icon: Package,
-      color: 'bg-blue-500',
-      href: '/admin/products',
-    },
-    {
-      title: 'Danh mục',
-      value: stats.categories,
-      icon: Tags,
-      color: 'bg-green-500',
-      href: '/admin/categories',
-    },
-    {
-      title: 'Tin tức',
-      value: stats.news,
-      icon: Newspaper,
-      color: 'bg-purple-500',
-      href: '/admin/news',
-    },
-    {
-      title: 'Liên hệ',
-      value: stats.contacts,
-      icon: MessageSquare,
-      color: 'bg-orange-500',
-      href: '/admin/contacts',
-    },
+    { title: 'Sản phẩm', value: stats.products, icon: Package, color: 'bg-blue-600', href: '/admin/products' },
+    { title: 'Danh mục', value: stats.categories, icon: Tags, color: 'bg-emerald-600', href: '/admin/categories' },
+    { title: 'Tin tức', value: stats.news, icon: Newspaper, color: 'bg-purple-600', href: '/admin/news' },
+    { title: 'Liên hệ', value: stats.contacts, icon: MessageSquare, color: 'bg-orange-600', href: '/admin/contacts' },
+  ];
+
+  const quickActions = [
+    { label: 'Thêm sản phẩm mới', href: '/admin/products/new', icon: Package },
+    { label: 'Thêm danh mục mới', href: '/admin/categories/new', icon: Tags },
+    { label: 'Viết tin tức mới', href: '/admin/news/new', icon: Newspaper },
+    { label: 'Thêm đánh giá', href: '/admin/reviews', icon: Star },
   ];
 
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Tổng quan hệ thống quản lý website</p>
+          <h1 className="text-2xl font-bold text-gray-900">Tổng quan</h1>
+          <p className="text-gray-600 mt-1">
+            Xin chào{session?.user?.name ? `, ${session.user.name}` : ''}. Đây là tình hình
+            hiện tại của website.
+          </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {error && (
+          <div role="alert" className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+            Không tải được số liệu thống kê. Vui lòng tải lại trang.
+          </div>
+        )}
+
+        {/* Thẻ số liệu: dùng <Link> thay cho <div onClick> để bàn phím tới được
+            và mở tab mới được (tiêu chí 5) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {statCards.map((card) => {
             const Icon = card.icon;
             return (
-              <div
+              <Link
                 key={card.title}
-                className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => window.location.href = card.href}
+                href={card.href}
+                className="bg-white rounded-lg border border-gray-200 p-4 sm:p-5 hover:border-blue-400 hover:shadow-md transition-all"
               >
-                <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className={`${card.color} rounded-md p-3`}>
-                        <Icon className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                    <div className="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">
-                          {card.title}
-                        </dt>
-                        <dd>
-                          <div className="text-lg font-medium text-gray-900">
-                            {loading ? '...' : card.value}
-                          </div>
-                        </dd>
-                      </dl>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-4">
+                  <span className={`${card.color} rounded-lg p-3 flex-shrink-0`}>
+                    <Icon className="h-5 w-5 text-white" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium text-gray-500 truncate">
+                      {card.title}
+                    </span>
+                    <span className="block text-2xl font-bold text-gray-900 tabular-nums">
+                      {loading ? (
+                        // Skeleton thay cho "..." để không nhảy layout (tiêu chí 7)
+                        <span className="inline-block h-7 w-10 bg-gray-200 rounded animate-pulse align-middle" />
+                      ) : (
+                        card.value
+                      )}
+                    </span>
+                  </span>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
 
-        {/* Welcome Section */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
-              Chào mừng, {session?.user?.name}!
-            </h2>
-            <div className="prose text-gray-600">
-              <p>
-                Bạn đang sử dụng hệ thống quản lý website bán cân điện tử. 
-                Từ đây bạn có thể:
-              </p>
-              <ul className="list-disc ml-6 mt-2 space-y-1">
-                <li>Quản lý danh mục sản phẩm</li>
-                <li>Thêm, sửa, xóa sản phẩm</li>
-                <li>Đăng và quản lý tin tức</li>
-                <li>Xem và phản hồi liên hệ từ khách hàng</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        {/* Thao tác nhanh */}
+        <section className="bg-white rounded-lg border border-gray-200 p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Thao tác nhanh</h2>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <li key={action.href}>
+                  <Link
+                    href={action.href}
+                    className="flex items-center gap-3 min-h-touch p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors h-full"
+                  >
+                    <Icon className="h-5 w-5 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-sm font-medium text-gray-900">{action.label}</span>
+                    <Plus className="h-4 w-4 text-gray-400 ml-auto flex-shrink-0" aria-hidden="true" />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
 
-        {/* Quick Actions */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Thao tác nhanh
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button
-                onClick={() => window.location.href = '/admin/products/new'}
-                className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-center"
-              >
-                <Package className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <span className="text-sm font-medium text-gray-900">
-                  Thêm sản phẩm mới
-                </span>
-              </button>
-              
-              <button
-                onClick={() => window.location.href = '/admin/categories/new'}
-                className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors text-center"
-              >
-                <Tags className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <span className="text-sm font-medium text-gray-900">
-                  Thêm danh mục mới
-                </span>
-              </button>
-              
-              <button
-                onClick={() => window.location.href = '/admin/news/new'}
-                className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors text-center"
-              >
-                <Newspaper className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <span className="text-sm font-medium text-gray-900">
-                  Viết tin tức mới
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
+        {/* Hướng dẫn ngắn gọn (tiêu chí 9: đoạn ngắn, gạch đầu dòng) */}
+        <section className="bg-white rounded-lg border border-gray-200 p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-3">Việc bạn có thể làm ở đây</h2>
+          <ul className="list-disc ml-5 space-y-1.5 text-gray-600 text-sm max-w-prose">
+            <li>Thêm, sửa, xóa sản phẩm và đánh dấu sản phẩm nổi bật để hiện trên trang chủ</li>
+            <li>Quản lý danh mục sản phẩm hiển thị ở thanh điều hướng</li>
+            <li>Đăng tin tức (nhớ bật &ldquo;Xuất bản&rdquo; thì bài mới hiện ra ngoài)</li>
+            <li>Xem liên hệ khách hàng gửi từ website và đánh giá hiển thị trên trang chủ</li>
+          </ul>
+        </section>
       </div>
     </AdminLayout>
   );

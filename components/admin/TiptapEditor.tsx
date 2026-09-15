@@ -9,7 +9,7 @@ import Link from '@tiptap/extension-link';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   Bold,
   Italic,
@@ -32,6 +32,7 @@ import {
   Image as ImageIcon,
   Smile,
   Palette,
+  X,
 } from 'lucide-react';
 
 interface TiptapEditorProps {
@@ -41,6 +42,46 @@ interface TiptapEditorProps {
   placeholder?: string;
   required?: boolean;
   height?: number;
+}
+
+/**
+ * Nút trên thanh công cụ.
+ *
+ * Định nghĩa Ở NGOÀI component cha: bản trước khai báo bên trong nên mỗi lần gõ
+ * một ký tự, React coi đây là một loại component mới và tháo/dựng lại toàn bộ
+ * ~25 nút — vừa tốn tài nguyên vừa làm mất focus.
+ *
+ * Vùng chạm 40px (thanh công cụ dày đặc nên không ép đủ 44px, nhưng vẫn lớn hơn
+ * mức 32px trước đây) và có trạng thái aria-pressed cho screen reader.
+ */
+function ToolbarButton({
+  onClick,
+  active = false,
+  disabled = false,
+  children,
+  title,
+}: {
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
+  children: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+      aria-pressed={active}
+      className={`w-10 h-10 flex items-center justify-center rounded hover:bg-gray-200 transition-colors ${
+        active ? 'bg-blue-100 text-blue-700' : 'text-gray-700'
+      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    >
+      {children}
+    </button>
+  );
 }
 
 export default function TiptapEditor({
@@ -53,6 +94,36 @@ export default function TiptapEditor({
 }: TiptapEditorProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Đóng bảng emoji / bảng màu khi nhấn Esc hoặc bấm ra ngoài (tiêu chí 5).
+   * Trước đây chỉ đóng được bằng nút "Đóng" bên trong bảng, nên bảng cứ mở lơ
+   * lửng che mất nội dung đang soạn.
+   */
+  useEffect(() => {
+    if (!showEmojiPicker && !showColorPicker) return;
+
+    const closeAll = () => {
+      setShowEmojiPicker(false);
+      setShowColorPicker(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeAll();
+    };
+    const onPointerDown = (e: MouseEvent) => {
+      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+        closeAll();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('mousedown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('mousedown', onPointerDown);
+    };
+  }, [showEmojiPicker, showColorPicker]);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -160,41 +231,24 @@ export default function TiptapEditor({
     );
   }
 
-  const ToolbarButton = ({
-    onClick,
-    active = false,
-    disabled = false,
-    children,
-    title,
-  }: {
-    onClick: () => void;
-    active?: boolean;
-    disabled?: boolean;
-    children: React.ReactNode;
-    title: string;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-        active ? 'bg-gray-300 text-blue-600' : 'text-gray-700'
-      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-    >
-      {children}
-    </button>
-  );
-
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
 
-      <div className="border border-gray-300 rounded-lg overflow-hidden bg-white">
+      {/*
+        KHÔNG dùng overflow-hidden ở đây: bảng chọn emoji và bảng màu là phần tử
+        `absolute` nằm tràn ra ngoài khung editor, nên overflow-hidden của thẻ cha
+        sẽ CẮT CỤT chúng — người dùng chỉ thấy vài cột emoji đầu tiên.
+        Dùng isolate để tạo stacking context riêng, giữ z-index hoạt động đúng.
+      */}
+      <div className="border border-gray-300 rounded-lg bg-white isolate">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-1 p-2 bg-gray-50 border-b border-gray-300">
+        <div
+          ref={toolbarRef}
+          className="flex flex-wrap items-center gap-1 p-2 bg-gray-50 border-b border-gray-300 rounded-t-lg"
+        >
           {/* Text Formatting */}
           <div className="flex items-center gap-1 border-r border-gray-300 pr-2">
             <ToolbarButton
@@ -393,28 +447,59 @@ export default function TiptapEditor({
                 <Smile size={18} />
               </ToolbarButton>
               {showEmojiPicker && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 grid grid-cols-8 gap-1 w-72 z-20">
-                  <div className="col-span-8 text-xs text-gray-500 mb-2 border-b pb-2">
-                    Click để thêm emoji
-                  </div>
-                  {commonEmojis.map((emoji, index) => (
+                <>
+                {/* Lớp phủ: làm nổi bảng chọn và cho phép bấm ra ngoài để đóng */}
+                <div
+                  className="fixed inset-0 z-40 bg-black/20"
+                  onClick={() => setShowEmojiPicker(false)}
+                  aria-hidden="true"
+                />
+                {/* Bảng emoji: 8 cột × 40px + lề = 356px, đủ chỗ cho mọi icon */}
+                <div
+                  role="dialog"
+                  aria-label="Chọn emoji"
+                  /*
+                    Vị trí bảng emoji phụ thuộc chỗ nút nằm trên thanh công cụ —
+                    mà thanh công cụ tự xuống dòng theo bề rộng màn hình, nên nút
+                    có thể ở bên phải (mở sang trái thì tràn ra ngoài form) hoặc
+                    bên trái (mở sang phải thì bị sidebar che).
+
+                    Dùng `fixed` + căn giữa màn hình để bảng luôn hiện trọn vẹn,
+                    không lệ thuộc vị trí nút hay khung cha. Trên mobile cách này
+                    cũng dễ thao tác hơn hẳn.
+                  */
+                  className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[356px] max-w-[calc(100vw-2rem)] bg-white border border-gray-300 rounded-lg shadow-2xl z-50"
+                >
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200">
+                    <span className="text-xs font-medium text-gray-600">Chọn emoji</span>
                     <button
-                      key={index}
                       type="button"
-                      onClick={() => insertEmoji(emoji)}
-                      className="p-2 text-lg hover:bg-gray-100 rounded transition-colors"
+                      onClick={() => setShowEmojiPicker(false)}
+                      aria-label="Đóng bảng emoji"
+                      className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded"
                     >
-                      {emoji}
+                      <X size={16} />
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setShowEmojiPicker(false)}
-                    className="col-span-8 mt-2 px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
-                  >
-                    Đóng
-                  </button>
+                  </div>
+
+                  {/* 60 emoji × 8 cột = 8 hàng ≈ 330px: hiển thị hết trong một
+                      lần nhìn, không cần cuộn. max-h chỉ là chặn an toàn nếu
+                      sau này danh sách emoji dài thêm. */}
+                  <div className="grid grid-cols-8 gap-1 p-2 max-h-[60vh] overflow-y-auto">
+                    {commonEmojis.map((emoji, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => insertEmoji(emoji)}
+                        aria-label={`Chèn emoji ${emoji}`}
+                        className="w-10 h-10 flex items-center justify-center text-xl leading-none hover:bg-gray-100 rounded transition-colors"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+                </>
               )}
             </div>
           </div>
