@@ -15,7 +15,7 @@ const TiptapEditor = dynamic(() => import('@/components/admin/TiptapEditor'), {
   loading: () => (
     <div className="animate-pulse bg-gray-50 border border-gray-200 rounded-xl h-[300px] flex flex-col items-center justify-center gap-2">
       <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
-      <span className="text-xs text-gray-400 font-medium">Đang tải trình soạn thảo mô tả...</span>
+      <span className="text-xs text-gray-500 font-medium">Đang tải trình soạn thảo mô tả...</span>
     </div>
   ),
 });
@@ -25,7 +25,7 @@ const MultiImageUpload = dynamic(() => import('@/components/admin/MultiImageUplo
   loading: () => (
     <div className="animate-pulse bg-gray-50 border border-gray-200 rounded-xl h-[200px] flex flex-col items-center justify-center gap-2">
       <div className="w-8 h-8 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
-      <span className="text-xs text-gray-400 font-medium">Đang tải khu vực tải ảnh...</span>
+      <span className="text-xs text-gray-500 font-medium">Đang tải khu vực tải ảnh...</span>
     </div>
   ),
 });
@@ -364,7 +364,7 @@ export default function EditProductPage() {
                   />
                 </button>
                 <div className="flex items-center gap-2">
-                  <Star className={`h-4 w-4 ${formData.featured ? 'text-amber-500 fill-amber-500' : 'text-gray-400'}`} />
+                  <Star className={`h-4 w-4 ${formData.featured ? 'text-amber-500 fill-amber-500' : 'text-gray-500'}`} />
                   <span className="text-sm font-medium text-gray-700">Sản phẩm nổi bật</span>
                   <span className="text-xs text-gray-500">— hiển thị ưu tiên trên trang chủ</span>
                 </div>
@@ -399,10 +399,10 @@ export default function EditProductPage() {
                 />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Giá <span className="text-gray-400 font-normal">(VNĐ)</span>
+                    Giá <span className="text-gray-500 font-normal">(VNĐ)</span>
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                     <input
                       type="text"
                       value={formData.price}
@@ -477,7 +477,7 @@ export default function EditProductPage() {
                   Đã tự động lưu nháp lúc {autosaveTime}
                 </span>
               ) : (
-                <span className="text-xs text-gray-400 italic">
+                <span className="text-xs text-gray-500 italic">
                   Thay đổi sẽ được tự động lưu nháp dưới trình duyệt
                 </span>
               )}

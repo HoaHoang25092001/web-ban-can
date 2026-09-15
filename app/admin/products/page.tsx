@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
+import { isOptimizableImage } from '@/lib/image';
 import AdminLayout from '@/components/admin/AdminLayout';
 import ProductFilter from '@/components/admin/ProductFilter';
 import { Button } from '@/components/admin/FormComponents';
@@ -232,7 +234,7 @@ export default function ProductsPage() {
           <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm flex-shrink-0">
             <button
               onClick={() => setViewMode('table')}
-              className={`w-9 h-9 flex items-center justify-center rounded-md transition-all ${viewMode === 'table' ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
+              className={`w-11 h-11 flex items-center justify-center rounded-md transition-all ${viewMode === 'table' ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
               title="Xem dạng bảng"
               aria-label="Xem dạng bảng"
               aria-pressed={viewMode === 'table'}
@@ -241,7 +243,7 @@ export default function ProductsPage() {
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`w-9 h-9 flex items-center justify-center rounded-md transition-all ${viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
+              className={`w-11 h-11 flex items-center justify-center rounded-md transition-all ${viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
               title="Xem dạng lưới"
               aria-label="Xem dạng lưới"
               aria-pressed={viewMode === 'grid'}
@@ -264,20 +266,20 @@ export default function ProductsPage() {
                   />
                 ))}
               </div>
-              <p className="text-sm text-gray-400">Đang tải dữ liệu...</p>
+              <p className="text-sm text-gray-500">Đang tải dữ liệu...</p>
             </div>
           </div>
         ) : products.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Package className="h-8 w-8 text-gray-400" />
+              <Package className="h-8 w-8 text-gray-500" />
             </div>
             <h3 className="text-lg font-semibold text-gray-700 mb-2">
               {filters.search.trim() || filters.categoryId !== 'all'
                 ? 'Không tìm thấy sản phẩm'
                 : 'Chưa có sản phẩm nào'}
             </h3>
-            <p className="text-sm text-gray-400 mb-6">
+            <p className="text-sm text-gray-500 mb-6">
               {filters.search.trim() || filters.categoryId !== 'all'
                 ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm'
                 : 'Bắt đầu bằng cách thêm sản phẩm đầu tiên'}
@@ -315,20 +317,18 @@ export default function ProductsPage() {
                           <div className="flex items-center gap-3">
                             <div className="relative flex-shrink-0">
                               {primaryImage ? (
-                                <img
+                                <Image
                                   src={primaryImage}
-                                  alt={product.name}
+                                  alt=""
                                   width={56}
                                   height={56}
                                   loading="lazy"
+                                  unoptimized={!isOptimizableImage(primaryImage)}
                                   className="h-14 w-14 object-cover rounded-xl border border-gray-100 shadow-sm"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Crect width='56' height='56' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%239ca3af' font-size='10'%3E?%3C/text%3E%3C/svg%3E";
-                                  }}
                                 />
                               ) : (
                                 <div className="h-14 w-14 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-100">
-                                  <Package className="h-5 w-5 text-gray-400" />
+                                  <Package className="h-5 w-5 text-gray-500" />
                                 </div>
                               )}
                               {extraImgs > 1 && (
@@ -341,7 +341,7 @@ export default function ProductsPage() {
                               <div className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 max-w-[220px]">
                                 {product.name}
                               </div>
-                              <div className="text-xs text-gray-400 mt-0.5">ID #{product.id}</div>
+                              <div className="text-xs text-gray-500 mt-0.5">ID #{product.id}</div>
                             </div>
                           </div>
                         </td>
@@ -358,16 +358,16 @@ export default function ProductsPage() {
                           <div className="space-y-0.5">
                             {product.capacity && (
                               <div className="text-xs text-gray-600">
-                                <span className="text-gray-400">KL:</span> {product.capacity}
+                                <span className="text-gray-500">KL:</span> {product.capacity}
                               </div>
                             )}
                             {product.accuracy && (
                               <div className="text-xs text-gray-600">
-                                <span className="text-gray-400">Chính xác:</span> {product.accuracy}
+                                <span className="text-gray-500">Chính xác:</span> {product.accuracy}
                               </div>
                             )}
                             {!product.capacity && !product.accuracy && (
-                              <span className="text-xs text-gray-300">—</span>
+                              <span className="text-xs text-gray-500">—</span>
                             )}
                           </div>
                         </td>
@@ -379,7 +379,7 @@ export default function ProductsPage() {
                               {product.price}
                             </span>
                           ) : (
-                            <span className="text-xs text-gray-300">Liên hệ</span>
+                            <span className="text-xs text-gray-500">Liên hệ</span>
                           )}
                         </td>
 
@@ -390,10 +390,10 @@ export default function ProductsPage() {
                             aria-pressed={product.featured}
                             aria-label={`${product.featured ? 'Bỏ đánh dấu' : 'Đánh dấu'} nổi bật cho ${product.name}`}
                             title={product.featured ? 'Bỏ nổi bật' : 'Đặt nổi bật'}
-                            className={`inline-flex items-center justify-center w-9 h-9 rounded-lg transition-all ${
+                            className={`inline-flex items-center justify-center w-11 h-11 rounded-lg transition-all ${
                               product.featured
                                 ? 'bg-amber-100 text-amber-500 hover:bg-amber-200'
-                                : 'bg-gray-100 text-gray-300 hover:bg-amber-50 hover:text-amber-400'
+                                : 'bg-gray-100 text-gray-500 hover:bg-amber-50 hover:text-amber-400'
                             }`}
                           >
                             <Star className="h-4 w-4" fill={product.featured ? 'currentColor' : 'none'} />
@@ -405,7 +405,7 @@ export default function ProductsPage() {
                           <div className="flex items-center justify-end gap-1.5">
                             <Link
                               href={`/admin/products/edit/${product.id}`}
-                              className="w-9 h-9 flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-all"
+                              className="w-11 h-11 flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-all"
                               title="Chỉnh sửa"
                               aria-label={`Chỉnh sửa sản phẩm ${product.name}`}
                             >
@@ -413,7 +413,7 @@ export default function ProductsPage() {
                             </Link>
                             <button
                               onClick={() => handleDelete(product.id)}
-                              className="w-9 h-9 flex items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-all"
+                              className="w-11 h-11 flex items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-all"
                               title="Xóa"
                               aria-label={`Xóa sản phẩm ${product.name}`}
                             >
@@ -430,7 +430,7 @@ export default function ProductsPage() {
 
             {/* Table footer */}
             <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-500">
                 Hiển thị <span className="font-medium text-gray-600">{products.length}</span> sản phẩm (trên tổng số <span className="font-medium text-gray-600">{pagination.total}</span>)
               </p>
             </div>
@@ -449,17 +449,18 @@ export default function ProductsPage() {
                   {/* Image */}
                   <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden">
                     {primaryImage ? (
-                      <img
+                      <Image
                         src={primaryImage}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
+                        alt=""
+                        fill
+                        sizes="(max-width: 768px) 50vw, 240px"
+                        loading="lazy"
+                        unoptimized={!isOptimizableImage(primaryImage)}
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Package className="h-10 w-10 text-gray-300" />
+                        <Package className="h-10 w-10 text-gray-500" />
                       </div>
                     )}
                     {/* Overlays */}
@@ -504,8 +505,8 @@ export default function ProductsPage() {
                         aria-pressed={product.featured}
                         aria-label={`${product.featured ? 'Bỏ đánh dấu' : 'Đánh dấu'} nổi bật cho ${product.name}`}
                         title={product.featured ? 'Bỏ nổi bật' : 'Đặt nổi bật'}
-                        className={`flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-md transition-all ${
-                          product.featured ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400'
+                        className={`flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-md transition-all ${
+                          product.featured ? 'text-amber-500' : 'text-gray-500 hover:text-amber-400'
                         }`}
                       >
                         <Star className="h-4 w-4" fill={product.featured ? 'currentColor' : 'none'} />
@@ -530,14 +531,14 @@ export default function ProductsPage() {
             <nav className="flex items-center gap-1.5">
               {/* Prev */}
               {currentPage === 1 ? (
-                <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-300 cursor-not-allowed select-none border border-gray-200">
+                <span className="flex items-center gap-1.5 px-4 min-h-touch rounded-xl text-sm font-bold bg-slate-100 text-slate-300 cursor-not-allowed select-none border border-gray-200">
                   <ChevronLeft className="w-4 h-4" />
                   Trước
                 </span>
               ) : (
                 <button
                   onClick={() => setCurrentPage(currentPage - 1)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all bg-white text-slate-700 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 shadow-sm cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 min-h-touch rounded-xl text-sm font-bold transition-all bg-white text-slate-700 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 shadow-sm cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Trước
@@ -551,15 +552,15 @@ export default function ProductsPage() {
                   const showEllipsis = index > 0 && page - array[index - 1] > 1;
                   return (
                     <div key={page} className="flex items-center gap-1.5">
-                      {showEllipsis && <span className="px-1 text-slate-400 font-bold">…</span>}
+                      {showEllipsis && <span className="px-1 text-slate-500 font-bold">…</span>}
                       {currentPage === page ? (
-                        <span className="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md shadow-blue-500/30 select-none border border-blue-600">
+                        <span className="w-11 h-11 flex items-center justify-center rounded-xl text-sm font-bold bg-blue-600 text-white shadow-md shadow-blue-500/30 select-none border border-blue-600">
                           {page}
                         </span>
                       ) : (
                         <button
                           onClick={() => setCurrentPage(page)}
-                          className="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold bg-white text-slate-700 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 shadow-sm cursor-pointer"
+                          className="w-11 h-11 flex items-center justify-center rounded-xl text-sm font-bold bg-white text-slate-700 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 shadow-sm cursor-pointer"
                         >
                           {page}
                         </button>
@@ -571,14 +572,14 @@ export default function ProductsPage() {
 
               {/* Next */}
               {currentPage === pagination.pages ? (
-                <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-300 cursor-not-allowed select-none border border-gray-200">
+                <span className="flex items-center gap-1.5 px-4 min-h-touch rounded-xl text-sm font-bold bg-slate-100 text-slate-300 cursor-not-allowed select-none border border-gray-200">
                   Tiếp
                   <ChevronRight className="w-4 h-4" />
                 </span>
               ) : (
                 <button
                   onClick={() => setCurrentPage(currentPage + 1)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all bg-white text-slate-700 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 shadow-sm cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 min-h-touch rounded-xl text-sm font-bold transition-all bg-white text-slate-700 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 shadow-sm cursor-pointer"
                 >
                   Tiếp
                   <ChevronRight className="w-4 h-4" />
@@ -586,7 +587,7 @@ export default function ProductsPage() {
               )}
             </nav>
 
-            <p className="text-xs text-slate-400 font-medium">
+            <p className="text-xs text-slate-500 font-medium">
               Trang {currentPage}/{pagination.pages} · Hiển thị {products.length}/{pagination.total} sản phẩm
             </p>
           </div>

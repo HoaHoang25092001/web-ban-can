@@ -91,7 +91,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 /** Lớp dùng chung để input, textarea và select trông giống hệt nhau (tiêu chí 2). */
 const controlClasses = (hasError?: boolean) =>
   `w-full min-h-touch px-3 py-2 text-base text-gray-900 bg-white border-2 rounded-lg
-   placeholder:text-gray-400 focus:outline-none transition-colors ${
+   placeholder:text-gray-500 focus:outline-none transition-colors ${
      hasError ? 'border-red-500 focus:border-red-600' : 'border-gray-300 focus:border-blue-600'
    }`;
 

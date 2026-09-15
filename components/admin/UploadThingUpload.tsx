@@ -98,7 +98,7 @@ export default function UploadThingUpload({
               <X className="h-3 w-3" />
             </button>
           </div>
-          <p className="text-xs text-gray-400 truncate max-w-xs">{value}</p>
+          <p className="text-xs text-gray-500 truncate max-w-xs">{value}</p>
         </div>
       ) : (
         <label
@@ -127,11 +127,11 @@ export default function UploadThingUpload({
             </div>
           ) : (
             <div className="flex flex-col items-center text-gray-500">
-              <UploadCloud className="h-10 w-10 mb-2 text-gray-400" />
+              <UploadCloud className="h-10 w-10 mb-2 text-gray-500" />
               <p className="text-sm font-medium mb-1">
                 Kéo thả hoặc <span className="text-blue-600">click để chọn ảnh</span>
               </p>
-              <p className="text-xs text-gray-400">PNG, JPG, WebP, GIF — tối đa 4MB</p>
+              <p className="text-xs text-gray-500">PNG, JPG, WebP, GIF — tối đa 4MB</p>
             </div>
           )}
         </label>

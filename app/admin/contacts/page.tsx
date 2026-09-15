@@ -164,12 +164,12 @@ export default function ContactsPage() {
                 <TableCell>
                   <div className="space-y-1">
                     <div className="flex items-center text-sm">
-                      <Phone className="h-4 w-4 mr-1 text-gray-400" />
+                      <Phone className="h-4 w-4 mr-1 text-gray-500" />
                       {contact.phone}
                     </div>
                     {contact.email && (
                       <div className="flex items-center text-sm">
-                        <Mail className="h-4 w-4 mr-1 text-gray-400" />
+                        <Mail className="h-4 w-4 mr-1 text-gray-500" />
                         {contact.email}
                       </div>
                     )}
@@ -226,7 +226,7 @@ export default function ContactsPage() {
 
           {filteredContacts.length === 0 && (
             <div className="text-center py-12">
-              <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <MessageSquare className="h-12 w-12 text-gray-500 mx-auto mb-4" />
               <div className="text-gray-500">
                 {filter === 'all' ? 'Chưa có liên hệ nào' : `Không có liên hệ ${filter === 'new' ? 'mới' : filter === 'processing' ? 'đang xử lý' : 'đã xử lý'}`}
               </div>

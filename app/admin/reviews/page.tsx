@@ -54,7 +54,7 @@ function StarSelector({
             className={`w-7 h-7 transition-colors ${
               star <= (hovered || value)
                 ? 'text-yellow-400 fill-yellow-400'
-                : 'text-gray-300 fill-gray-300'
+                : 'text-gray-500 fill-gray-300'
             }`}
           />
         </button>
@@ -196,7 +196,7 @@ export default function ReviewsAdminPage() {
                 <h2 className="text-lg font-bold text-gray-900">
                   {editId ? 'Chỉnh sửa đánh giá' : 'Thêm đánh giá mới'}
                 </h2>
-                <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-600">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -291,7 +291,7 @@ export default function ReviewsAdminPage() {
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star
                         key={s}
-                        className={`w-4 h-4 ${s <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 fill-gray-300'}`}
+                        className={`w-4 h-4 ${s <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-500 fill-gray-300'}`}
                       />
                     ))}
                   </div>
@@ -299,7 +299,7 @@ export default function ReviewsAdminPage() {
                 <TableCell>
                   <button
                     onClick={() => toggleVisible(review)}
-                    className={`${review.isVisible ? 'text-green-600' : 'text-gray-400'} hover:text-green-700`}
+                    className={`${review.isVisible ? 'text-green-600' : 'text-gray-500'} hover:text-green-700`}
                     title={review.isVisible ? 'Ẩn đánh giá' : 'Hiện đánh giá'}
                   >
                     {review.isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
@@ -329,7 +329,7 @@ export default function ReviewsAdminPage() {
 
           {reviews.length === 0 && (
             <div className="text-center py-12">
-              <Star className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <Star className="w-12 h-12 text-gray-500 mx-auto mb-3" />
               <p className="text-gray-500 mb-4">Chưa có đánh giá nào</p>
               <Button onClick={openAdd}>
                 <Plus className="h-4 w-4 mr-2" />
