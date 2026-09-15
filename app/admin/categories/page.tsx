@@ -291,19 +291,24 @@ export default function CategoriesPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
+                    {/* Nút chỉ có icon: cần vùng chạm đủ lớn và aria-label mô tả
+                        rõ thao tác trên mục nào, vì screen reader không đọc được
+                        icon và title chỉ hiện khi rê chuột (tiêu chí 5). */}
                     <button
                       onClick={() => openEdit(category)}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="w-9 h-9 flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                       title="Chỉnh sửa"
+                      aria-label={`Chỉnh sửa danh mục ${category.name}`}
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-4 w-4" aria-hidden="true" />
                     </button>
                     <button
                       onClick={() => handleDelete(category.id)}
-                      className="text-red-600 hover:text-red-800"
+                      className="w-9 h-9 flex items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                       title="Xóa"
+                      aria-label={`Xóa danh mục ${category.name}`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
                 </TableCell>

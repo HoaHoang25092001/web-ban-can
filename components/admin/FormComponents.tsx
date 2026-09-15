@@ -1,36 +1,45 @@
 'use client';
 
+import { useId } from 'react';
+
 interface ButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   type?: 'button' | 'submit';
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   className?: string;
+  title?: string;
+  'aria-label'?: string;
 }
 
-export function Button({ 
-  children, 
-  onClick, 
-  type = 'button', 
-  variant = 'primary', 
+export function Button({
+  children,
+  onClick,
+  type = 'button',
+  variant = 'primary',
   size = 'md',
   disabled = false,
-  className = ''
+  className = '',
+  title,
+  'aria-label': ariaLabel,
 }: ButtonProps) {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
-  
+  const baseClasses =
+    'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed';
+
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+    primary: 'bg-blue-600 text-white hover:bg-blue-700',
+    secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50',
+    danger: 'bg-red-600 text-white hover:bg-red-700',
+    ghost: 'text-gray-700 hover:bg-gray-100',
   };
 
+  // Vùng chạm tối thiểu 44px cho md/lg, 36px cho nút phụ trong bảng (tiêu chí 5)
   const sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base',
+    sm: 'min-h-[36px] px-3 text-sm',
+    md: 'min-h-touch px-4 text-sm',
+    lg: 'min-h-touch px-6 text-base',
   };
 
   return (
@@ -38,12 +47,53 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+      title={title}
+      aria-label={ariaLabel}
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
     >
       {children}
     </button>
   );
 }
+
+/** Nhãn + dấu bắt buộc, dùng chung cho mọi trường nhập. */
+function FieldLabel({
+  htmlFor,
+  label,
+  required,
+}: {
+  htmlFor: string;
+  label: string;
+  required?: boolean;
+}) {
+  return (
+    <label htmlFor={htmlFor} className="block text-sm font-semibold text-gray-700 mb-1.5">
+      {label}
+      {required && (
+        <>
+          <span className="text-red-600 ml-1" aria-hidden="true">*</span>
+          <span className="sr-only-text">(bắt buộc)</span>
+        </>
+      )}
+    </label>
+  );
+}
+
+function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+  return (
+    <p id={id} role="alert" className="mt-1.5 text-sm font-medium text-red-600">
+      {message}
+    </p>
+  );
+}
+
+/** Lớp dùng chung để input, textarea và select trông giống hệt nhau (tiêu chí 2). */
+const controlClasses = (hasError?: boolean) =>
+  `w-full min-h-touch px-3 py-2 text-base text-gray-900 bg-white border-2 rounded-lg
+   placeholder:text-gray-400 focus:outline-none transition-colors ${
+     hasError ? 'border-red-500 focus:border-red-600' : 'border-gray-300 focus:border-blue-600'
+   }`;
 
 interface InputProps {
   label: string;
@@ -53,34 +103,48 @@ interface InputProps {
   placeholder?: string;
   required?: boolean;
   error?: string;
+  hint?: string;
+  autoComplete?: string;
 }
 
-export function Input({ 
-  label, 
-  type = 'text', 
-  value, 
-  onChange, 
-  placeholder, 
+export function Input({
+  label,
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
   required = false,
-  error 
+  error,
+  hint,
+  autoComplete,
 }: InputProps) {
+  // useId: bản trước <label> không có htmlFor và <input> không có id, nên bấm
+  // vào nhãn không focus được ô nhập và screen reader đọc ô nhập là "không tên".
+  const id = useId();
+  const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
+      <FieldLabel htmlFor={id} label={label} required={required} />
       <input
+        id={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-          error ? 'border-red-300' : 'border-gray-300'
-        }`}
+        autoComplete={autoComplete}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : hint ? hintId : undefined}
+        className={controlClasses(!!error)}
       />
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {!error && hint && (
+        <p id={hintId} className="mt-1.5 text-sm text-gray-500">
+          {hint}
+        </p>
+      )}
+      <FieldError id={errorId} message={error} />
     </div>
   );
 }
@@ -93,34 +157,43 @@ interface TextareaProps {
   required?: boolean;
   rows?: number;
   error?: string;
+  hint?: string;
 }
 
-export function Textarea({ 
-  label, 
-  value, 
-  onChange, 
-  placeholder, 
+export function Textarea({
+  label,
+  value,
+  onChange,
+  placeholder,
   required = false,
   rows = 3,
-  error 
+  error,
+  hint,
 }: TextareaProps) {
+  const id = useId();
+  const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
+      <FieldLabel htmlFor={id} label={label} required={required} />
       <textarea
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
         rows={rows}
-        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-          error ? 'border-red-300' : 'border-gray-300'
-        }`}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : hint ? hintId : undefined}
+        className={`${controlClasses(!!error)} resize-y`}
       />
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {!error && hint && (
+        <p id={hintId} className="mt-1.5 text-sm text-gray-500">
+          {hint}
+        </p>
+      )}
+      <FieldError id={errorId} message={error} />
     </div>
   );
 }
@@ -132,38 +205,49 @@ interface SelectProps {
   options: { value: string; label: string }[];
   required?: boolean;
   error?: string;
+  hint?: string;
+  placeholder?: string;
 }
 
-export function Select({ 
-  label, 
-  value, 
-  onChange, 
-  options, 
+export function Select({
+  label,
+  value,
+  onChange,
+  options,
   required = false,
-  error 
+  error,
+  hint,
+  placeholder = '— Chọn —',
 }: SelectProps) {
+  const id = useId();
+  const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
+      <FieldLabel htmlFor={id} label={label} required={required} />
       <select
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
-        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-          error ? 'border-red-300' : 'border-gray-300'
-        }`}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : hint ? hintId : undefined}
+        className={controlClasses(!!error)}
       >
-        <option value="">Chọn...</option>
+        <option value="">{placeholder}</option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}
       </select>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {!error && hint && (
+        <p id={hintId} className="mt-1.5 text-sm text-gray-500">
+          {hint}
+        </p>
+      )}
+      <FieldError id={errorId} message={error} />
     </div>
   );
 }

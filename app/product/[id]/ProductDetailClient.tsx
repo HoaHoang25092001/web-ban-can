@@ -11,6 +11,11 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import RichContentDisplay from '@/components/RichContentDisplay';
+import { IMAGE_PLACEHOLDER, isOptimizableImage } from '@/lib/image';
+import { BUSINESS, telHref } from '@/lib/site';
+
+// Link chat Zalo dựng từ hotline chính trong lib/site.ts
+const ZALO_URL = `https://zalo.me/${BUSINESS.phones[0].replace(/\./g, '')}`;
 
 interface Product {
   id: number;
@@ -56,6 +61,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   });
   const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
   const [quoteStatus, setQuoteStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [quoteErrors, setQuoteErrors] = useState<{ name?: string; phone?: string }>({});
 
   // Khóa cuộn trang khi mở modal và bắt sự kiện bàn phím Escape để đóng modal
   useEffect(() => {
@@ -78,10 +84,13 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
     }
   }, [showImageModal]);
 
-  const getDefaultImage = (productName: string, categoryName: string) => {
-    const query = encodeURIComponent(`${productName} ${categoryName} electronic scale weighing equipment professional`);
-    return `https://readdy.ai/api/search-image?query=${query}&width=800&height=600&orientation=landscape`;
-  };
+  /**
+   * Ảnh thay thế khi sản phẩm chưa có hình.
+   * Trước đây gọi sang https://readdy.ai để sinh ảnh minh họa: phụ thuộc dịch vụ
+   * ngoài, tải chậm và có thể trả về ảnh không đúng sản phẩm. Nay dùng ảnh SVG
+   * nội bộ, hiển thị tức thì và không lệ thuộc mạng bên thứ ba.
+   */
+  const getDefaultImage = () => IMAGE_PLACEHOLDER;
 
   const formatPrice = (price: string | null) => {
     if (!price || price.toLowerCase().trim() === 'liên hệ') return 'Liên hệ báo giá';
@@ -104,7 +113,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
     }
     
     if (imgs.length === 0) {
-      imgs.push(getDefaultImage(product.name, product.category.name));
+      imgs.push(getDefaultImage());
     }
     
     return imgs;
@@ -128,8 +137,26 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
   const handleQuoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quoteForm.name.trim() || !quoteForm.phone.trim()) {
-      alert('Vui lòng điền đầy đủ Họ tên và Số điện thoại!');
+
+    /**
+     * Xác thực ngay tại chỗ, hiển thị lỗi cạnh từng ô nhập (tiêu chí 8).
+     * Bản trước dùng alert() — hộp thoại này chặn toàn trang, không nói rõ ô nào
+     * sai và biến mất ngay khi bấm OK nên người dùng phải tự đoán.
+     */
+    const nextErrors: { name?: string; phone?: string } = {};
+    if (!quoteForm.name.trim()) {
+      nextErrors.name = 'Vui lòng nhập họ và tên.';
+    }
+    const phone = quoteForm.phone.trim().replace(/[\s.\-()]/g, '');
+    if (!quoteForm.phone.trim()) {
+      nextErrors.phone = 'Vui lòng nhập số điện thoại để chúng tôi gọi lại.';
+    } else if (!/^(\+?84|0)\d{9,10}$/.test(phone)) {
+      nextErrors.phone = 'Số điện thoại chưa đúng. Ví dụ hợp lệ: 0326711476.';
+    }
+
+    setQuoteErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      document.getElementById(nextErrors.name ? 'quote-name' : 'quote-phone')?.focus();
       return;
     }
 
@@ -175,11 +202,11 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
       <div className="bg-white border-b border-slate-200 sticky top-0 z-20 backdrop-blur-md bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
           <nav className="flex items-center space-x-2 text-xs md:text-sm font-medium text-slate-500 overflow-x-auto whitespace-nowrap">
-            <Link href="/" className="hover:text-blue-600 transition-colors flex items-center gap-1">
+            <Link href="/" className="hover:text-blue-600 transition-colors inline-flex items-center min-h-touch gap-1">
               Trang chủ
             </Link>
             <span className="text-slate-300">/</span>
-            <Link href={`/category/${product.category.id}`} className="hover:text-blue-600 transition-colors">
+            <Link href={`/category/${product.category.id}`} className="hover:text-blue-600 transition-colors inline-flex items-center min-h-touch">
               {product.category.name}
             </Link>
             <span className="text-slate-300">/</span>
@@ -191,7 +218,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
         <button
           onClick={() => router.back()}
-          className="inline-flex items-center text-sm font-semibold text-slate-600 hover:text-blue-600 mb-6 group transition-colors animate-fade-in"
+          className="inline-flex items-center min-h-touch text-sm font-semibold text-slate-600 hover:text-blue-600 mb-4 group transition-colors animate-fade-in"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
           Quay lại danh sách
@@ -212,10 +239,11 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   width={800}
                   height={600}
                   priority
+                  unoptimized={!isOptimizableImage(allImages[activeImageIndex])}
                   className="w-full h-full object-contain object-center transition-transform duration-500 ease-out group-hover:scale-105"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = getDefaultImage(product.name, product.category.name);
+                    target.src = getDefaultImage();
                   }}
                 />
               </div>
@@ -244,14 +272,14 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 <>
                   <button
                     onClick={handlePrevImage}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white/90 hover:bg-white text-slate-800 rounded-full shadow-md border border-slate-100 active:scale-90 transition-all opacity-0 group-hover:opacity-100"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center bg-white/90 hover:bg-white text-slate-800 rounded-full shadow-md border border-slate-100 active:scale-90 transition-all"
                     aria-label="Ảnh trước"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button
                     onClick={handleNextImage}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white/90 hover:bg-white text-slate-800 rounded-full shadow-md border border-slate-100 active:scale-90 transition-all opacity-0 group-hover:opacity-100"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center bg-white/90 hover:bg-white text-slate-800 rounded-full shadow-md border border-slate-100 active:scale-90 transition-all"
                     aria-label="Ảnh tiếp theo"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -277,10 +305,11 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                       alt={`Thumbnail ${idx + 1}`}
                       fill
                       sizes="80px"
+                      unoptimized={!isOptimizableImage(img)}
                       className="object-contain p-1"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = getDefaultImage(product.name, product.category.name);
+                        target.src = getDefaultImage();
                       }}
                     />
                   </button>
@@ -307,25 +336,29 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               </div>
             </div>
 
+            {/*
+              ĐÃ GỠ phần "Giá cũ": bản trước lấy giá thật nhân 1.15 rồi gạch ngang
+              để tạo cảm giác đang giảm 15% — mức giá đó chưa từng tồn tại, đây là
+              quảng cáo sai sự thật và vi phạm quy định về khuyến mại.
+              Chỉ hiển thị giá thật kèm lưu ý VAT đúng như công ty công bố.
+            */}
             <div className="bg-gradient-to-r from-blue-50 to-slate-50/50 border-l-4 border-blue-600 rounded-r-2xl p-5 md:p-6 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Giá Bán Ưu Đãi</span>
+              <span className="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Giá tham khảo</span>
               <div className="flex flex-wrap items-baseline gap-3">
                 <span className={`text-2xl md:text-3xl font-black ${product.price && product.price.toLowerCase().trim() !== 'liên hệ' ? 'text-red-600' : 'text-blue-600'}`}>
                   {formatPrice(product.price)}
                 </span>
-                {product.price && product.price.toLowerCase().trim() !== 'liên hệ' && (
-                  <span className="text-xs text-slate-400 font-medium line-through">Giá cũ: {parseFloat(product.price.replace(/[^0-9]/g, '')) ? (parseFloat(product.price.replace(/[^0-9]/g, '')) * 1.15).toLocaleString('vi-VN') + 'đ' : ''}</span>
-                )}
               </div>
-              <p className="text-xs text-slate-500 mt-2 font-medium">
-                * Giá trên mang tính chất tham khảo. Quý khách vui lòng liên hệ nhận báo giá chính xác cùng ưu đãi theo số lượng.
+              <p className="text-xs text-slate-500 mt-2 font-medium leading-relaxed">
+                {BUSINESS.priceNote}. Giá cuối cùng phụ thuộc cấu hình và số lượng —
+                vui lòng liên hệ để nhận báo giá chính xác.
               </p>
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-blue-600" /> Thông số nổi bật
-              </h3>
+              </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {product.capacity && (
                   <div className="flex items-center gap-3 bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-sm hover:border-blue-200 transition-colors">
@@ -380,9 +413,9 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
             <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
               <div className="absolute right-0 top-0 w-32 h-32 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
               
-              <h3 className="text-lg font-bold mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+              <h2 className="text-lg font-bold mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
                 <Phone className="w-5 h-5 text-blue-400 animate-bounce" /> Tư vấn & Báo giá trực tiếp 24/7
-              </h3>
+              </h2>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 p-4 rounded-xl flex items-start gap-3">
@@ -391,8 +424,8 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   </div>
                   <div>
                     <p className="text-xs text-slate-400 font-medium">Hotline 1 (Zalo)</p>
-                    <a href="tel:0326711476" className="text-base font-extrabold text-white hover:text-blue-400 transition-colors block mt-0.5">
-                      0326.711.476
+                    <a href={telHref(BUSINESS.phones[0])} className="inline-flex items-center min-h-touch text-base font-extrabold text-white hover:text-blue-400 transition-colors mt-0.5">
+                      {BUSINESS.phones[0]}
                     </a>
                     <span className="text-[11px] text-slate-400 font-medium block">Mr. Thịnh (Kỹ thuật)</span>
                   </div>
@@ -404,8 +437,8 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   </div>
                   <div>
                     <p className="text-xs text-slate-400 font-medium">Hotline 2 (Zalo)</p>
-                    <a href="tel:0911093511" className="text-base font-extrabold text-white hover:text-pink-400 transition-colors block mt-0.5">
-                      0911.093.511
+                    <a href={telHref(BUSINESS.phones[1])} className="inline-flex items-center min-h-touch text-base font-extrabold text-white hover:text-pink-400 transition-colors mt-0.5">
+                      {BUSINESS.phones[1]}
                     </a>
                     <span className="text-[11px] text-slate-400 font-medium block">Ms. Hằng (Kinh doanh)</span>
                   </div>
@@ -414,7 +447,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
               <div className="mt-5 flex flex-wrap gap-3">
                 <a
-                  href="https://zalo.me/0326711476"
+                  href={ZALO_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 min-w-[140px] inline-flex items-center justify-center px-5 py-3 bg-sky-500 hover:bg-sky-600 active:scale-95 text-white font-bold rounded-xl transition-all shadow-md gap-2"
@@ -463,9 +496,9 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
         {relatedProducts.length > 0 && (
           <div className="mt-10 md:mt-12">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg md:text-xl font-extrabold text-slate-900 flex items-center gap-2">
+              <h2 className="text-lg md:text-xl font-extrabold text-slate-900 flex items-center gap-2">
                 <Package className="w-6 h-6 text-blue-600" /> Sản phẩm liên quan khác
-              </h3>
+              </h2>
               <Link 
                 href={`/category/${product.category.id}`}
                 className="text-xs md:text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 group transition-colors"
@@ -484,14 +517,15 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 >
                   <div className="relative bg-slate-50 flex items-center justify-center h-40 md:h-48 overflow-hidden">
                     <Image
-                      src={p.image || getDefaultImage(p.name, p.category.name)}
+                      src={p.image || getDefaultImage()}
                       alt={p.name}
                       width={300}
                       height={225}
+                      unoptimized={!isOptimizableImage(p.image)}
                       className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = getDefaultImage(p.name, p.category.name);
+                        target.src = getDefaultImage();
                       }}
                     />
                   </div>
@@ -682,9 +716,9 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
             <div className="bg-white border border-slate-200/60 shadow-lg rounded-2xl overflow-hidden p-6 md:p-7 space-y-6">
               
               <div className="space-y-1.5">
-                <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                   <Mail className="w-5 h-5 text-blue-600" /> Yêu Cầu Báo Giá Nhanh
-                </h3>
+                </h2>
                 <p className="text-xs text-slate-500 font-medium leading-relaxed">
                   Để lại thông tin dưới đây, chúng tôi sẽ lập tức liên hệ gửi báo giá chi tiết sản phẩm này.
                 </p>
@@ -698,12 +732,25 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   <input
                     type="text"
                     id="quote-name"
-                    required
+                    autoComplete="name"
                     value={quoteForm.name}
-                    onChange={(e) => setQuoteForm({ ...quoteForm, name: e.target.value })}
+                    onChange={(e) => {
+                      setQuoteForm({ ...quoteForm, name: e.target.value });
+                      if (quoteErrors.name) setQuoteErrors({ ...quoteErrors, name: undefined });
+                    }}
                     placeholder="Nhập họ và tên của bạn"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-250 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-semibold transition-all"
+                    aria-invalid={quoteErrors.name ? true : undefined}
+                    aria-describedby={quoteErrors.name ? 'quote-name-error' : undefined}
+                    className={`w-full px-4 py-2.5 min-h-touch bg-slate-50 rounded-xl focus:bg-white focus:border-blue-600 text-sm font-semibold transition-all border ${
+                      quoteErrors.name ? 'border-red-500' : 'border-slate-300'
+                    }`}
                   />
+                  {quoteErrors.name && (
+                    <p id="quote-name-error" role="alert" className="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-red-600">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                      {quoteErrors.name}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -713,12 +760,26 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   <input
                     type="tel"
                     id="quote-phone"
-                    required
+                    inputMode="tel"
+                    autoComplete="tel"
                     value={quoteForm.phone}
-                    onChange={(e) => setQuoteForm({ ...quoteForm, phone: e.target.value })}
-                    placeholder="Nhập số điện thoại liên hệ"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-250 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-semibold transition-all"
+                    onChange={(e) => {
+                      setQuoteForm({ ...quoteForm, phone: e.target.value });
+                      if (quoteErrors.phone) setQuoteErrors({ ...quoteErrors, phone: undefined });
+                    }}
+                    placeholder="Ví dụ: 0326711476"
+                    aria-invalid={quoteErrors.phone ? true : undefined}
+                    aria-describedby={quoteErrors.phone ? 'quote-phone-error' : undefined}
+                    className={`w-full px-4 py-2.5 min-h-touch bg-slate-50 rounded-xl focus:bg-white focus:border-blue-600 text-sm font-semibold transition-all border ${
+                      quoteErrors.phone ? 'border-red-500' : 'border-slate-300'
+                    }`}
                   />
+                  {quoteErrors.phone && (
+                    <p id="quote-phone-error" role="alert" className="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-red-600">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                      {quoteErrors.phone}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -731,7 +792,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                     value={quoteForm.email}
                     onChange={(e) => setQuoteForm({ ...quoteForm, email: e.target.value })}
                     placeholder="Nhập địa chỉ email"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-250 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-semibold transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-semibold transition-all"
                   />
                 </div>
 
@@ -758,7 +819,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                     value={quoteForm.note}
                     onChange={(e) => setQuoteForm({ ...quoteForm, note: e.target.value })}
                     placeholder="Cần tư vấn mức cân bao nhiêu, địa điểm giao hàng..."
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-250 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-semibold transition-all resize-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-semibold transition-all resize-none"
                   ></textarea>
                 </div>
 
@@ -814,7 +875,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[45] bg-white border-t border-slate-200 p-2.5 flex gap-2.5 shadow-[0_-5px_15px_rgba(0,0,0,0.08)]">
         <a
-          href="tel:0326711476"
+          href={telHref(BUSINESS.phones[0])}
           className="flex-1 inline-flex items-center justify-center py-2.5 px-3 bg-red-600 active:scale-95 text-white text-xs font-bold rounded-xl transition-all gap-1.5 shadow-md shadow-red-500/10"
         >
           <Phone className="w-4 h-4" />
@@ -822,7 +883,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
         </a>
         
         <a
-          href="https://zalo.me/0326711476"
+          href={ZALO_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="flex-1 inline-flex items-center justify-center py-2.5 px-3 bg-sky-500 active:scale-95 text-white text-xs font-bold rounded-xl transition-all gap-1.5 shadow-md shadow-sky-500/10"
@@ -880,11 +941,12 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 alt={product.name}
                 width={1920}
                 height={1080}
+                unoptimized={!isOptimizableImage(allImages[activeImageIndex])}
                 className="max-w-full max-h-[75vh] object-contain rounded-lg cursor-default"
                 onClick={e => e.stopPropagation()}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = getDefaultImage(product.name, product.category.name);
+                  target.src = getDefaultImage();
                 }}
               />
             </div>
@@ -923,10 +985,11 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                       alt={`Lightbox thumbnail ${idx + 1}`}
                       fill
                       sizes="64px"
+                      unoptimized={!isOptimizableImage(img)}
                       className="object-contain p-1"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = getDefaultImage(product.name, product.category.name);
+                        target.src = getDefaultImage();
                       }}
                     />
                   </button>

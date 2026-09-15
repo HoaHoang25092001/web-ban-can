@@ -1,9 +1,10 @@
-'use client';
+import { BUSINESS, PRIMARY_PHONE } from '@/lib/site';
 
-const ZALO_PHONE = '0326711476'; // Số Zalo — chỉnh lại nếu cần
-const EMAIL = 'canvanthinhphat@gmail.com';
-const MAP_URL =
-  'https://www.google.com/maps/search/?api=1&query=605+Quoc+lo+13+Phuong+Hiep+Binh+TP+Ho+Chi+Minh';
+// Server Component – chỉ gồm các link tĩnh, không cần gửi JS xuống trình duyệt.
+
+const ZALO_PHONE = PRIMARY_PHONE.replace(/\./g, '');
+const EMAIL = BUSINESS.email;
+const MAP_URL = BUSINESS.maps.directions;
 
 export default function FloatingContactIcons() {
   return (

@@ -1,47 +1,52 @@
-'use client';
-
 interface RichContentDisplayProps {
   content: string;
   className?: string;
 }
 
+/**
+ * Hiển thị nội dung HTML soạn từ trang quản trị (Tiptap).
+ *
+ * Lưu ý về selector: bản trước dùng `[&>a]`, `[&>strong]`… tức chỉ áp dụng cho
+ * con TRỰC TIẾP. Trình soạn thảo luôn bọc chữ trong <p>, nên link và chữ đậm
+ * nằm sâu một cấp và không hề nhận được style — link hiện ra như chữ thường,
+ * người đọc không biết bấm được. Nay dùng `[&_a]` (mọi cấp con) để style thật
+ * sự có tác dụng.
+ */
 export default function RichContentDisplay({ content, className = '' }: RichContentDisplayProps) {
-  // Process content for better formatting
-  const processContent = (htmlContent: string) => {
-    return htmlContent
-      // Remove empty paragraphs
+  const processContent = (htmlContent: string) =>
+    htmlContent
+      // Bỏ đoạn rỗng do trình soạn thảo sinh ra
       .replace(/<p><br><\/p>/g, '')
       .replace(/<p>\s*<\/p>/g, '')
-      // Clean up extra spaces
-      .replace(/\s+/g, ' ')
       .trim();
-  };
 
   const processedContent = processContent(content);
 
   return (
-    <div 
+    <div
       className={`
-        text-gray-700 leading-relaxed
-        [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:text-gray-900 [&>h1]:mb-4 [&>h1]:mt-6
-        [&>h2]:text-xl [&>h2]:font-semibold [&>h2]:text-gray-900 [&>h2]:mb-3 [&>h2]:mt-5
-        [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:text-gray-900 [&>h3]:mb-3 [&>h3]:mt-4
-        [&>p]:mb-4 [&>p]:leading-7 [&>p]:text-gray-700
-        [&>strong]:font-semibold [&>strong]:text-gray-900
-        [&>em]:italic [&>em]:text-gray-600
-        [&>ul]:mb-4 [&>ul]:ml-6 [&>ul]:list-disc [&>ul]:space-y-2
-        [&>ol]:mb-4 [&>ol]:ml-6 [&>ol]:list-decimal [&>ol]:space-y-2
-        [&>li]:leading-6 [&>li]:text-gray-700
-        [&>blockquote]:border-l-4 [&>blockquote]:border-blue-500 [&>blockquote]:bg-blue-50 [&>blockquote]:p-4 [&>blockquote]:my-4 [&>blockquote]:italic [&>blockquote]:text-gray-600
-        [&>a]:text-blue-600 [&>a]:no-underline hover:[&>a]:underline
-        [&>img]:max-w-full [&>img]:h-auto [&>img]:rounded-lg [&>img]:shadow-md [&>img]:mx-auto [&>img]:my-4
-        [&>code]:bg-gray-100 [&>code]:px-2 [&>code]:py-1 [&>code]:rounded [&>code]:text-sm [&>code]:font-mono
+        text-base leading-relaxed text-slate-700
+        [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-slate-900 [&_h1]:mb-4 [&_h1]:mt-6
+        [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-slate-900 [&_h2]:mb-3 [&_h2]:mt-6
+        [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-slate-900 [&_h3]:mb-2 [&_h3]:mt-5
+        [&_p]:mb-4 [&_p]:leading-7
+        [&_strong]:font-semibold [&_strong]:text-slate-900
+        [&_em]:italic
+        [&_ul]:mb-4 [&_ul]:ml-6 [&_ul]:list-disc [&_ul]:space-y-1.5
+        [&_ol]:mb-4 [&_ol]:ml-6 [&_ol]:list-decimal [&_ol]:space-y-1.5
+        [&_li]:leading-7
+        [&_blockquote]:border-l-4 [&_blockquote]:border-brand-500 [&_blockquote]:bg-brand-50
+        [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:my-4 [&_blockquote]:italic
+        [&_a]:text-brand-700 [&_a]:font-medium [&_a]:underline [&_a]:underline-offset-2
+        [&_a]:decoration-brand-300 hover:[&_a]:decoration-brand-700 [&_a]:break-words
+        [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-card [&_img]:shadow-card
+        [&_img]:mx-auto [&_img]:my-5
+        [&_code]:bg-surface-sunken [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm
+        [&_table]:w-full [&_table]:my-4 [&_table]:text-sm
+        [&_td]:border [&_td]:border-surface-border [&_td]:px-3 [&_td]:py-2
+        [&_th]:border [&_th]:border-surface-border [&_th]:px-3 [&_th]:py-2 [&_th]:bg-surface-sunken
         ${className}
       `}
-      style={{
-        fontSize: '16px',
-        lineHeight: '1.7'
-      }}
       dangerouslySetInnerHTML={{ __html: processedContent }}
     />
   );

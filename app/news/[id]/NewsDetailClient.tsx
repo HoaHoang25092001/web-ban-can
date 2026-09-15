@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { isOptimizableImage } from '@/lib/image';
+import { BUSINESS, telHref } from '@/lib/site';
 import {
   ArrowLeft, Calendar, Clock, ChevronRight, Newspaper, Share2, 
   Facebook, Twitter, LinkIcon, Phone, Mail, CheckCircle2
@@ -42,7 +44,7 @@ export default function NewsDetailClient({ news, relatedNews }: NewsDetailClient
 
   const getImageSrc = (image: string | null) => {
     if (image && image.trim() !== '') {
-      return image.startsWith('/') ? `http://localhost:3000${image}` : image;
+      return image;
     }
     return null;
   };
@@ -84,6 +86,7 @@ export default function NewsDetailClient({ news, relatedNews }: NewsDetailClient
             priority
             className="object-cover opacity-85"
             sizes="100vw"
+            unoptimized={!isOptimizableImage(imageSrc)}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700" />
@@ -229,22 +232,22 @@ export default function NewsDetailClient({ news, relatedNews }: NewsDetailClient
                 Đội ngũ kỹ thuật sẵn sàng hỗ trợ bạn 24/7 về thiết bị đo lường.
               </p>
               <div className="space-y-2.5 mb-4">
-                <a href="tel:0326711476" className="flex items-center gap-3 bg-slate-800/70 border border-slate-700/50 px-4 py-3 rounded-xl hover:bg-slate-800 transition-colors group">
+                <a href={telHref(BUSINESS.phones[0])} className="flex items-center gap-3 bg-slate-800/70 border border-slate-700/50 px-4 py-3 rounded-xl hover:bg-slate-800 transition-colors group">
                   <div className="p-1.5 bg-blue-500/10 text-blue-400 rounded-lg">
                     <Phone className="w-4 h-4" />
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 font-semibold">Hotline kỹ thuật</p>
-                    <p className="text-sm font-extrabold text-white group-hover:text-blue-300 transition-colors">0326.711.476</p>
+                    <p className="text-sm font-extrabold text-white group-hover:text-blue-300 transition-colors">{BUSINESS.phones[0]}</p>
                   </div>
                 </a>
-                <a href="tel:0911093511" className="flex items-center gap-3 bg-slate-800/70 border border-slate-700/50 px-4 py-3 rounded-xl hover:bg-slate-800 transition-colors group">
+                <a href={telHref(BUSINESS.phones[1])} className="flex items-center gap-3 bg-slate-800/70 border border-slate-700/50 px-4 py-3 rounded-xl hover:bg-slate-800 transition-colors group">
                   <div className="p-1.5 bg-pink-500/10 text-pink-400 rounded-lg">
                     <Phone className="w-4 h-4" />
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 font-semibold">Kinh doanh (Zalo)</p>
-                    <p className="text-sm font-extrabold text-white group-hover:text-pink-300 transition-colors">0911.093.511</p>
+                    <p className="text-sm font-extrabold text-white group-hover:text-pink-300 transition-colors">{BUSINESS.phones[1]}</p>
                   </div>
                 </a>
               </div>
@@ -338,6 +341,7 @@ function RelatedCard({
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             sizes="80px"
+            unoptimized={!isOptimizableImage(imgSrc)}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">

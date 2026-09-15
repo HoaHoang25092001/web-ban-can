@@ -1,40 +1,52 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useId } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface SearchProductProps {
-  /** Compact mode: no suggestions, smaller padding – dùng trong Header */
+  /** Compact mode: gọn hơn, không có gợi ý – dùng trong Header */
   compact?: boolean;
 }
+
+const SUGGESTIONS = ['Cân bàn', 'Cân sàn', 'Cân treo', 'Cân phân tích'];
 
 export default function SearchProduct({ compact = false }: SearchProductProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
+  // useId đảm bảo label/input ghép đúng cặp khi component xuất hiện nhiều lần
+  const inputId = useId();
 
   const handleSearch = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    const q = searchQuery.trim();
+    if (q) {
+      router.push(`/search?q=${encodeURIComponent(q)}`);
     }
   };
 
   if (compact) {
     return (
-      <form onSubmit={handleSearch} className="flex items-center w-full">
-        <div className="flex w-full border-2 border-gray-300 rounded-lg overflow-hidden focus-within:border-blue-500 transition-colors">
+      <form onSubmit={handleSearch} role="search" className="w-full">
+        {/* Label ẩn về mặt thị giác nhưng vẫn tồn tại cho screen reader:
+            placeholder không thay thế được label (tiêu chí 8). */}
+        <label htmlFor={inputId} className="sr-only-text">
+          Tìm kiếm sản phẩm
+        </label>
+        <div className="flex w-full border-2 border-surface-border rounded-control overflow-hidden bg-white focus-within:border-brand-600 transition-colors">
           <input
-            type="text"
+            id={inputId}
+            type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm kiếm sản phẩm..."
-            className="flex-1 px-3 py-1.5 text-sm text-gray-800 outline-none bg-white"
+            placeholder="Tìm cân bàn, cân sàn, cân treo…"
+            className="flex-1 min-w-0 min-h-touch px-3 text-base md:text-sm text-slate-900 outline-none bg-transparent"
           />
           <button
             type="submit"
-            className="px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center"
+            aria-label="Tìm kiếm"
+            className="min-w-touch min-h-touch px-3 bg-brand-600 text-white hover:bg-brand-700 transition-colors flex items-center justify-center flex-shrink-0"
           >
-            <i className="ri-search-line text-base"></i>
+            <i className="ri-search-line text-lg" aria-hidden="true"></i>
           </button>
         </div>
       </form>
@@ -42,41 +54,36 @@ export default function SearchProduct({ compact = false }: SearchProductProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto mb-12">
-      <form onSubmit={handleSearch} className="relative">
+    <div className="max-w-3xl mx-auto">
+      <form onSubmit={handleSearch} role="search">
+        <label htmlFor={inputId} className="field-label">
+          Tìm sản phẩm
+        </label>
         <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm sản phẩm theo tên..."
-              className="w-full px-6 py-2 pr-12 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-            />
-            <i className="ri-search-line absolute right-4 top-1/2 transform -translate-y-1/2 text-2xl text-gray-400"></i>
-          </div>
-          <button
-            type="submit"
-            className="px-8 py-2 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 whitespace-nowrap"
-          >
-            <i className="ri-search-line text-xl"></i>
-            Tìm kiếm
+          <input
+            id={inputId}
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Nhập tên cân, ví dụ: cân bàn 100kg"
+            className="field-input flex-1"
+          />
+          <button type="submit" className="btn-primary flex-shrink-0">
+            <i className="ri-search-line text-lg" aria-hidden="true"></i>
+            <span className="hidden sm:inline">Tìm kiếm</span>
+            <span className="sm:hidden sr-only-text">Tìm kiếm</span>
           </button>
         </div>
       </form>
 
-      {/* Quick search suggestions */}
-      <div className="mt-4 flex flex-wrap gap-2">
-        <span className="text-sm text-gray-600">Gợi ý:</span>
-        {['Cân điện tử', 'Cân kỹ thuật', 'Cân bàn', 'Cân sàn'].map((suggestion) => (
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <span className="text-sm text-slate-600">Tìm nhiều:</span>
+        {SUGGESTIONS.map((suggestion) => (
           <button
             key={suggestion}
             type="button"
-            onClick={() => {
-              setSearchQuery(suggestion);
-              router.push(`/search?q=${encodeURIComponent(suggestion)}`);
-            }}
-            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
+            onClick={() => router.push(`/search?q=${encodeURIComponent(suggestion)}`)}
+            className="inline-flex items-center min-h-[36px] px-3 text-sm font-medium bg-surface-sunken text-slate-700 rounded-full hover:bg-brand-50 hover:text-brand-700 transition-colors"
           >
             {suggestion}
           </button>

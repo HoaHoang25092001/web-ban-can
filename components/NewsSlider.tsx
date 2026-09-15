@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { isOptimizableImage } from '@/lib/image';
 import { Calendar, Clock, ArrowRight, ChevronLeft, ChevronRight, BookOpen, Newspaper } from 'lucide-react';
 
 interface News {
@@ -10,9 +12,7 @@ interface News {
   content: string;
   excerpt?: string;
   image?: string;
-  published: boolean;
   createdAt: string;
-  updatedAt: string;
 }
 
 interface NewsSliderProps {
@@ -163,17 +163,15 @@ export default function NewsSlider({ initialNews }: NewsSliderProps) {
     );
   }
 
+  /**
+   * Chưa có bài viết thì ẩn hẳn khối này.
+   *
+   * Bản trước vẫn dựng một khung cao ~200px chỉ để thông báo "chưa có tin tức" —
+   * với khách hàng đây là khoảng trắng vô nghĩa chen giữa đánh giá và phần giới
+   * thiệu, đẩy nội dung quan trọng xuống thấp mà không mang lại thông tin gì.
+   */
   if (error || news.length === 0) {
-    return (
-      <section className="py-12 bg-gradient-to-b from-slate-50/50 to-white rounded-3xl border border-slate-100/80 shadow-sm relative overflow-hidden">
-        <div className="container mx-auto px-4">
-          <div className="text-center py-16 text-slate-500">
-            <Newspaper className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="font-medium">{error || 'Chưa có tin tức nào được đăng tải.'}</p>
-          </div>
-        </div>
-      </section>
-    );
+    return null;
   }
 
   return (
@@ -232,11 +230,17 @@ export default function NewsSlider({ initialNews }: NewsSliderProps) {
                 {/* News Image */}
                 <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden flex-shrink-0">
                   {newsItem.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={newsItem.image}
-                      alt={newsItem.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      alt=""
+                      fill
+                      sizes="(max-width: 640px) 280px, 350px"
+                      className="object-contain p-3 group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                      /* Ảnh tin tức cũ có thể trỏ tới host chưa khai báo trong
+                         next.config.ts. next/image sẽ ném lỗi và làm sập cả trang
+                         chủ, nên bỏ qua tối ưu với những URL đó. */
+                      unoptimized={!isOptimizableImage(newsItem.image ?? null)}
                     />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
@@ -285,7 +289,7 @@ export default function NewsSlider({ initialNews }: NewsSliderProps) {
                   <div className="mt-auto pt-2">
                     <Link
                       href={`/news/${newsItem.id}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors group/link"
+                      className="inline-flex items-center gap-1.5 min-h-touch text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors group/link"
                     >
                       Đọc chi tiết
                       <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform duration-300" />
@@ -320,11 +324,17 @@ export default function NewsSlider({ initialNews }: NewsSliderProps) {
             <button
               key={index}
               onClick={() => scrollToSlide(index)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                currentSlide === index ? 'w-6 bg-blue-600' : 'w-2 bg-slate-200 hover:bg-slate-300'
-              }`}
-              aria-label={`Slide ${index + 1}`}
-            />
+              /* Vùng chạm 44px dù chấm hiển thị chỉ cao 8px (tiêu chí 5) */
+              className="min-w-touch min-h-touch flex items-center justify-center"
+              aria-label={`Chuyển tới tin thứ ${index + 1}`}
+              aria-current={currentSlide === index}
+            >
+              <span
+                className={`block h-2 rounded-full transition-all duration-300 ${
+                  currentSlide === index ? 'w-6 bg-blue-600' : 'w-2 bg-slate-300 hover:bg-slate-400'
+                }`}
+              />
+            </button>
           ))}
         </div>
 

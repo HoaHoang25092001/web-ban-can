@@ -40,6 +40,12 @@ model Product {
   updatedAt    DateTime @updatedAt
   category     Category @relation(fields: [categoryId], references: [id])
 
+  // Index cho các truy vấn thường dùng. Với 3.000+ sản phẩm, thiếu index thì
+  // mọi lần lọc theo danh mục hay lấy sản phẩm nổi bật đều phải quét toàn bảng.
+  // Kèm createdAt vì luôn sắp xếp theo ngày tạo giảm dần.
+  @@index([categoryId, createdAt(sort: Desc)])
+  @@index([featured, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
   @@map("products")
 }
 
@@ -53,6 +59,10 @@ model News {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Mọi truy vấn tin tức đều lọc published rồi sắp theo ngày giảm dần.
+  // Thiếu index thì phải quét toàn bảng — với 69 bài chưa nặng, nhưng sẽ chậm
+  // dần khi số bài tăng, và mỗi lần quét đều tốn một vòng đi-về tới Neon.
+  @@index([published, createdAt(sort: Desc)])
   @@map("news")
 }
 

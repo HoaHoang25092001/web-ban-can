@@ -34,7 +34,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Tìm kiếm sản phẩm
             </h1>
-            <p className="text-gray-550 text-slate-500 mb-8">
+            <p className="text-slate-600 mb-8">
               Vui lòng nhập từ khóa tìm kiếm trên thanh tìm kiếm để bắt đầu tìm sản phẩm.
             </p>
             <Link
@@ -50,53 +50,60 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     );
   }
 
-  // Cấu hình điều kiện tìm kiếm bằng Prisma
-  const where: any = {
-    OR: [
-      {
-        name: {
-          contains: query.trim(),
-          mode: 'insensitive',
-        },
-      },
-      {
-        description: {
-          contains: query.trim(),
-          mode: 'insensitive',
-        },
-      },
-    ],
-  };
+  /*
+   * Tìm kiếm KHÔNG PHÂN BIỆT DẤU.
+   *
+   * Khách hàng phần lớn gõ không dấu ("can ban" thay vì "cân bàn"). Với truy vấn
+   * `contains` thông thường của Prisma, "can ban" trả về 0 kết quả trong khi có
+   * hơn 1.100 sản phẩm phù hợp — khách tưởng cửa hàng không bán mặt hàng đó.
+   *
+   * Prisma chưa hỗ trợ hàm unaccent() trong mệnh đề where, nên dùng SQL thô.
+   * Đã tạo index GIN trên immutable_unaccent(lower(name)) để không quét toàn
+   * bảng 3.226 bản ghi (xem scripts/setup-search.mjs).
+   */
+  const keyword = `%${query.trim()}%`;
 
-  // Thực hiện song song truy vấn lấy sản phẩm và tổng đếm từ DB trên Server
-  const [productsRaw, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      include: {
-        category: true,
-      },
-      skip,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.product.count({ where }),
+  const [productsRaw, totalRows] = await Promise.all([
+    prisma.$queryRaw<Array<{
+      id: number; name: string; capacity: string | null; accuracy: string | null;
+      price: string | null; image: string | null; featured: boolean;
+      category_id: number; category_name: string;
+    }>>`
+      SELECT p.id, p.name, p.capacity, p.accuracy, p.price, p.image, p.featured,
+             c.id AS category_id, c.name AS category_name
+      FROM products p
+      JOIN categories c ON c.id = p."categoryId"
+      WHERE immutable_unaccent(lower(p.name)) LIKE immutable_unaccent(lower(${keyword}))
+         OR immutable_unaccent(lower(coalesce(p.description, ''))) LIKE immutable_unaccent(lower(${keyword}))
+      -- Sản phẩm có ảnh lên trước: kết quả toàn ô xám trống khiến khách tưởng
+      -- không tìm thấy gì (tiêu chí 9)
+      ORDER BY (p.image IS NULL), p."createdAt" DESC
+      LIMIT ${limit} OFFSET ${skip}
+    `,
+    prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*)::bigint AS count
+      FROM products p
+      WHERE immutable_unaccent(lower(p.name)) LIKE immutable_unaccent(lower(${keyword}))
+         OR immutable_unaccent(lower(coalesce(p.description, ''))) LIKE immutable_unaccent(lower(${keyword}))
+    `,
   ]);
+
+  const total = Number(totalRows[0]?.count ?? 0);
 
   const totalPages = Math.ceil(total / limit);
 
   // Chuẩn hóa dữ liệu sang client-safe format
-  const products = productsRaw.map(p => ({
-    ...p,
-    createdAt: p.createdAt.toISOString(),
-    updatedAt: p.updatedAt.toISOString(),
-    category: {
-      id: p.category.id,
-      name: p.category.name,
-    },
+  // Truy vấn thô trả về cột phẳng (category_id, category_name) — gộp lại thành
+  // đúng hình dạng mà ProductCard mong đợi.
+  const products = productsRaw.map((p) => ({
+    id: p.id,
+    name: p.name,
+    category: { id: p.category_id, name: p.category_name },
     capacity: p.capacity ?? '',
     accuracy: p.accuracy ?? '',
     price: p.price ?? '',
     image: p.image ?? '',
+    featured: p.featured,
   }));
 
   return (
@@ -107,7 +114,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-2">
             Kết quả tìm kiếm
           </h1>
-          <p className="text-gray-650 text-slate-500 font-medium text-sm">
+          <p className="text-slate-600 font-medium text-sm">
             Từ khóa: <span className="font-extrabold text-blue-600">&quot;{query}&quot;</span>
           </p>
           <p className="text-xs text-slate-500 font-bold bg-blue-50 border border-blue-100 rounded-full px-3 py-1 inline-block mt-3 uppercase tracking-wider">
@@ -146,7 +153,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             {/* Products Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-12">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} headingLevel={2} />
               ))}
             </div>
 
@@ -204,7 +211,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <div className="text-center mt-16 border-t pt-8">
           <Link
             href="/"
-            className="inline-flex items-center text-sm font-extrabold text-blue-600 hover:text-blue-700 transition-colors"
+            className="inline-flex items-center min-h-touch text-sm font-extrabold text-blue-600 hover:text-blue-700 transition-colors"
           >
             <i className="ri-arrow-left-line mr-2"></i>
             Quay lại trang chủ

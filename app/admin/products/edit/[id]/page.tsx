@@ -242,13 +242,15 @@ export default function EditProductPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 max-w-5xl">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Link href="/admin/products">
-            <button className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all cursor-pointer">
-              <ArrowLeft className="h-5 w-5" />
-            </button>
+          <Link
+            href="/admin/products"
+            aria-label="Quay lại danh sách sản phẩm"
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all"
+          >
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Chỉnh sửa sản phẩm</h1>
@@ -304,7 +306,8 @@ export default function EditProductPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_420px] gap-6 items-start">
+          <div className="space-y-6 min-w-0">
           {/* Section 1: Thông tin cơ bản */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -348,6 +351,7 @@ export default function EditProductPage() {
                   type="button"
                   role="switch"
                   aria-checked={formData.featured}
+                  aria-label="Đánh dấu là sản phẩm nổi bật, hiển thị ưu tiên trên trang chủ"
                   onClick={() => setFormData({ ...formData, featured: !formData.featured })}
                   className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 ${
                     formData.featured ? 'bg-amber-400' : 'bg-gray-200'
@@ -439,7 +443,10 @@ export default function EditProductPage() {
             </div>
           </div>
 
-          {/* Section 3: Hình ảnh */}
+          </div>
+
+          {/* ── Cột phải: ảnh sản phẩm ── */}
+          <div className="space-y-6 xl:sticky xl:top-20 min-w-0">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
               <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -459,8 +466,10 @@ export default function EditProductPage() {
             </div>
           </div>
 
-          {/* Actions & Draft Save Indicator */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 pb-6 border-t border-gray-100 mt-4">
+          </div>
+
+          {/* Thanh hành động trải hết chiều ngang */}
+          <div className="xl:col-span-2 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 pb-6 border-t border-gray-100">
             <div className="flex items-center gap-2">
               {autosaveTime ? (
                 <span className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 font-medium">
@@ -475,8 +484,11 @@ export default function EditProductPage() {
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-              <Link href="/admin/products" className="w-full sm:w-auto">
-                <Button variant="secondary" className="w-full sm:w-auto">Hủy bỏ</Button>
+              <Link
+                href="/admin/products"
+                className="w-full sm:w-auto inline-flex items-center justify-center min-h-touch px-4 rounded-lg bg-white text-gray-700 border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-colors"
+              >
+                Hủy bỏ
               </Link>
               <Button
                 type="button"

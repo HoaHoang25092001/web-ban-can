@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Cân Vạn Thịnh Phát">
+  <!--
+    Favicon: cân thăng bằng hai đĩa trên nền xanh thương hiệu.
+
+    Thiết kế cho kích thước rất nhỏ (16×16px trên tab trình duyệt):
+    - Nét dày 4px và hình khối lớn để không biến thành vệt mờ khi thu nhỏ
+    - Chỉ hai màu (nền xanh #0D47A1 + hình trắng) cho tương phản tối đa
+    - Bo góc 14px khớp với phong cách bo tròn của giao diện
+  -->
+  <rect width="64" height="64" rx="14" fill="#0D47A1"/>
+
+  <g stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Trụ đứng và đế cân -->
+    <path d="M32 15v34"/>
+    <path d="M22 51h20"/>
+    <!-- Đòn cân ngang -->
+    <path d="M14 22h36"/>
+    <!-- Dây treo hai đĩa -->
+    <path d="M18 22l-6 12M46 22l6 12"/>
+    <!-- Hai đĩa cân: cung tròn hứng phía dưới -->
+    <path d="M4 34a8 8 0 0 0 16 0z" fill="#fff"/>
+    <path d="M44 34a8 8 0 0 0 16 0z" fill="#fff"/>
+  </g>
+
+  <!-- Chóp trên trụ, gợi hình kim chỉ thăng bằng -->
+  <circle cx="32" cy="13" r="4" fill="#fff"/>
+</svg>

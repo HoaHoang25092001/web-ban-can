@@ -47,22 +47,39 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, phone, email, subject, message } = body;
+    const { name, phone, email, subject, product, message } = body;
+
+    // Xác thực phía server: không tin dữ liệu từ client (client có thể bị bỏ qua)
+    const cleanName = typeof name === 'string' ? name.trim() : '';
+    const cleanPhone = typeof phone === 'string' ? phone.trim() : '';
+
+    if (!cleanName) {
+      return NextResponse.json({ error: 'Vui lòng nhập họ và tên' }, { status: 400 });
+    }
+    if (!cleanPhone) {
+      return NextResponse.json({ error: 'Vui lòng nhập số điện thoại' }, { status: 400 });
+    }
+    if (!/^(\+?84|0)\d{9,10}$/.test(cleanPhone.replace(/[\s.\-()]/g, ''))) {
+      return NextResponse.json({ error: 'Số điện thoại không hợp lệ' }, { status: 400 });
+    }
 
     const contact = await prisma.contactRequest.create({
       data: {
-        name,
-        phone,
-        email,
-        product: subject || '', // Map subject to product field in database
-        message,
+        name: cleanName,
+        phone: cleanPhone,
+        email: typeof email === 'string' ? email.trim() : null,
+        // Form trang chủ gửi "product", form trang liên hệ gửi "subject"
+        product: (subject || product || '').toString().trim(),
+        // Giới hạn độ dài để tránh ghi bản ghi quá lớn vào database
+        message: typeof message === 'string' ? message.trim().slice(0, 2000) : '',
       },
     });
 
     return NextResponse.json(contact, { status: 201 });
   } catch (error) {
+    console.error('Error creating contact:', error);
     return NextResponse.json(
-      { error: 'Failed to create contact' },
+      { error: 'Không gửi được thông tin liên hệ' },
       { status: 500 }
     );
   }

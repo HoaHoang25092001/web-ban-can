@@ -91,6 +91,8 @@ export default function ProductsPage() {
       }
       params.append('limit', '15');
       params.append('page', page.toString());
+      // Chỉ trang admin mới cần số liệu thống kê (API public bỏ qua cho nhẹ)
+      params.append('withStats', 'true');
 
       const response = await fetch(`/api/products?${params.toString()}`);
       const data = await response.json();
@@ -178,11 +180,14 @@ export default function ProductsPage() {
             <h1 className="text-2xl font-bold text-gray-900">Quản lý sản phẩm</h1>
             <p className="text-sm text-gray-500 mt-1">Quản lý tất cả sản phẩm của website</p>
           </div>
-          <Link href="/admin/products/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Thêm sản phẩm
-            </Button>
+          {/* Link đóng vai trò nút: không lồng <button> trong <a> (HTML không
+              hợp lệ, gây lỗi hydration và điều hướng khó đoán). */}
+          <Link
+            href="/admin/products/new"
+            className="inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Thêm sản phẩm
           </Link>
         </div>
 
@@ -227,17 +232,21 @@ export default function ProductsPage() {
           <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm flex-shrink-0">
             <button
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`w-9 h-9 flex items-center justify-center rounded-md transition-all ${viewMode === 'table' ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
               title="Xem dạng bảng"
+              aria-label="Xem dạng bảng"
+              aria-pressed={viewMode === 'table'}
             >
-              <LayoutList className="h-4 w-4" />
+              <LayoutList className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`w-9 h-9 flex items-center justify-center rounded-md transition-all ${viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
               title="Xem dạng lưới"
+              aria-label="Xem dạng lưới"
+              aria-pressed={viewMode === 'grid'}
             >
-              <Grid3X3 className="h-4 w-4" />
+              <Grid3X3 className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -307,8 +316,11 @@ export default function ProductsPage() {
                             <div className="relative flex-shrink-0">
                               {primaryImage ? (
                                 <img
-                                  src={primaryImage.startsWith('/') ? `http://localhost:3000${primaryImage}` : primaryImage}
+                                  src={primaryImage}
                                   alt={product.name}
+                                  width={56}
+                                  height={56}
+                                  loading="lazy"
                                   className="h-14 w-14 object-cover rounded-xl border border-gray-100 shadow-sm"
                                   onError={(e) => {
                                     (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Crect width='56' height='56' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%239ca3af' font-size='10'%3E?%3C/text%3E%3C/svg%3E";
@@ -375,12 +387,14 @@ export default function ProductsPage() {
                         <td className="px-5 py-4 text-center">
                           <button
                             onClick={() => toggleFeatured(product.id, product.featured)}
-                            className={`inline-flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
+                            aria-pressed={product.featured}
+                            aria-label={`${product.featured ? 'Bỏ đánh dấu' : 'Đánh dấu'} nổi bật cho ${product.name}`}
+                            title={product.featured ? 'Bỏ nổi bật' : 'Đặt nổi bật'}
+                            className={`inline-flex items-center justify-center w-9 h-9 rounded-lg transition-all ${
                               product.featured
                                 ? 'bg-amber-100 text-amber-500 hover:bg-amber-200'
                                 : 'bg-gray-100 text-gray-300 hover:bg-amber-50 hover:text-amber-400'
                             }`}
-                            title={product.featured ? 'Bỏ nổi bật' : 'Đặt nổi bật'}
                           >
                             <Star className="h-4 w-4" fill={product.featured ? 'currentColor' : 'none'} />
                           </button>
@@ -389,20 +403,21 @@ export default function ProductsPage() {
                         {/* Actions */}
                         <td className="px-5 py-4">
                           <div className="flex items-center justify-end gap-1.5">
-                            <Link href={`/admin/products/edit/${product.id}`}>
-                              <button
-                                className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-all"
-                                title="Chỉnh sửa"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
+                            <Link
+                              href={`/admin/products/edit/${product.id}`}
+                              className="w-9 h-9 flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-all"
+                              title="Chỉnh sửa"
+                              aria-label={`Chỉnh sửa sản phẩm ${product.name}`}
+                            >
+                              <Edit className="h-4 w-4" aria-hidden="true" />
                             </Link>
                             <button
                               onClick={() => handleDelete(product.id)}
-                              className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all"
+                              className="w-9 h-9 flex items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-all"
                               title="Xóa"
+                              aria-label={`Xóa sản phẩm ${product.name}`}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
                             </button>
                           </div>
                         </td>
@@ -435,7 +450,7 @@ export default function ProductsPage() {
                   <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden">
                     {primaryImage ? (
                       <img
-                        src={primaryImage.startsWith('/') ? `http://localhost:3000${primaryImage}` : primaryImage}
+                        src={primaryImage}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
@@ -486,10 +501,12 @@ export default function ProductsPage() {
                       </h3>
                       <button
                         onClick={() => toggleFeatured(product.id, product.featured)}
-                        className={`flex-shrink-0 p-1 rounded-md transition-all ${
+                        aria-pressed={product.featured}
+                        aria-label={`${product.featured ? 'Bỏ đánh dấu' : 'Đánh dấu'} nổi bật cho ${product.name}`}
+                        title={product.featured ? 'Bỏ nổi bật' : 'Đặt nổi bật'}
+                        className={`flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-md transition-all ${
                           product.featured ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400'
                         }`}
-                        title={product.featured ? 'Bỏ nổi bật' : 'Đặt nổi bật'}
                       >
                         <Star className="h-4 w-4" fill={product.featured ? 'currentColor' : 'none'} />
                       </button>
