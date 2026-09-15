@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import ContactForm from '@/components/ContactForm';
 import BankTransfer from '@/components/BankTransfer';
+import ZaloQr from '@/components/ZaloQr';
 import LazyMap from '@/components/LazyMap';
 import { BUSINESS, PRIMARY_PHONE, telHref } from '@/lib/site';
 
@@ -24,7 +25,7 @@ const contactItems = [
     icon: 'ri-phone-line',
     label: 'Hotline',
     content: (
-      <span className="flex flex-col gap-0.5">
+      <span className="flex flex-col gap-2">
         {PHONES.map((phone) => (
           <a
             key={phone}
@@ -114,6 +115,8 @@ export default function ContactPage() {
                 ))}
               </dl>
             </section>
+
+            <ZaloQr />
 
             <section className="card overflow-hidden" aria-labelledby="map-heading">
               <h2 id="map-heading" className="text-xl font-bold text-slate-900 px-6 pt-6 pb-4">

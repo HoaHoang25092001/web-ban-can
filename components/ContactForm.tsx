@@ -33,7 +33,7 @@ function validateField(name: FieldName, value: string): string {
       if (!v) return 'Vui lòng nhập số điện thoại để chúng tôi gọi lại.';
       const digits = v.replace(/[\s.\-()]/g, '');
       if (!/^(\+?84|0)\d{9,10}$/.test(digits)) {
-        return 'Số điện thoại chưa đúng. Ví dụ hợp lệ: 0326711476.';
+        return 'Số điện thoại chưa đúng. Ví dụ hợp lệ: 0912345678.';
       }
       return '';
     }
@@ -201,7 +201,7 @@ export default function ContactForm() {
             type="tel"
             inputMode="tel"
             autoComplete="tel"
-            placeholder="0326711476"
+            placeholder="0912345678"
             {...fieldProps('phone')}
           />
           <FieldError name="phone" />

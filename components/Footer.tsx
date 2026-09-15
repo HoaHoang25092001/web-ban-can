@@ -102,7 +102,7 @@ export default function Footer() {
                   <dt className="sr-only-text">Điện thoại</dt>
                   {/* 34px mỗi dòng: vẫn đủ để bấm trúng trên điện thoại nhưng ba
                       số không bị kéo giãn rời rạc như khi dùng 44px. */}
-                  <dd className="flex flex-col">
+                  <dd className="flex flex-col gap-1.5 sm:gap-0">
                     {PHONES.map((phone) => (
                       <a
                         key={phone}

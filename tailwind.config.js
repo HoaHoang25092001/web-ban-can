@@ -5,8 +5,8 @@ module.exports = {
     // ── Tiêu chí 2: Typography có thang đo (ratio ~1.25) ────────────────────
     // body >= 16px, nội dung dài 18px, line-height đi kèm để nhịp dọc ổn định.
     fontSize: {
-      xs:   ['0.75rem',  { lineHeight: '1rem' }],      // 12 – chú thích
-      sm:   ['0.875rem', { lineHeight: '1.25rem' }],   // 14 – meta, label phụ
+      xs:   ['clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem)', { lineHeight: '1.15rem' }], // 13→14 – chú thích
+      sm:   ['clamp(0.875rem, 0.85rem + 0.12vw, 0.9375rem)', { lineHeight: '1.35rem' }], // 14→15 – meta, label phụ
       base: ['1rem',     { lineHeight: '1.5rem' }],    // 16 – body tối thiểu
       lg:   ['1.125rem', { lineHeight: '1.75rem' }],   // 18 – nội dung dài
       xl:   ['1.25rem',  { lineHeight: '1.75rem' }],   // 20
