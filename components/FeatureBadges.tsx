@@ -36,7 +36,7 @@ export default function FeatureBadges() {
   return (
     <section className="w-full bg-brand-600" aria-label="Cam kết dịch vụ">
       <div className="max-w-shell mx-auto px-4 sm:px-6 lg:px-8">
-        <ul className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/15">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/15">
           {features.map((feature) => (
             <li key={feature.id} className="bg-brand-600">
               <Link
