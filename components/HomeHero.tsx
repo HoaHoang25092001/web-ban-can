@@ -185,14 +185,14 @@ export default function HomeHero({ categories }: HomeHeroProps) {
 
                   {/* Chữ giới hạn trong nửa trái, không đè lên phần ảnh sản phẩm */}
                   {/* pb-16 chừa chỗ cho hàng chấm + nút điều hướng ở đáy */}
-                  <div className="absolute inset-y-0 left-0 w-full lg:w-[58%] flex flex-col justify-center px-5 sm:px-8 lg:px-10 pb-16 z-10">
+                  <div className="absolute inset-y-0 left-0 w-full lg:w-[58%] flex flex-col justify-center px-5 sm:px-8 lg:px-10 pb-14 sm:pb-16 z-10 bg-gradient-to-r from-brand-900/85 via-brand-900/55 to-transparent lg:bg-none">
                     <span className="inline-block bg-accent-600 text-white text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full mb-3 w-fit">
                       {slide.badge}
                     </span>
-                    <h2 className="text-white text-xl sm:text-3xl lg:text-[2.5rem] lg:leading-[1.15] font-bold mb-3 max-w-md">
+                    <h2 className="text-white text-lg leading-snug sm:text-3xl lg:text-[2.5rem] lg:leading-[1.15] font-bold mb-2 sm:mb-3 max-w-md">
                       {slide.title}
                     </h2>
-                    <p className="text-brand-100 text-sm sm:text-base mb-6 max-w-sm leading-relaxed">
+                    <p className="text-brand-100 text-sm sm:text-base mb-4 sm:mb-6 max-w-[34ch] sm:max-w-sm leading-relaxed">
                       {slide.subtitle}
                     </p>
                     <div className="flex gap-3 flex-wrap">
@@ -238,7 +238,7 @@ export default function HomeHero({ categories }: HomeHeroProps) {
             {/* Nút chuyển slide đặt ở đáy phải, cạnh chấm chỉ báo.
                 Đặt giữa hai cạnh như trước khiến nút trái đè lên phần mô tả,
                 che mất chữ ở mọi slide. */}
-            <div className="absolute bottom-3 right-3 z-20 flex gap-2">
+            <div className="hidden sm:flex absolute bottom-3 right-3 z-20 gap-2">
               <button
                 type="button"
                 onClick={prev}

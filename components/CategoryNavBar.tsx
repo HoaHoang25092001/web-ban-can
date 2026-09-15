@@ -93,7 +93,18 @@ export default function CategoryNavBar({ initialCategories }: CategoryNavBarProp
   }, [isOpen]);
 
   return (
-    <div className="w-full bg-brand-600 relative z-40">
+    <div className={`w-full bg-brand-600 relative ${isOpen ? 'z-50' : 'z-40'}`}>
+      {/* Lớp phủ mờ khi menu danh mục đang mở: tách bảng danh mục trắng khỏi
+          nội dung trang phía sau, và bấm vào đâu cũng đóng được. Bản trước
+          bảng trắng nổi thẳng trên nội dung nên nhìn như dính vào trang. */}
+      {isOpen && (
+        <div
+          className="absolute inset-x-0 top-full h-screen bg-slate-900/40 z-30 hidden lg:block"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       <div className="max-w-shell mx-auto px-4 sm:px-6 lg:px-8 flex items-stretch">
 
         {/* ── Nút mở danh mục (ẩn trên trang chủ vì danh mục đã là cột trái) ── */}
@@ -126,7 +137,7 @@ export default function CategoryNavBar({ initialCategories }: CategoryNavBarProp
               hidden={!isOpen}
             >
               <nav aria-label="Danh mục sản phẩm">
-                <ul className="bg-white border border-surface-border shadow-card-hover rounded-b-card overflow-hidden max-h-[70vh] overflow-y-auto scrollable-content">
+                <ul className="bg-white border border-surface-border shadow-2xl rounded-b-card overflow-hidden max-h-[70vh] overflow-y-auto scrollable-content">
                   {loadingCats
                     ? [...Array(8)].map((_, i) => (
                         <li key={i} className="h-11 border-b border-slate-100 px-4 flex items-center">
@@ -159,8 +170,12 @@ export default function CategoryNavBar({ initialCategories }: CategoryNavBarProp
         )}
 
         {/* ── Nav links ── */}
-        <nav aria-label="Điều hướng chính" className="flex items-center flex-1 min-w-0 overflow-x-auto no-scrollbar">
-          <ul className="flex items-stretch">
+        {/* Lớp phủ mờ dần ở mép phải: báo cho khách biết menu còn cuộn tiếp.
+            Bản trước cắt cụt giữa chữ ("CH...") mà không có dấu hiệu nào, nên
+            khách tưởng chỉ có bấy nhiêu mục (tiêu chí 4). */}
+        <div className="relative flex-1 min-w-0">
+          <nav aria-label="Điều hướng chính" className="flex items-center overflow-x-auto no-scrollbar scroll-smooth">
+            <ul className="flex items-stretch">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -176,13 +191,16 @@ export default function CategoryNavBar({ initialCategories }: CategoryNavBarProp
                 </li>
               );
             })}
-          </ul>
-        </nav>
+            </ul>
+          </nav>
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-brand-600 to-transparent lg:hidden" />
+        </div>
       </div>
 
       {/* ── Mobile + tablet: danh mục cuộn ngang (không ẩn sau hover) ── */}
       <div className="border-t border-white/15 lg:hidden">
-        <nav aria-label="Danh mục sản phẩm" className="overflow-x-auto no-scrollbar">
+        <div className="relative">
+        <nav aria-label="Danh mục sản phẩm" className="overflow-x-auto no-scrollbar scroll-smooth">
           <ul className="flex items-center gap-2 px-4 sm:px-6 py-2">
             {loadingCats
               ? [...Array(5)].map((_, i) => (
@@ -206,6 +224,8 @@ export default function CategoryNavBar({ initialCategories }: CategoryNavBarProp
                 })}
           </ul>
         </nav>
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-brand-600 to-transparent" />
+        </div>
       </div>
     </div>
   );

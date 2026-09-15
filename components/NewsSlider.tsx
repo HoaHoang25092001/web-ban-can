@@ -202,7 +202,7 @@ export default function NewsSlider({ initialNews }: NewsSliderProps) {
           <div className="hidden md:block">
             <Link
               href="/news"
-              className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 text-sm font-bold rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
+              className="group inline-flex items-center justify-center gap-2 min-h-touch px-5 bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 text-sm font-bold rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
             >
               Xem tất cả tin tức
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -303,7 +303,7 @@ export default function NewsSlider({ initialNews }: NewsSliderProps) {
           {/* Navigation Arrows */}
           <button
             onClick={handlePrev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 bg-white/90 hover:bg-blue-600 hover:text-white backdrop-blur-md rounded-full p-2.5 shadow-md border border-slate-200/50 transition-all duration-300 text-slate-600 hover:scale-105 z-10 opacity-0 group-hover/slider:opacity-100 cursor-pointer"
+            className="hidden md:flex items-center justify-center absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 w-11 h-11 bg-white/90 hover:bg-blue-600 hover:text-white backdrop-blur-md rounded-full shadow-md border border-slate-200/50 transition-all duration-300 text-slate-600 hover:scale-105 z-10 opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 cursor-pointer"
             aria-label="Previous slide"
           >
             <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -311,7 +311,7 @@ export default function NewsSlider({ initialNews }: NewsSliderProps) {
 
           <button
             onClick={handleNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 bg-white/90 hover:bg-blue-600 hover:text-white backdrop-blur-md rounded-full p-2.5 shadow-md border border-slate-200/50 transition-all duration-300 text-slate-600 hover:scale-105 z-10 opacity-0 group-hover/slider:opacity-100 cursor-pointer"
+            className="hidden md:flex items-center justify-center absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 w-11 h-11 bg-white/90 hover:bg-blue-600 hover:text-white backdrop-blur-md rounded-full shadow-md border border-slate-200/50 transition-all duration-300 text-slate-600 hover:scale-105 z-10 opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 cursor-pointer"
             aria-label="Next slide"
           >
             <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -342,7 +342,7 @@ export default function NewsSlider({ initialNews }: NewsSliderProps) {
         <div className="text-center mt-8 md:hidden px-6">
           <Link
             href="/news"
-            className="inline-flex items-center justify-center w-full px-5 py-2.5 bg-slate-50 border border-slate-200 text-slate-600 font-bold rounded-xl text-sm transition-all"
+            className="inline-flex items-center justify-center w-full min-h-touch px-5 bg-slate-50 border border-slate-200 text-slate-600 font-bold rounded-xl text-sm transition-all"
           >
             Xem tất cả tin tức
             <ArrowRight className="w-4 h-4 ml-2" />

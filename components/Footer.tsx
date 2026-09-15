@@ -107,7 +107,7 @@ export default function Footer() {
                       <a
                         key={phone}
                         href={telHref(phone)}
-                        className="inline-flex items-center min-h-[34px] text-slate-300 hover:text-white hover:underline w-fit"
+                        className="inline-flex items-center min-h-touch sm:min-h-[34px] text-slate-300 hover:text-white hover:underline w-fit"
                       >
                         {phone}
                       </a>
@@ -122,7 +122,7 @@ export default function Footer() {
                   <dd>
                     <a
                       href={`mailto:${EMAIL}`}
-                      className="inline-flex items-center min-h-[34px] text-slate-300 hover:text-white hover:underline break-all"
+                      className="inline-flex items-center min-h-touch sm:min-h-[34px] text-slate-300 hover:text-white hover:underline break-all"
                     >
                       {EMAIL}
                     </a>
@@ -153,7 +153,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="flex items-center min-h-[34px] text-sm text-slate-300 hover:text-white hover:underline"
+                    className="flex items-center min-h-touch sm:min-h-[34px] text-sm text-slate-300 hover:text-white hover:underline"
                   >
                     {link.label}
                   </Link>
@@ -185,11 +185,11 @@ export default function Footer() {
             © {new Date().getFullYear()} {BUSINESS.name}. Tất cả quyền được bảo lưu.
           </p>
           <p className="text-sm text-slate-500">
-            <Link href="/huong-dan-mua-hang" className="hover:text-slate-300 hover:underline">
+            <Link href="/huong-dan-mua-hang" className="inline-flex items-center min-h-touch sm:min-h-0 px-1 hover:text-slate-300 hover:underline">
               Hướng dẫn mua hàng
             </Link>
             <span className="mx-2" aria-hidden="true">·</span>
-            <Link href="/chinh-sach" className="hover:text-slate-300 hover:underline">
+            <Link href="/chinh-sach" className="inline-flex items-center min-h-touch sm:min-h-0 px-1 hover:text-slate-300 hover:underline">
               Chính sách
             </Link>
           </p>
