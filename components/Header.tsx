@@ -22,13 +22,53 @@ const navLinks = [
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hideOnScroll, setHideOnScroll] = useState(false);
   const pathname = usePathname();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const lastScrollY = useRef(0);
 
   // Đóng menu khi chuyển trang – tránh menu treo lơ lửng sau khi điều hướng
   useEffect(() => {
     setIsMenuOpen(false);
   }, [pathname]);
+
+  /*
+   * Ẩn header khi cuộn XUỐNG, hiện lại khi cuộn LÊN (chỉ trên điện thoại).
+   *
+   * Header dính cao 125px, cộng hai thanh điều hướng bên dưới là 229px —
+   * chiếm 27% màn hình 852px một cách thường trực. Khách đang đọc sản phẩm
+   * thì phần đó chỉ là vật cản; khi cần tìm kiếm hay đổi danh mục thì vuốt
+   * nhẹ lên là header trở lại ngay, không phải cuộn về đầu trang (tiêu chí 3 & 6).
+   *
+   * Không ẩn khi menu đang mở, và luôn hiện lại khi về gần đầu trang.
+   */
+  useEffect(() => {
+    // Người dùng đã bật "giảm chuyển động" thì giữ header cố định.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY;
+        const diff = y - lastScrollY.current;
+        // Bỏ qua rung lắc nhỏ để header không chớp tắt liên tục.
+        if (Math.abs(diff) > 6) {
+          setHideOnScroll(y > 240 && diff > 0);
+          lastScrollY.current = y;
+        }
+        ticking = false;
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Mở menu thì luôn phải thấy header.
+  useEffect(() => {
+    if (isMenuOpen) setHideOnScroll(false);
+  }, [isMenuOpen]);
 
   // Đóng menu bằng phím Esc (tiêu chí 5: điều hướng bàn phím)
   useEffect(() => {
@@ -44,7 +84,10 @@ export default function Header() {
   }, [isMenuOpen]);
 
   return (
-    <header className="bg-white border-b border-surface-border sticky top-0 z-50">
+    <header
+      className={`bg-white border-b border-surface-border sticky top-0 z-50 transition-transform duration-300 will-change-transform
+        ${hideOnScroll ? '-translate-y-full lg:translate-y-0' : 'translate-y-0'}`}
+    >
       <div className="max-w-shell mx-auto px-4 sm:px-6 lg:px-8">
         {/* ── Desktop: Tìm kiếm | Logo | Hotline ── */}
         {/* Bố cục 3 cột (tìm kiếm | logo | hotline) cần ~792px. Trước đây bật từ

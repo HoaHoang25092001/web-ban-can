@@ -9,7 +9,8 @@ import { useToast } from '@/components/Toast';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import {
   Plus, Edit, Trash2, Eye, EyeOff,
-  Newspaper, BookOpen, BookMarked, LayoutList, Grid3X3, Search, X
+  Newspaper, BookOpen, BookMarked, LayoutList, Grid3X3, Search, X,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -29,8 +30,19 @@ export default function NewsPage() {
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [page, setPage] = useState(1);
+
+  // Màn hình hẹp: mở dạng thẻ thay vì bảng. Đặt trong effect để HTML dựng trên
+  // server và trên trình duyệt khớp nhau, tránh lỗi hydration.
+  useEffect(() => {
+    if (window.matchMedia('(max-width: 767px)').matches) setViewMode('grid');
+  }, []);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
+
+  // Đổi từ khoá hoặc bộ lọc thì quay về trang đầu: nếu giữ nguyên trang hiện
+  // tại, kết quả lọc ít hơn sẽ cho ra một trang trống.
+  useEffect(() => { setPage(1); }, [search, statusFilter]);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; newsId: number | null }>({
     isOpen: false,
     newsId: null,
@@ -110,6 +122,17 @@ export default function NewsPage() {
     return matchSearch && matchStatus;
   });
 
+  /*
+   * Phân trang danh sách.
+   * Trước đây dựng hết 69 bài một lượt: ở dạng thẻ trên điện thoại, trang dài
+   * tới 29,7 màn hình — cuộn mãi không tới cuối, và trình duyệt phải dựng 69
+   * ảnh cùng lúc (tiêu chí 3 & 7).
+   */
+  const PER_PAGE = 12;
+  const totalPages = Math.max(1, Math.ceil(filteredNews.length / PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedNews = filteredNews.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+
   const publishedCount = news.filter(n => n.published).length;
   const draftCount = news.filter(n => !n.published).length;
 
@@ -129,14 +152,14 @@ export default function NewsPage() {
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
               <Newspaper className="h-5 w-5 text-blue-600" />
             </div>
             <div>
               <div className="text-2xl font-bold text-gray-900">{news.length}</div>
-              <div className="text-xs text-gray-500">Tổng bài viết</div>
+              <div className="text-xs text-gray-500 whitespace-nowrap">Tổng bài viết</div>
             </div>
           </div>
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
@@ -145,7 +168,7 @@ export default function NewsPage() {
             </div>
             <div>
               <div className="text-2xl font-bold text-gray-900">{publishedCount}</div>
-              <div className="text-xs text-gray-500">Đã xuất bản</div>
+              <div className="text-xs text-gray-500 whitespace-nowrap">Đã xuất bản</div>
             </div>
           </div>
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
@@ -154,7 +177,7 @@ export default function NewsPage() {
             </div>
             <div>
               <div className="text-2xl font-bold text-gray-900">{draftCount}</div>
-              <div className="text-xs text-gray-500">Bản nháp</div>
+              <div className="text-xs text-gray-500 whitespace-nowrap">Bản nháp</div>
             </div>
           </div>
         </div>
@@ -278,7 +301,7 @@ export default function NewsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredNews.map(item => (
+                  {pagedNews.map(item => (
                     <tr key={item.id} className="hover:bg-gray-50/60 transition-colors group">
                       {/* Article cell */}
                       <td className="px-5 py-4">
@@ -389,7 +412,7 @@ export default function NewsPage() {
         ) : (
           /* GRID VIEW */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredNews.map(item => (
+            {pagedNews.map(item => (
               <div
                 key={item.id}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group"
@@ -424,21 +447,21 @@ export default function NewsPage() {
                   <div className="absolute inset-x-0 bottom-0 pt-8 bg-gradient-to-t from-black/70 to-transparent flex items-end justify-center pb-3 gap-2">
                     <Link
                       href={`/admin/news/edit/${item.id}`}
-                      className="bg-white text-blue-600 text-xs font-medium min-h-[36px] px-3 rounded-lg hover:bg-blue-50 transition-colors inline-flex items-center gap-1"
+                      className="bg-white text-blue-600 text-sm font-medium min-h-touch px-4 inline-flex items-center justify-center gap-1 rounded-lg hover:bg-blue-50 transition-colors inline-flex items-center gap-1"
                       aria-label={`Chỉnh sửa bài viết ${item.title}`}
                     >
                       <Edit className="h-3 w-3" aria-hidden="true" /> Sửa
                     </Link>
                     <button
                       onClick={() => togglePublished(item.id, item.published)}
-                      className="bg-white text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1"
+                      className="bg-white text-gray-700 text-sm font-medium px-4 min-h-touch inline-flex items-center justify-center gap-1 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1"
                     >
                       {item.published ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                       {item.published ? 'Ẩn' : 'Đăng'}
                     </button>
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className="bg-white text-red-500 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-1"
+                      className="bg-white text-red-500 text-sm font-medium px-4 min-h-touch inline-flex items-center justify-center gap-1 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-1"
                     >
                       <Trash2 className="h-3 w-3" /> Xóa
                     </button>
@@ -457,16 +480,51 @@ export default function NewsPage() {
                     <span className="text-xs text-gray-500">
                       {new Date(item.createdAt).toLocaleDateString('vi-VN')}
                     </span>
-                    <Link href={`/admin/news/edit/${item.id}`}>
-                      <button className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
-                        <Edit className="h-3 w-3" /> Chỉnh sửa
-                      </button>
+                    <Link
+                      href={`/admin/news/edit/${item.id}`}
+                      aria-label={`Chỉnh sửa bài viết ${item.title}`}
+                      className="inline-flex items-center gap-1 min-h-touch px-2 -mr-2 text-sm text-blue-600 hover:text-blue-800 font-medium rounded-md hover:bg-blue-50 transition-colors"
+                    >
+                      <Edit className="h-3.5 w-3.5" aria-hidden="true" /> Chỉnh sửa
                     </Link>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+        )}
+
+        {/* ── Phân trang ── */}
+        {totalPages > 1 && (
+          <nav
+            aria-label="Phân trang danh sách bài viết"
+            className="mt-6 flex flex-wrap items-center justify-center gap-2"
+          >
+            <button
+              type="button"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="inline-flex items-center gap-1 min-h-touch px-4 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+              Trước
+            </button>
+
+            <span className="inline-flex items-center min-h-touch px-3 text-sm text-gray-600">
+              Trang <strong className="mx-1 text-gray-900">{currentPage}</strong> / {totalPages}
+              <span className="ml-2 text-gray-500 hidden sm:inline">({filteredNews.length} bài)</span>
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="inline-flex items-center gap-1 min-h-touch px-4 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Tiếp
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </nav>
         )}
       </div>
 

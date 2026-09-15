@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
+import MobileActionBar from './MobileActionBar';
 
 
 /**
@@ -42,6 +43,8 @@ export default function ConditionalLayout({
         {children}
       </main>
       <Footer />
+      {/* Thanh hành động đáy: chỉ hiện trên điện thoại (xem MobileActionBar). */}
+      <MobileActionBar />
     </div>
   );
 }

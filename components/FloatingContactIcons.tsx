@@ -1,6 +1,3 @@
-'use client';
-
-import { useState, useEffect, useRef } from 'react';
 import { BUSINESS, PRIMARY_PHONE } from '@/lib/site';
 
 const ZALO_PHONE = PRIMARY_PHONE.replace(/\./g, '');
@@ -62,36 +59,15 @@ const CHANNELS = [
  * vì ở đó có thừa chỗ trống hai bên.
  */
 export default function FloatingContactIcons() {
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  // Bấm ra ngoài hoặc nhấn Esc thì đóng — khách không bị kẹt với bảng đang mở.
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
   return (
     <div
-      ref={wrapRef}
-      className="fixed right-4 bottom-5 z-40 flex flex-col items-end gap-3"
+      className="hidden sm:flex fixed right-4 bottom-5 z-40 flex-col items-end gap-3"
     >
       {/* ── Các kênh liên hệ ──
           Màn hình nhỏ: chỉ hiện khi đã bấm mở. Từ sm trở lên: luôn hiện. */}
       <ul
         id="floating-contact-list"
-        className={`flex flex-col items-end gap-3 ${open ? 'flex' : 'hidden sm:flex'}`}
+        className="flex flex-col items-end gap-3"
       >
         {CHANNELS.map((c) => (
           <li key={c.key}>
@@ -99,15 +75,12 @@ export default function FloatingContactIcons() {
               href={c.href}
               {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               aria-label={c.aria}
-              onClick={() => setOpen(false)}
               className="group flex items-center gap-2"
             >
               {/* Nhãn chữ giúp nhận ra kênh mà không phải đoán qua biểu tượng.
                   Trên điện thoại hiện sẵn khi mở; máy tính hiện khi rê chuột. */}
               <span
-                className={`text-xs font-semibold text-white bg-slate-800/90 px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-md
-                  ${open ? 'inline-block sm:hidden' : 'hidden'}
-                  sm:group-hover:inline-block sm:group-focus-within:inline-block`}
+                className="hidden text-xs font-semibold text-white bg-slate-800/90 px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-md group-hover:inline-block group-focus-within:inline-block"
               >
                 {c.label}
               </span>
@@ -122,20 +95,6 @@ export default function FloatingContactIcons() {
         ))}
       </ul>
 
-      {/* ── Nút bật/tắt, chỉ có trên điện thoại ── */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-controls="floating-contact-list"
-        aria-label={open ? 'Đóng danh sách liên hệ' : 'Mở danh sách liên hệ'}
-        className="sm:hidden w-14 h-14 rounded-full bg-brand-600 text-white shadow-xl flex items-center justify-center active:scale-95 transition-transform"
-      >
-        <i
-          className={`text-2xl ${open ? 'ri-close-line' : 'ri-customer-service-2-line'}`}
-          aria-hidden="true"
-        ></i>
-      </button>
     </div>
   );
 }
