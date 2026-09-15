@@ -129,8 +129,8 @@ export default function ContactPage() {
             </section>
           </div>
 
-          {/* ── Cột form ── */}
-          <div className="lg:col-span-3">
+          {/* ── Cột tác vụ: gửi yêu cầu, rồi thanh toán ── */}
+          <div className="lg:col-span-3 space-y-6">
             <section id="contact-form" className="card p-6 md:p-8" aria-labelledby="form-heading">
               <h2 id="form-heading" className="text-xl font-bold text-slate-900 mb-1">
                 Gửi yêu cầu tư vấn
@@ -140,12 +140,9 @@ export default function ContactPage() {
               </p>
               <ContactForm />
             </section>
-          </div>
-        </div>
 
-        {/* ── Chuyển khoản: khối riêng, trải hết chiều ngang ── */}
-        <div className="mt-8">
-          <BankTransfer description="Đã chốt đơn và muốn thanh toán trước? Quét mã QR bằng app ngân hàng để điền sẵn thông tin, hoặc chuyển thủ công theo số tài khoản bên dưới." />
+            <BankTransfer description="Đã chốt đơn và muốn thanh toán trước? Quét mã QR bằng app ngân hàng để điền sẵn thông tin, hoặc chuyển thủ công theo số tài khoản bên dưới." />
+          </div>
         </div>
       </div>
     </div>

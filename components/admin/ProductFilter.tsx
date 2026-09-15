@@ -83,7 +83,7 @@ export default function ProductFilter({ onFilterChange, initialFilters }: Produc
         {/* Search Input */}
         <div className="flex-1 relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-gray-400" />
+            <Search className="h-4 w-4 text-gray-500" />
           </div>
           <label htmlFor="product-search" className="sr-only">
             Tìm kiếm sản phẩm theo tên
@@ -101,7 +101,7 @@ export default function ProductFilter({ onFilterChange, initialFilters }: Produc
         {/* Category Filter */}
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-400" />
+            <Filter className="h-4 w-4 text-gray-500" />
             <label htmlFor="product-category-filter" className="sr-only">
               Lọc theo danh mục
             </label>

@@ -175,7 +175,7 @@ export default function CategoriesPage() {
                 <h2 className="text-lg font-bold text-gray-900">
                   {editId ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'}
                 </h2>
-                <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-600">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -278,7 +278,7 @@ export default function CategoriesPage() {
                 </TableCell>
                 <TableCell>
                   <span className="text-sm text-gray-600 max-w-xs line-clamp-2 block" title={category.description}>
-                    {category.description || <span className="text-gray-400 italic">Chưa có mô tả</span>}
+                    {category.description || <span className="text-gray-500 italic">Chưa có mô tả</span>}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -296,7 +296,7 @@ export default function CategoriesPage() {
                         icon và title chỉ hiện khi rê chuột (tiêu chí 5). */}
                     <button
                       onClick={() => openEdit(category)}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                      className="w-11 h-11 flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                       title="Chỉnh sửa"
                       aria-label={`Chỉnh sửa danh mục ${category.name}`}
                     >
@@ -304,7 +304,7 @@ export default function CategoriesPage() {
                     </button>
                     <button
                       onClick={() => handleDelete(category.id)}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                      className="w-11 h-11 flex items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                       title="Xóa"
                       aria-label={`Xóa danh mục ${category.name}`}
                     >
@@ -318,7 +318,7 @@ export default function CategoriesPage() {
 
           {categories.length === 0 && (
             <div className="text-center py-12">
-              <Tag className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <Tag className="w-12 h-12 text-gray-500 mx-auto mb-3" />
               <p className="text-gray-500 mb-4">Chưa có danh mục nào</p>
               <Button onClick={openAdd}>
                 <Plus className="h-4 w-4 mr-2" />

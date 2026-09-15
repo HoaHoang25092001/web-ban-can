@@ -8,9 +8,8 @@ export async function GET(request: NextRequest) {
     const includeProducts = searchParams.get('includeProducts') === 'true';
 
     const categories = await prisma.category.findMany({
-      include: {
-        products: includeProducts,
-      },
+      // Đếm bằng COUNT(*) thay vì tải hết bản ghi sản phẩm về rồi .length.
+      ...(includeProducts ? { include: { _count: { select: { products: true } } } } : {}),
       orderBy: {
         name: 'asc',
       },

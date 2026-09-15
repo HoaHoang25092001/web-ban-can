@@ -173,7 +173,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <button
                 type="button"
                 onClick={() => signOut({ callbackUrl: '/admin/login' })}
-                className="inline-flex items-center gap-2 min-h-touch px-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                className="inline-flex items-center justify-center gap-2 min-h-touch min-w-touch px-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
               >
                 <LogOut className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">Đăng xuất</span>

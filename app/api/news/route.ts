@@ -22,6 +22,21 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
+        /*
+         * Không lấy cột `content`: bảng quản trị và các thẻ tin tức chỉ cần
+         * tiêu đề, tóm tắt, ảnh và trạng thái. Mỗi bài dài ~6.000 ký tự nên
+         * với limit=100 sẽ là ~559 KB tải về rồi bỏ đi (tiêu chí 7).
+         * Trang xem/sửa chi tiết gọi /api/news/[id] và vẫn nhận đủ content.
+         */
+        select: {
+          id: true,
+          title: true,
+          excerpt: true,
+          image: true,
+          published: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       }),
       prisma.news.count({ where }),
     ]);

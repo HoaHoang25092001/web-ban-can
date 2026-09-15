@@ -143,9 +143,9 @@ export default function AdminDashboard() {
                     href={action.href}
                     className="flex items-center gap-3 min-h-touch p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors h-full"
                   >
-                    <Icon className="h-5 w-5 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                    <Icon className="h-5 w-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
                     <span className="text-sm font-medium text-gray-900">{action.label}</span>
-                    <Plus className="h-4 w-4 text-gray-400 ml-auto flex-shrink-0" aria-hidden="true" />
+                    <Plus className="h-4 w-4 text-gray-500 ml-auto flex-shrink-0" aria-hidden="true" />
                   </Link>
                 </li>
               );

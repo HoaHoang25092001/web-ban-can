@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { isOptimizableImage } from '@/lib/image';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/admin/FormComponents';
 import { useToast } from '@/components/Toast';
@@ -161,31 +163,42 @@ export default function NewsPage() {
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           {/* Search */}
           <div className="flex-1 relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <label htmlFor="news-search" className="sr-only">
+              Tìm kiếm bài viết theo tiêu đề
+            </label>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" aria-hidden="true" />
             <input
-              type="text"
+              id="news-search"
+              type="search"
               placeholder="Tìm kiếm theo tiêu đề..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-9 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                <X className="h-3.5 w-3.5" />
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                aria-label="Xoá từ khoá tìm kiếm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-11 h-11 rounded-md text-gray-500 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
             )}
           </div>
 
           {/* Status filter tabs */}
-          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm flex-shrink-0">
+          <div role="group" aria-label="Lọc theo trạng thái" className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm flex-shrink-0">
             {(['all', 'published', 'draft'] as const).map(s => (
               <button
                 key={s}
+                type="button"
                 onClick={() => setStatusFilter(s)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                aria-pressed={statusFilter === s}
+                className={`inline-flex items-center justify-center min-h-touch px-4 rounded-md text-sm font-medium transition-all ${
                   statusFilter === s
                     ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 {s === 'all' ? 'Tất cả' : s === 'published' ? 'Xuất bản' : 'Nháp'}
@@ -196,18 +209,22 @@ export default function NewsPage() {
           {/* View toggle */}
           <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm flex-shrink-0">
             <button
+              type="button"
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-              title="Xem dạng bảng"
+              aria-label="Xem dạng bảng"
+              aria-pressed={viewMode === 'table'}
+              className={`inline-flex items-center justify-center w-11 h-11 rounded-md transition-all ${viewMode === 'table' ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:text-gray-600 hover:bg-gray-50'}`}
             >
-              <LayoutList className="h-4 w-4" />
+              <LayoutList className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-              title="Xem dạng lưới"
+              aria-label="Xem dạng lưới"
+              aria-pressed={viewMode === 'grid'}
+              className={`inline-flex items-center justify-center w-11 h-11 rounded-md transition-all ${viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:text-gray-600 hover:bg-gray-50'}`}
             >
-              <Grid3X3 className="h-4 w-4" />
+              <Grid3X3 className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -225,18 +242,18 @@ export default function NewsPage() {
                   />
                 ))}
               </div>
-              <p className="text-sm text-gray-400">Đang tải dữ liệu...</p>
+              <p className="text-sm text-gray-500">Đang tải dữ liệu...</p>
             </div>
           </div>
         ) : filteredNews.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Newspaper className="h-8 w-8 text-gray-400" />
+              <Newspaper className="h-8 w-8 text-gray-500" />
             </div>
             <h3 className="text-lg font-semibold text-gray-700 mb-2">
               {search || statusFilter !== 'all' ? 'Không tìm thấy bài viết' : 'Chưa có bài viết nào'}
             </h3>
-            <p className="text-sm text-gray-400 mb-6">
+            <p className="text-sm text-gray-500 mb-6">
               {search || statusFilter !== 'all'
                 ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm'
                 : 'Bắt đầu bằng cách viết bài đầu tiên'}
@@ -268,18 +285,18 @@ export default function NewsPage() {
                         <div className="flex items-center gap-3">
                           <div className="relative flex-shrink-0">
                             {item.image ? (
-                              <img
+                              <Image
                                 src={item.image}
-                                alt={item.title}
+                                alt=""
                                 width={80}
                                 height={56}
                                 loading="lazy"
+                                unoptimized={!isOptimizableImage(item.image)}
                                 className="h-14 w-20 object-cover rounded-xl border border-gray-100 shadow-sm"
-                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                               />
                             ) : (
                               <div className="h-14 w-20 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-100">
-                                <Newspaper className="h-5 w-5 text-gray-400" />
+                                <Newspaper className="h-5 w-5 text-gray-500" />
                               </div>
                             )}
                           </div>
@@ -287,7 +304,7 @@ export default function NewsPage() {
                             <div className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 max-w-[260px]">
                               {item.title}
                             </div>
-                            <div className="text-xs text-gray-400 mt-0.5">ID #{item.id}</div>
+                            <div className="text-xs text-gray-500 mt-0.5">ID #{item.id}</div>
                           </div>
                         </div>
                       </td>
@@ -295,20 +312,25 @@ export default function NewsPage() {
                       {/* Excerpt */}
                       <td className="px-5 py-4">
                         <p className="text-sm text-gray-500 line-clamp-2 max-w-[240px]">
-                          {item.excerpt || <span className="text-gray-300 italic">Chưa có tóm tắt</span>}
+                          {item.excerpt || <span className="text-gray-500 italic">Chưa có tóm tắt</span>}
                         </p>
                       </td>
 
                       {/* Status */}
                       <td className="px-5 py-4 text-center">
                         <button
+                          type="button"
                           onClick={() => togglePublished(item.id, item.published)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                          aria-label={
+                            item.published
+                              ? `Chuyển bài "${item.title}" về nháp`
+                              : `Xuất bản bài "${item.title}"`
+                          }
+                          className={`inline-flex items-center justify-center gap-1.5 px-4 min-h-touch rounded-full text-sm font-semibold transition-all border ${
                             item.published
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
                               : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
                           }`}
-                          title={item.published ? 'Click để chuyển về nháp' : 'Click để xuất bản'}
                         >
                           {item.published
                             ? <><Eye className="h-3 w-3" /> Xuất bản</>
@@ -324,7 +346,7 @@ export default function NewsPage() {
                             day: '2-digit', month: '2-digit', year: 'numeric'
                           })}
                         </div>
-                        <div className="text-xs text-gray-400 mt-0.5">
+                        <div className="text-xs text-gray-500 mt-0.5">
                           {new Date(item.createdAt).toLocaleTimeString('vi-VN', {
                             hour: '2-digit', minute: '2-digit'
                           })}
@@ -336,18 +358,19 @@ export default function NewsPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <Link
                             href={`/admin/news/edit/${item.id}`}
-                            className="w-9 h-9 flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-all"
+                            className="w-11 h-11 flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-all"
                             title="Chỉnh sửa"
                             aria-label={`Chỉnh sửa bài viết ${item.title}`}
                           >
                             <Edit className="h-4 w-4" aria-hidden="true" />
                           </Link>
                           <button
+                            type="button"
                             onClick={() => handleDelete(item.id)}
-                            className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all"
-                            title="Xóa"
+                            aria-label={`Xoá bài viết ${item.title}`}
+                            className="inline-flex items-center justify-center w-11 h-11 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-all"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </button>
                         </div>
                       </td>
@@ -358,7 +381,7 @@ export default function NewsPage() {
             </div>
             {/* Footer */}
             <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-500">
                 Hiển thị <span className="font-medium text-gray-600">{filteredNews.length}</span> bài viết
               </p>
             </div>
@@ -374,15 +397,18 @@ export default function NewsPage() {
                 {/* Cover image */}
                 <div className="relative aspect-video bg-gray-50 overflow-hidden">
                   {item.image ? (
-                    <img
+                    <Image
                       src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      alt=""
+                      fill
+                      sizes="(max-width: 768px) 100vw, 320px"
+                      loading="lazy"
+                      unoptimized={!isOptimizableImage(item.image)}
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Newspaper className="h-10 w-10 text-gray-300" />
+                      <Newspaper className="h-10 w-10 text-gray-500" />
                     </div>
                   )}
                   {/* Status badge */}
@@ -428,7 +454,7 @@ export default function NewsPage() {
                     <p className="text-xs text-gray-500 line-clamp-2 mb-3">{item.excerpt}</p>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-500">
                       {new Date(item.createdAt).toLocaleDateString('vi-VN')}
                     </span>
                     <Link href={`/admin/news/edit/${item.id}`}>

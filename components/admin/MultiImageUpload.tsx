@@ -117,7 +117,7 @@ export default function MultiImageUpload({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <label className="block text-sm font-semibold text-gray-700">{label}</label>
-        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
           {values.length}/{maxImages} ảnh
         </span>
       </div>
@@ -175,8 +175,8 @@ export default function MultiImageUpload({
               htmlFor="multi-upload-input"
               className="aspect-square border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all group"
             >
-              <ImagePlus className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
-              <span className="text-[11px] text-gray-400 group-hover:text-blue-500 mt-1 transition-colors">
+              <ImagePlus className="h-5 w-5 text-gray-500 group-hover:text-blue-500 transition-colors" />
+              <span className="text-[11px] text-gray-500 group-hover:text-blue-500 mt-1 transition-colors">
                 Thêm ảnh
               </span>
             </label>
@@ -215,14 +215,14 @@ export default function MultiImageUpload({
             ) : (
               <div className="flex flex-col items-center text-gray-500">
                 <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-3">
-                  <UploadCloud className="h-8 w-8 text-gray-400" />
+                  <UploadCloud className="h-8 w-8 text-gray-500" />
                 </div>
                 <p className="text-sm font-semibold text-gray-600 mb-1">
                   Kéo thả hoặc{' '}
                   <span className="text-blue-600 underline underline-offset-2">chọn ảnh</span>
                 </p>
-                <p className="text-xs text-gray-400">PNG, JPG, WebP, GIF — Tối đa 4MB/ảnh</p>
-                <p className="text-xs text-gray-400 mt-0.5">Có thể chọn nhiều ảnh cùng lúc</p>
+                <p className="text-xs text-gray-500">PNG, JPG, WebP, GIF — Tối đa 4MB/ảnh</p>
+                <p className="text-xs text-gray-500 mt-0.5">Có thể chọn nhiều ảnh cùng lúc</p>
               </div>
             )}
           </label>
@@ -261,7 +261,7 @@ export default function MultiImageUpload({
 
       {/* Helper text */}
       {values.length > 0 && (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-500">
           💡 Ảnh đầu tiên là <span className="font-medium text-blue-600">ảnh chính</span> — hiển thị
           trong danh sách. Hover vào ảnh để xóa hoặc đặt làm ảnh chính.
         </p>

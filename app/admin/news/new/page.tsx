@@ -164,7 +164,7 @@ export default function NewNewsPage() {
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                     !formData.published ? 'bg-amber-200' : 'bg-gray-100'
                   }`}>
-                    <EyeOff className={`h-5 w-5 ${!formData.published ? 'text-amber-700' : 'text-gray-400'}`} />
+                    <EyeOff className={`h-5 w-5 ${!formData.published ? 'text-amber-700' : 'text-gray-500'}`} />
                   </div>
                   <div>
                     <div className={`text-sm font-semibold ${!formData.published ? 'text-amber-800' : 'text-gray-700'}`}>
@@ -190,7 +190,7 @@ export default function NewNewsPage() {
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                     formData.published ? 'bg-emerald-200' : 'bg-gray-100'
                   }`}>
-                    <Eye className={`h-5 w-5 ${formData.published ? 'text-emerald-700' : 'text-gray-400'}`} />
+                    <Eye className={`h-5 w-5 ${formData.published ? 'text-emerald-700' : 'text-gray-500'}`} />
                   </div>
                   <div>
                     <div className={`text-sm font-semibold ${formData.published ? 'text-emerald-800' : 'text-gray-700'}`}>

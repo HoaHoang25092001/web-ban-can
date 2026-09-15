@@ -9,7 +9,7 @@ import { Calendar, Clock, ArrowRight, ChevronLeft, ChevronRight, BookOpen, Newsp
 interface News {
   id: number;
   title: string;
-  content: string;
+  content?: string;
   excerpt?: string;
   image?: string;
   createdAt: string;
@@ -134,8 +134,16 @@ export default function NewsSlider({ initialNews }: NewsSliderProps) {
     return text.substring(0, maxLength) + '...';
   };
 
-  const estimateReadTime = (content: string) => {
-    return Math.max(1, Math.ceil(content.replace(/<[^>]+>/g, '').length / 1000));
+  /*
+    * Ước tính thời gian đọc.
+    * API danh sách không trả về `content` nữa (mỗi bài ~6.000 ký tự, tải về
+    * chỉ để đếm là lãng phí), nên khi thiếu thì ước lượng từ tóm tắt.
+    */
+  const estimateReadTime = (item: News) => {
+    const text = item.content ?? item.excerpt ?? '';
+    if (!text) return 6;
+    const plain = text.replace(/<[^>]+>/g, '');
+    return Math.max(1, Math.ceil((item.content ? plain.length : plain.length * 12) / 1000));
   };
 
   // Hàm tự động phân tích category dựa trên tiêu đề bài viết
@@ -266,7 +274,7 @@ export default function NewsSlider({ initialNews }: NewsSliderProps) {
                     <span>·</span>
                     <span className="inline-flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-indigo-500" />
-                      {estimateReadTime(newsItem.content)} phút đọc
+                      {estimateReadTime(newsItem)} phút đọc
                     </span>
                   </div>
                   
@@ -279,10 +287,10 @@ export default function NewsSlider({ initialNews }: NewsSliderProps) {
                   
                   {/* Excerpt */}
                   <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 mb-4 flex-grow">
-                    {newsItem.excerpt 
-                      ? truncateText(newsItem.excerpt, 100)
-                      : truncateText(newsItem.content.replace(/<[^>]*>/g, ''), 100)
-                    }
+                    {truncateText(
+                      (newsItem.excerpt ?? newsItem.content ?? '').replace(/<[^>]*>/g, ''),
+                      100
+                    )}
                   </p>
                   
                   {/* Action link */}

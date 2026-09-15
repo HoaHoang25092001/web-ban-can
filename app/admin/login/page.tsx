@@ -99,7 +99,7 @@ export default function AdminLogin() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@congty.com"
                 aria-invalid={error ? true : undefined}
-                className="w-full min-h-touch px-3 py-2 text-base text-gray-900 bg-white border-2 border-gray-300 rounded-lg placeholder:text-gray-400 focus:outline-none focus:border-blue-600 transition-colors"
+                className="w-full min-h-touch px-3 py-2 text-base text-gray-900 bg-white border-2 border-gray-300 rounded-lg placeholder:text-gray-500 focus:outline-none focus:border-blue-600 transition-colors"
               />
             </div>
 
@@ -117,7 +117,7 @@ export default function AdminLogin() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Nhập mật khẩu"
                   aria-invalid={error ? true : undefined}
-                  className="w-full min-h-touch pl-3 pr-12 py-2 text-base text-gray-900 bg-white border-2 border-gray-300 rounded-lg placeholder:text-gray-400 focus:outline-none focus:border-blue-600 transition-colors"
+                  className="w-full min-h-touch pl-3 pr-12 py-2 text-base text-gray-900 bg-white border-2 border-gray-300 rounded-lg placeholder:text-gray-500 focus:outline-none focus:border-blue-600 transition-colors"
                 />
                 {/* Cho phép xem lại mật khẩu vừa gõ – giảm lỗi nhập sai */}
                 <button
