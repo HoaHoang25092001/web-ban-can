@@ -53,3 +53,7 @@ next-env.d.ts
 # User uploaded files
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# File sao lưu database: dung lượng lớn, chứa toàn bộ dữ liệu kinh doanh.
+# Giữ ở máy hoặc ổ lưu trữ riêng, không đưa lên Git.
+backup-*.json
