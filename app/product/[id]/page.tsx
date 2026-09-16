@@ -112,7 +112,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       { image: { sort: 'desc', nulls: 'last' } },
       { createdAt: 'desc' },
     ],
-    take: 12
+    take: 48
   });
 
   // Serialize dữ liệu để an toàn khi truyền qua Client Component boundary

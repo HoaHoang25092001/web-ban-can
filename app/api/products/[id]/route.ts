@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 // GET /api/products/[id] - Lấy sản phẩm theo ID
@@ -83,6 +84,8 @@ export async function PUT(
       },
     });
 
+    // Xoá cache đếm sản phẩm (xem chú thích ở POST /api/products).
+    revalidateTag('products');
     return NextResponse.json(product);
   } catch (error: any) {
     console.error('Error updating product:', error);
@@ -106,6 +109,8 @@ export async function DELETE(
       where: { id },
     });
 
+    // Xoá cache đếm sản phẩm (xem chú thích ở POST /api/products).
+    revalidateTag('products');
     return NextResponse.json({ message: 'Product deleted successfully' });
   } catch (error: any) {
     console.error('Error deleting product:', error);

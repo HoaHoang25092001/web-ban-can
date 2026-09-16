@@ -55,68 +55,32 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   const formRef = useRef<HTMLDivElement>(null);
 
   /*
-   * Băng chuyền "Sản phẩm liên quan".
+   * Phân trang "Sản phẩm liên quan".
    *
-   * Bản trước là lưới cố định 4 cột: chỉ xem được 4 sản phẩm, số còn lại trong
-   * cùng danh mục không ai thấy. Nay cuộn ngang được và tự chạy, khách lướt qua
-   * là thấy thêm lựa chọn — vẫn giữ nút qua lại cho người muốn tự điều khiển
-   * (tiêu chí 1 & 6).
+   * Bản trước là băng chuyền một dòng: khách phải chờ nó trượt hoặc bấm mũi
+   * tên mới thấy hết, nên phần lớn sản phẩm không ai xem tới. Lưới 3 dòng × 4
+   * cột cho thấy 12 sản phẩm cùng lúc — khách quét mắt một lượt là nắm được
+   * toàn bộ lựa chọn (tiêu chí 1 & 3).
    */
-  const relatedRef = useRef<HTMLDivElement>(null);
-  const relatedPaused = useRef(false);
-  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const RELATED_PER_PAGE = 12;
+  const [relatedPage, setRelatedPage] = useState(1);
+  const relatedTopRef = useRef<HTMLDivElement>(null);
 
-  /** Cập nhật trạng thái bật/tắt của hai nút mũi tên theo vị trí cuộn. */
-  const updateArrows = useCallback(() => {
-    const el = relatedRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
-  }, []);
+  const relatedTotalPages = Math.max(
+    1,
+    Math.ceil(relatedProducts.length / RELATED_PER_PAGE)
+  );
+  const relatedVisible = relatedProducts.slice(
+    (relatedPage - 1) * RELATED_PER_PAGE,
+    relatedPage * RELATED_PER_PAGE
+  );
 
-  /** Cuộn đi đúng một thẻ mỗi lần bấm, thay vì một khoảng cố định. */
-  const scrollRelated = (dir: 'prev' | 'next') => {
-    const el = relatedRef.current;
-    if (!el) return;
-    const card = el.querySelector('a');
-    const step = card ? card.getBoundingClientRect().width + 20 : 260;
-    el.scrollBy({ left: dir === 'next' ? step : -step, behavior: 'smooth' });
-    // Người dùng vừa tự bấm thì dừng tự chạy một lúc, tránh giành quyền điều khiển.
-    relatedPaused.current = true;
-    if (resumeTimer.current) clearTimeout(resumeTimer.current);
-    resumeTimer.current = setTimeout(() => { relatedPaused.current = false; }, 5000);
+  /* Đổi trang thì cuộn về đầu khối, nếu không khách đang ở cuối trang 1 sẽ
+   * thấy trang 2 bắt đầu từ giữa chừng và tưởng không có gì thay đổi. */
+  const goRelatedPage = (page: number) => {
+    setRelatedPage(page);
+    relatedTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
-
-  useEffect(() => {
-    const el = relatedRef.current;
-    if (!el || relatedProducts.length === 0) return;
-
-    updateArrows();
-    el.addEventListener('scroll', updateArrows, { passive: true });
-
-    // Người bật "giảm chuyển động" thì không tự chạy, chỉ dùng nút mũi tên.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return () => el.removeEventListener('scroll', updateArrows);
-    }
-
-    /* Cứ 4 giây trượt sang một thẻ; hết dãy thì quay về đầu. Đủ chậm để đọc
-     * được tên sản phẩm khi lướt qua. */
-    const timer = setInterval(() => {
-      if (relatedPaused.current || document.visibilityState !== 'visible') return;
-      const card = el.querySelector('a');
-      const step = card ? card.getBoundingClientRect().width + 20 : 260;
-      const atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 8;
-      el.scrollTo({ left: atEnd ? 0 : el.scrollLeft + step, behavior: 'smooth' });
-    }, 4000);
-
-    return () => {
-      clearInterval(timer);
-      el.removeEventListener('scroll', updateArrows);
-      if (resumeTimer.current) clearTimeout(resumeTimer.current);
-    };
-  }, [relatedProducts.length, updateArrows]);
   const [quoteForm, setQuoteForm] = useState({
     name: '',
     phone: '',
@@ -886,56 +850,28 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
         {/* Related Products - Full Width Section */}
         {relatedProducts.length > 0 && (
-          <div className="mt-10 md:mt-12">
+          <div ref={relatedTopRef} className="mt-10 md:mt-12 scroll-mt-24">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg md:text-xl font-extrabold text-slate-900 flex items-center gap-2">
                 <Package className="w-6 h-6 text-blue-600" /> Sản phẩm liên quan khác
               </h2>
-              <div className="flex items-center gap-2">
-                {/* Nút qua lại: mờ đi khi đã ở đầu/cuối dãy để khách biết
-                    không còn gì để xem thêm (tiêu chí 1). */}
-                <button
-                  type="button"
-                  onClick={() => scrollRelated('prev')}
-                  disabled={!canScrollLeft}
-                  aria-label="Xem sản phẩm trước đó"
-                  className="hidden sm:inline-flex items-center justify-center w-11 h-11 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => scrollRelated('next')}
-                  disabled={!canScrollRight}
-                  aria-label="Xem sản phẩm tiếp theo"
-                  className="hidden sm:inline-flex items-center justify-center w-11 h-11 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight className="w-5 h-5" aria-hidden="true" />
-                </button>
-                <Link
-                  href={`/category/${product.category.id}`}
-                  className="inline-flex items-center gap-1 min-h-touch px-2 rounded-lg text-sm font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 group transition-colors"
-                >
-                  Xem tất cả
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </div>
+              <Link
+                href={`/category/${product.category.id}`}
+                className="inline-flex items-center gap-1 min-h-touch px-2 -mr-2 rounded-lg text-sm font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 group transition-colors"
+              >
+                Xem tất cả
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
             </div>
 
-            {/* Dừng tự chạy khi rê chuột hoặc chạm vào, để khách kịp đọc. */}
-            <div
-              ref={relatedRef}
-              onMouseEnter={() => { relatedPaused.current = true; }}
-              onMouseLeave={() => { relatedPaused.current = false; }}
-              onTouchStart={() => { relatedPaused.current = true; }}
-              className="flex gap-5 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-2 -mx-1 px-1"
-              style={{ scrollbarWidth: 'none' }}
-            >
-              {relatedProducts.map((p) => (
+            {/* Lưới 4 cột × 3 dòng = 12 sản phẩm mỗi trang. Trên điện thoại
+                thu còn 2 cột để thẻ không quá nhỏ (tiêu chí 6). */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+              {relatedVisible.map((p) => (
                 <Link
                   key={p.id}
                   href={`/product/${p.id}`}
-                  className="group flex-shrink-0 w-[calc(50%-10px)] sm:w-[calc(33.333%-14px)] lg:w-[calc(25%-15px)] snap-start bg-white border border-slate-200/60 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
+                  className="group bg-white border border-slate-200/60 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full"
                 >
                   <div className="relative bg-slate-50 flex items-center justify-center h-40 md:h-48 overflow-hidden">
                     <Image
@@ -972,6 +908,60 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 </Link>
               ))}
             </div>
+
+            {/* ── Phân trang ──
+                Chỉ hiện khi có nhiều hơn một trang. Số trang bấm được trực
+                tiếp, không bắt khách bấm "tiếp" nhiều lần (tiêu chí 4). */}
+            {relatedTotalPages > 1 && (
+              <nav
+                aria-label="Phân trang sản phẩm liên quan"
+                className="mt-6 flex flex-wrap items-center justify-center gap-2"
+              >
+                <button
+                  type="button"
+                  onClick={() => goRelatedPage(relatedPage - 1)}
+                  disabled={relatedPage === 1}
+                  className="inline-flex items-center gap-1 min-h-touch px-4 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+                  Trước
+                </button>
+
+                {Array.from({ length: relatedTotalPages }, (_, i) => i + 1).map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => goRelatedPage(n)}
+                    aria-label={`Trang ${n}`}
+                    aria-current={n === relatedPage ? 'page' : undefined}
+                    className={`inline-flex items-center justify-center w-11 h-11 rounded-xl text-sm font-bold transition-colors ${
+                      n === relatedPage
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-600'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => goRelatedPage(relatedPage + 1)}
+                  disabled={relatedPage === relatedTotalPages}
+                  className="inline-flex items-center gap-1 min-h-touch px-4 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Tiếp
+                  <ChevronRight className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </nav>
+            )}
+
+            {/* Cho biết đang xem bao nhiêu trên tổng bao nhiêu (tiêu chí 1). */}
+            {relatedProducts.length > RELATED_PER_PAGE && (
+              <p className="mt-3 text-center text-sm text-slate-500">
+                Hiển thị {relatedVisible.length} / {relatedProducts.length} sản phẩm cùng danh mục
+              </p>
+            )}
           </div>
         )}
       </div>
