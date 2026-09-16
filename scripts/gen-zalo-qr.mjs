@@ -11,9 +11,22 @@
  * mà chỉ nặng vài KB.
  */
 import QRCode from 'qrcode';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync } from 'node:fs';
 
-const PHONE = '0911.093.511';
+/*
+ * Đọc hotline thẳng từ lib/site.ts để mã QR không bao giờ lệch với số hiển
+ * thị trên website. Bản trước chép cứng số ở đây, nên đổi hotline trong
+ * site.ts rồi chạy lại script này vẫn sinh ra QR trỏ về số CŨ mà không báo
+ * lỗi gì — sai lặng lẽ, rất khó phát hiện.
+ */
+const siteSrc = readFileSync(new URL('../lib/site.ts', import.meta.url), 'utf8');
+const phoneMatch = siteSrc.match(/phones:\s*\[\s*'([^']+)'/);
+if (!phoneMatch) {
+  console.error('Không đọc được số điện thoại từ lib/site.ts');
+  process.exit(1);
+}
+
+const PHONE = phoneMatch[1];
 const ZALO_URL = `https://zalo.me/${PHONE.replace(/\./g, '')}`;
 
 const svg = await QRCode.toString(ZALO_URL, {

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
+import { useToast } from '@/components/Toast';
 import { Button, Input, Textarea } from '@/components/admin/FormComponents';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -27,6 +28,7 @@ const iconOptions = [
 ];
 
 export default function NewCategoryPage() {
+  const toast = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,11 +54,11 @@ export default function NewCategoryPage() {
         router.push('/admin/categories');
       } else {
         const error = await response.json();
-        alert(error.error || 'Có lỗi xảy ra khi tạo danh mục');
+        toast.error('Chưa tạo được danh mục', error.error || 'Vui lòng thử lại.');
       }
     } catch (error) {
       console.error('Error creating category:', error);
-      alert('Có lỗi xảy ra khi tạo danh mục');
+      toast.error('Chưa tạo được danh mục', 'Không kết nối được tới máy chủ.');
     } finally {
       setLoading(false);
     }

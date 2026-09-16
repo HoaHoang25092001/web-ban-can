@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useUploadThing } from '@/lib/uploadthing-client';
 import { X, Loader2, UploadCloud } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface UploadThingUploadProps {
   label: string;
@@ -16,6 +17,7 @@ export default function UploadThingUpload({
   value,
   onChange,
 }: UploadThingUploadProps) {
+  const toast = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
@@ -29,7 +31,7 @@ export default function UploadThingUpload({
     },
     onUploadError: (error: Error) => {
       setIsUploading(false);
-      alert(`Upload thất bại: ${error.message}`);
+      toast.error('Tải ảnh thất bại', error.message);
     },
   });
 
@@ -39,19 +41,19 @@ export default function UploadThingUpload({
 
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
       if (!allowedTypes.includes(file.type)) {
-        alert('Chỉ hỗ trợ định dạng: JPG, PNG, WebP, GIF');
+        toast.error('File không phải ảnh', `"${file.name}" không dùng được. Chỉ nhận JPG, PNG, WebP, GIF.`);
         return;
       }
 
       if (file.size > 4 * 1024 * 1024) {
-        alert('Kích thước file tối đa là 4MB');
+        toast.error('Ảnh vượt quá 4MB', `"${file.name}" nặng ${(file.size / 1024 / 1024).toFixed(1)}MB. Hãy giảm dung lượng rồi tải lại.`);
         return;
       }
 
       setIsUploading(true);
       await startUpload([file]);
     },
-    [startUpload]
+    [startUpload, toast]
   );
 
   const handleInputChange = useCallback(

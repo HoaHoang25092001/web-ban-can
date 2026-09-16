@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
@@ -35,9 +36,24 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
           
-          // Trong thực tế nên sử dụng bcrypt để so sánh password đã hash
-          if (admin.password !== credentials.password) {
-            return null;
+          const isHashed = /^\$2[aby]\$/.test(admin.password);
+
+          if (isHashed) {
+            const ok = await bcrypt.compare(credentials.password, admin.password);
+            if (!ok) return null;
+          } else {
+            // Bản ghi cũ còn lưu mật khẩu thuần: so trực tiếp một lần cuối...
+            if (admin.password !== credentials.password) return null;
+            // ...rồi nâng cấp ngay sang bcrypt để lần sau không còn dạng thuần.
+            try {
+              const hashed = await bcrypt.hash(credentials.password, 10);
+              await prisma.admin.update({
+                where: { id: admin.id },
+                data: { password: hashed },
+              });
+            } catch {
+              // Không nâng cấp được thì vẫn cho đăng nhập, lần sau thử lại.
+            }
           }
 
           return {
@@ -51,6 +67,7 @@ export const authOptions: NextAuthOptions = {
       }
     })
   ],
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: 'jwt',
   },

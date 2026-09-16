@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useUploadThing } from '@/lib/uploadthing-client';
 import { X, Loader2, UploadCloud, ImagePlus, Star } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface MultiImageUploadProps {
   label?: string;
@@ -17,6 +18,7 @@ export default function MultiImageUpload({
   onChange,
   maxImages = 10,
 }: MultiImageUploadProps) {
+  const toast = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
@@ -34,7 +36,7 @@ export default function MultiImageUpload({
     onUploadError: (error: Error) => {
       setIsUploading(false);
       setUploadProgress('');
-      alert(`Upload thất bại: ${error.message}`);
+      toast.error('Tải ảnh thất bại', error.message);
     },
     onUploadProgress: (p) => {
       setUploadProgress(`${p}%`);
@@ -46,31 +48,58 @@ export default function MultiImageUpload({
       if (!files.length) return;
 
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-      const validFiles = files.filter((f) => allowedTypes.includes(f.type));
+      const MAX_SIZE = 4 * 1024 * 1024;
 
-      if (validFiles.length !== files.length) {
-        alert('Một số file không hợp lệ. Chỉ hỗ trợ: JPG, PNG, WebP, GIF');
-      }
-
-      const oversizedFiles = validFiles.filter((f) => f.size > 4 * 1024 * 1024);
-      if (oversizedFiles.length > 0) {
-        alert(`${oversizedFiles.length} file vượt quá 4MB và sẽ bị bỏ qua`);
-      }
-
-      const toUpload = validFiles.filter((f) => f.size <= 4 * 1024 * 1024);
+      /*
+       * Kiểm tra CÒN CHỖ trước tiên. Bản trước để phép kiểm tra này xuống cuối
+       * và gộp chung với mọi nguyên nhân khác vào một câu "Đã đạt giới hạn N
+       * ảnh" — nên khi khách chọn nhầm file PDF hoặc ảnh quá 4MB lúc chưa có
+       * ảnh nào, hệ thống vẫn báo "đã đạt giới hạn 10 ảnh" dù đang là 0/10.
+       * Thông báo sai khiến người dùng không biết phải sửa gì (tiêu chí 8).
+       */
       const remaining = maxImages - values.length;
-      const limited = toUpload.slice(0, remaining);
-
-      if (limited.length === 0) {
-        alert(`Đã đạt giới hạn ${maxImages} ảnh`);
+      if (remaining <= 0) {
+        toast.warning(
+          `Đã đủ ${maxImages} ảnh`,
+          'Xoá bớt ảnh hiện có nếu muốn thêm ảnh khác.'
+        );
         return;
+      }
+
+      const wrongType = files.filter((f) => !allowedTypes.includes(f.type));
+      const validFiles = files.filter((f) => allowedTypes.includes(f.type));
+      const oversized = validFiles.filter((f) => f.size > MAX_SIZE);
+      const toUpload = validFiles.filter((f) => f.size <= MAX_SIZE);
+
+      // Mỗi nguyên nhân một thông báo riêng, nói rõ file nào và vì sao bị loại.
+      if (wrongType.length > 0) {
+        toast.error(
+          `${wrongType.length} file không phải ảnh`,
+          `Chỉ nhận JPG, PNG, WebP, GIF. Bị bỏ qua: ${wrongType.map((f) => f.name).slice(0, 3).join(', ')}`
+        );
+      }
+      if (oversized.length > 0) {
+        toast.error(
+          `${oversized.length} ảnh vượt quá 4MB`,
+          `Hãy giảm dung lượng rồi tải lại: ${oversized.map((f) => f.name).slice(0, 3).join(', ')}`
+        );
+      }
+
+      if (toUpload.length === 0) return;
+
+      const limited = toUpload.slice(0, remaining);
+      if (limited.length < toUpload.length) {
+        toast.warning(
+          `Chỉ tải lên ${limited.length} ảnh`,
+          `Còn trống ${remaining} chỗ trong tổng số ${maxImages} ảnh.`
+        );
       }
 
       setIsUploading(true);
       setUploadProgress('0%');
       await startUpload(limited);
     },
-    [startUpload, values, maxImages]
+    [startUpload, values, maxImages, toast]
   );
 
   const handleInputChange = useCallback(

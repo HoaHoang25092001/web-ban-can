@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import ProductCard from '../../../components/ProductCard';
 import { Metadata } from 'next';
+import { PRIMARY_PHONE, SITE_URL, buildBreadcrumbJsonLd } from '@/lib/site';
 
 // Cache 5 phút: danh sách sản phẩm theo danh mục thay đổi không thường xuyên,
 // không cần truy vấn lại database ở mỗi lượt xem (tiêu chí 7).
@@ -53,9 +54,26 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   try {
     const category = await getCategory(parseInt(id));
     if (!category) return { title: 'Không tìm thấy danh mục - Vạn Thịnh Phát' };
+
+    /* Tiêu đề đưa cụm khách thực sự gõ ("cân bàn điện tử giá rẻ") lên đầu,
+     * nhưng vẫn kèm "chính hãng" để không bị hiểu là hàng trôi nổi. */
+    const title = `${category.name} Giá Rẻ Chính Hãng`;
+    const description =
+      `${category.name} giá rẻ chính hãng tại TP.HCM. Có tem kiểm định, ` +
+      `bảo hành 12 tháng, giao lắp tận nơi. Gọi ${PRIMARY_PHONE} để được báo giá nhanh.`;
+
     return {
-      title: `${category.name} - Cân điện tử chất lượng cao`,
-      description: category.description || `Mua cân điện tử chính hãng thuộc danh mục ${category.name} uy tín, chính xác cao.`
+      title,
+      description,
+      // Chỉ trang 1 mới là địa chỉ chuẩn; các trang 2, 3… trỏ canonical về
+      // chính nó để Google không coi là nội dung trùng lặp.
+      alternates: { canonical: `/category/${category.id}` },
+      openGraph: {
+        type: 'website',
+        title,
+        description,
+        url: `${SITE_URL}/category/${category.id}`,
+      },
     };
   } catch {
     return { title: 'Danh mục sản phẩm - Vạn Thịnh Phát' };

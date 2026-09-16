@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
+import { useToast } from '@/components/Toast';
 import { Button, Input, Textarea } from '@/components/admin/FormComponents';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -27,6 +28,7 @@ const iconOptions = [
 ];
 
 export default function EditCategoryPage() {
+  const toast = useToast();
   const router = useRouter();
   const params = useParams();
   const categoryId = params.id as string;
@@ -50,12 +52,12 @@ export default function EditCategoryPage() {
           icon: data.icon || '',
         });
       } else {
-        alert('Không tìm thấy danh mục');
+        toast.error('Không tìm thấy danh mục', 'Danh mục có thể đã bị xoá.');
         router.push('/admin/categories');
       }
     } catch (error) {
       console.error('Error fetching category:', error);
-      alert('Có lỗi xảy ra khi tải dữ liệu');
+      toast.error('Không tải được dữ liệu', 'Kiểm tra kết nối rồi thử lại.');
     } finally {
       setFetchLoading(false);
     }
@@ -84,11 +86,11 @@ export default function EditCategoryPage() {
         router.push('/admin/categories');
       } else {
         const error = await response.json();
-        alert(error.error || 'Có lỗi xảy ra khi cập nhật danh mục');
+        toast.error('Chưa lưu được', error.error || 'Vui lòng thử lại.');
       }
     } catch (error) {
       console.error('Error updating category:', error);
-      alert('Có lỗi xảy ra khi cập nhật danh mục');
+      toast.error('Chưa lưu được', 'Không kết nối được tới máy chủ.');
     } finally {
       setLoading(false);
     }

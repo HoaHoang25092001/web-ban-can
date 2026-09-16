@@ -1,9 +1,13 @@
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/require-admin';
 import { NextRequest, NextResponse } from 'next/server';
 
 // GET /api/contacts - Lấy danh sách liên hệ
 export async function GET(request: NextRequest) {
   try {
+    const denied = await requireAdmin();
+    if (denied) return denied;
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const page = parseInt(searchParams.get('page') || '1');
@@ -44,6 +48,20 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/contacts - Tạo liên hệ mới (từ form contact)
+/*
+ * Form gửi lên MÃ của chủ đề ("price-quote"), không phải nhãn tiếng Việt.
+ * Nếu lưu nguyên mã thì trang quản trị hiện "Quan tâm: price-quote" — nhân
+ * viên phải tự đoán nghĩa. Đổi sang nhãn ngay khi lưu (tiêu chí 1).
+ */
+const SUBJECT_LABELS: Record<string, string> = {
+  'price-quote': 'Xin báo giá',
+  'product-inquiry': 'Tư vấn chọn sản phẩm',
+  'technical-support': 'Hỗ trợ kỹ thuật',
+  'warranty': 'Bảo hành, sửa chữa',
+  'collaboration': 'Hợp tác kinh doanh',
+  'other': 'Nội dung khác',
+};
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -69,7 +87,10 @@ export async function POST(request: NextRequest) {
         phone: cleanPhone,
         email: typeof email === 'string' ? email.trim() : null,
         // Form trang chủ gửi "product", form trang liên hệ gửi "subject"
-        product: (subject || product || '').toString().trim(),
+        product: (() => {
+          const raw = (subject || product || '').toString().trim();
+          return SUBJECT_LABELS[raw] ?? raw;
+        })(),
         // Giới hạn độ dài để tránh ghi bản ghi quá lớn vào database
         message: typeof message === 'string' ? message.trim().slice(0, 2000) : '',
       },
