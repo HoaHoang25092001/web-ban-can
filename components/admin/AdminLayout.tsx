@@ -38,6 +38,33 @@ const menuItems = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const [newContacts, setNewContacts] = useState(0);
+
+  /*
+   * Đếm yêu cầu báo giá chưa xử lý để hiện huy hiệu trên menu.
+   *
+   * Trước đây admin phải tự nhớ mở trang Liên hệ mới biết có khách gửi yêu
+   * cầu — yêu cầu dễ nằm im nhiều ngày, mà chậm gọi lại là mất đơn.
+   *
+   * Nạp lại mỗi khi chuyển trang trong khu quản trị, và định kỳ 60 giây để
+   * người đang mở sẵn một trang vẫn thấy yêu cầu mới tới.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch('/api/contacts/unread');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setNewContacts(data.count ?? 0);
+      } catch {
+        // Mất mạng tạm thời thì bỏ qua, lần sau đếm lại.
+      }
+    };
+    load();
+    const timer = setInterval(load, 60_000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [pathname]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -84,6 +111,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 <Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
                 <span className="truncate">{item.label}</span>
+                {/* Huy hiệu số yêu cầu chưa xử lý. Kèm chữ trong nhãn ẩn để
+                    người dùng trình đọc màn hình cũng nắm được, không chỉ dựa
+                    vào màu sắc (tiêu chí 5). */}
+                {item.href === '/admin/contacts' && newContacts > 0 && (
+                  <span className="ml-auto inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-red-600 text-white text-xs font-bold">
+                    {newContacts > 99 ? '99+' : newContacts}
+                    <span className="sr-only-text"> yêu cầu chưa xử lý</span>
+                  </span>
+                )}
               </Link>
             </li>
           );

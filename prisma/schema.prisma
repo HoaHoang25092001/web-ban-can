@@ -74,8 +74,18 @@ model ContactRequest {
   product   String?
   message   String?
   status    String   @default("new")
+  /// Ghi chú của nhân viên sau khi liên hệ khách: đã báo giá bao nhiêu, khách
+  /// hẹn lúc nào, vì sao không chốt... Trước đây chỉ đổi được trạng thái sang
+  /// "Đã xử lý" mà không lưu lại kết quả, nên người khác tiếp nhận không biết
+  /// đã trao đổi những gì và dễ gọi lại trùng.
+  note      String?
+  /// Thời điểm chuyển sang "Đã xử lý" — dùng để đo tốc độ phản hồi khách.
+  handledAt DateTime?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
 
+  // Trang quản trị luôn lọc theo trạng thái rồi sắp xếp theo ngày gửi.
+  @@index([status, createdAt(sort: Desc)])
   @@map("contact_requests")
 }
 

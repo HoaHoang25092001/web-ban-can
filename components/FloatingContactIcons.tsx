@@ -1,10 +1,29 @@
-import { BUSINESS, PRIMARY_PHONE } from '@/lib/site';
+import { BUSINESS, PRIMARY_PHONE, telHref } from '@/lib/site';
 
 const ZALO_PHONE = PRIMARY_PHONE.replace(/\./g, '');
 const EMAIL = BUSINESS.email;
 const MAP_URL = BUSINESS.maps.directions;
 
 const CHANNELS = [
+  {
+    /*
+     * Gọi điện đứng đầu: với mặt hàng cân điện tử, khách hầu hết muốn hỏi giá
+     * và tư vấn chọn loại — gọi trực tiếp nhanh hơn nhắn tin. Nút này cũng
+     * được làm nổi hơn ba kênh còn lại (tiêu chí 1: một hành động chính rõ ràng).
+     */
+    key: 'call',
+    href: telHref(PRIMARY_PHONE),
+    label: `Gọi ${PRIMARY_PHONE}`,
+    aria: `Gọi hotline ${PRIMARY_PHONE}`,
+    bg: '#C2410C',
+    external: false,
+    primary: true,
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white" aria-hidden="true">
+        <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+      </svg>
+    ),
+  },
   {
     key: 'zalo',
     href: `https://zalo.me/${ZALO_PHONE}`,
@@ -85,10 +104,21 @@ export default function FloatingContactIcons() {
                 {c.label}
               </span>
               <span
-                className="w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform duration-200 hover:scale-110"
+                className={`relative rounded-full shadow-lg flex items-center justify-center transition-transform duration-200 hover:scale-110 ${
+                  'primary' in c && c.primary ? 'w-14 h-14' : 'w-12 h-12'
+                }`}
                 style={{ backgroundColor: c.bg }}
               >
-                {c.icon}
+                {/* Vòng sóng lan toả quanh nút gọi để khách nhận ra ngay đây là
+                    kênh liên hệ chính. Tắt khi người dùng bật "giảm chuyển động". */}
+                {'primary' in c && c.primary && (
+                  <span
+                    className="absolute inset-0 rounded-full opacity-40 motion-safe:animate-ping motion-reduce:hidden"
+                    style={{ backgroundColor: c.bg }}
+                    aria-hidden="true"
+                  />
+                )}
+                <span className="relative flex items-center justify-center">{c.icon}</span>
               </span>
             </a>
           </li>

@@ -4,7 +4,7 @@ import SessionProvider from "../components/SessionProvider";
 import ConditionalLayout from "../components/ConditionalLayout";
 import CategoryNavWrapper from "../components/CategoryNavWrapper";
 import { ToastProvider } from "../components/Toast";
-import { SITE_URL, PRIMARY_PHONE, buildLocalBusinessJsonLd } from "@/lib/site";
+import { SITE_URL, PRIMARY_PHONE, BUSINESS, buildLocalBusinessJsonLd } from "@/lib/site";
 import "./globals.css";
 
 /**
@@ -30,23 +30,51 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Cân Vạn Thịnh Phát – Cân điện tử chính hãng, bảo hành 12 tháng',
+    default: 'Cân Điện Tử Giá Rẻ Chính Hãng – Cân Vạn Thịnh Phát',
     template: '%s | Cân Vạn Thịnh Phát',
   },
-  description: `Cung cấp cân bàn, cân sàn, cân treo, cân phân tích chính hãng. Có kiểm định, bảo hành 12 tháng, lắp đặt tận nơi tại TP. Hồ Chí Minh. Gọi ${PRIMARY_PHONE} để được báo giá.`,
-  keywords: ['cân điện tử', 'cân bàn', 'cân sàn', 'cân treo', 'cân phân tích', 'cân công nghiệp', 'Vạn Thịnh Phát'],
-  authors: [{ name: 'Cân Vạn Thịnh Phát' }],
+  description: `Cân điện tử giá rẻ chính hãng: cân bàn, cân sàn, cân treo, cân tính tiền. Có tem kiểm định, bảo hành 12 tháng, giao lắp tận nơi TP.HCM. Gọi ${PRIMARY_PHONE} báo giá ngay.`,
+  keywords: [
+    'cân điện tử giá rẻ', 'cân giá rẻ', 'cân điện tử', 'cân bàn điện tử',
+    'cân sàn điện tử', 'cân treo điện tử', 'cân tính tiền', 'cân phân tích',
+    'cân công nghiệp', 'cân điện tử chính hãng', 'bán cân điện tử TPHCM',
+    'Cân Vạn Thịnh Phát',
+  ],
+  authors: [{ name: BUSINESS.name }],
+  creator: BUSINESS.name,
+  publisher: BUSINESS.legalName,
+  // Thẻ canonical cho Google biết đâu là địa chỉ chuẩn của mỗi trang, tránh
+  // bị coi là nội dung trùng lặp khi truy cập qua www/không-www hay có tham số.
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     type: 'website',
     locale: 'vi_VN',
-    siteName: 'Cân Vạn Thịnh Phát',
-    title: 'Cân Vạn Thịnh Phát – Cân điện tử chính hãng',
+    url: SITE_URL,
+    siteName: BUSINESS.name,
+    title: 'Cân Điện Tử Giá Rẻ Chính Hãng – Cân Vạn Thịnh Phát',
     description:
-      'Cân bàn, cân sàn, cân treo, cân phân tích chính hãng. Có kiểm định, bảo hành 12 tháng, lắp đặt tận nơi.',
+      'Cân bàn, cân sàn, cân treo, cân tính tiền giá rẻ chính hãng. Có tem kiểm định, bảo hành 12 tháng, giao lắp tận nơi.',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Cân Điện Tử Giá Rẻ Chính Hãng – Cân Vạn Thịnh Phát',
+    description:
+      'Cân bàn, cân sàn, cân treo giá rẻ chính hãng. Có kiểm định, bảo hành 12 tháng.',
+  },
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 

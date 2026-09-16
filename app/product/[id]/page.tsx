@@ -3,8 +3,9 @@ import Link from 'next/link';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import ProductDetailClient from './ProductDetailClient';
 import { Metadata } from 'next';
+import { buildProductJsonLd, buildBreadcrumbJsonLd, SITE_URL } from '@/lib/site';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 600;
 
 interface ProductPageProps {
   params: Promise<{
@@ -20,9 +21,28 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       include: { category: true }
     });
     if (!product) return { title: 'Không tìm thấy sản phẩm - Vạn Thịnh Phát' };
+    /* Mô tả lấy từ nội dung sản phẩm nhưng phải bỏ thẻ HTML và cắt ~155 ký
+     * tự — đúng độ dài Google hiển thị. Để nguyên HTML thì đoạn mô tả trên
+     * kết quả tìm kiếm sẽ hiện lẫn thẻ <p>, trông như lỗi. */
+    const plain = (product.description || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/s+/g, ' ')
+      .trim();
+    const desc = plain
+      ? `${plain.slice(0, 120)}… Chính hãng, có tem kiểm định, bảo hành 12 tháng.`
+      : `${product.name} chính hãng, giá tốt. Có tem kiểm định, bảo hành 12 tháng, giao lắp tận nơi TP.HCM.`;
+
     return {
-      title: `${product.name} - Giá tốt chính hãng`,
-      description: product.description || `Mua ngay ${product.name} chất lượng cao, có kiểm định, bảo hành chính hãng từ Vạn Thịnh Phát.`
+      title: `${product.name} – Giá Rẻ Chính Hãng`,
+      description: desc,
+      alternates: { canonical: `/product/${product.id}` },
+      openGraph: {
+        type: 'website',
+        title: `${product.name} – Giá Rẻ Chính Hãng`,
+        description: desc,
+        url: `${SITE_URL}/product/${product.id}`,
+        ...(product.image ? { images: [{ url: product.image }] } : {}),
+      },
     };
   } catch {
     return { title: 'Chi tiết sản phẩm - Vạn Thịnh Phát' };
@@ -117,10 +137,45 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     }
   }));
 
+  /*
+   * Dữ liệu có cấu trúc cho Google.
+   *
+   * Product giúp kết quả tìm kiếm hiện kèm ảnh và tình trạng hàng thay vì chỉ
+   * một dòng link; BreadcrumbList thay đường dẫn dài bằng "Trang chủ › Cân bàn
+   * › Tên sản phẩm" để khách biết mình sẽ vào đâu trước khi bấm.
+   */
+  const productJsonLd = buildProductJsonLd({
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    image: product.image,
+    brand: product.manufacturer,
+    capacity: product.capacity,
+    categoryName: product.category?.name ?? null,
+  });
+
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: 'Trang chủ', path: '/' },
+    ...(product.category
+      ? [{ name: product.category.name, path: `/category/${product.category.id}` }]
+      : []),
+    { name: product.name, path: `/product/${product.id}` },
+  ]);
+
   return (
-    <ProductDetailClient 
-      product={productSerialized} 
-      relatedProducts={relatedProductsSerialized} 
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <ProductDetailClient
+        product={productSerialized}
+        relatedProducts={relatedProductsSerialized}
+      />
+    </>
   );
 }

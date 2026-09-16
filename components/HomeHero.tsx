@@ -91,8 +91,12 @@ export default function HomeHero({ categories }: HomeHeroProps) {
         {/* Mỗi trang phải có đúng một <h1> nói rõ trang này về cái gì — vừa là
             yêu cầu của screen reader, vừa là tín hiệu chính cho Google
             (tiêu chí 1 & 5). Trang chủ trước đây không hề có h1. */}
+        {/* Đặt cụm khách thực sự gõ khi tìm ("cân điện tử giá rẻ") lên trước,
+            giữ "chính hãng" ngay sau để không bị hiểu là hàng trôi nổi. H1 là
+            một trong những tín hiệu Google đọc đầu tiên để biết trang bán gì. */}
         <h1 className="sr-only-text">
-          Cân Vạn Thịnh Phát – Cung cấp cân điện tử chính hãng tại TP. Hồ Chí Minh
+          Cân điện tử giá rẻ chính hãng – Cân bàn, cân sàn, cân treo, cân tính tiền
+          tại TP. Hồ Chí Minh | Cân Vạn Thịnh Phát
         </h1>
 
         {/* Một lưới duy nhất: cột danh mục cố định 264px + slide chiếm phần còn lại.

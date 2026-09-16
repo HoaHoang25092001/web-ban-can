@@ -62,13 +62,13 @@ export default function ProductCard({
         aria-label={`${product.name} – ${priceLabel}`}
       >
         {/* Vùng ảnh: aspect-ratio cố định nên không gây nhảy layout (CLS ~ 0) */}
-        <div className="relative w-full aspect-[4/3] overflow-hidden bg-surface-sunken">
+        <div className="relative w-full aspect-square overflow-hidden bg-white">
           <Image
             src={imageUrl || IMAGE_PLACEHOLDER}
             alt={imageUrl ? product.name : ''}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
             priority={priority}

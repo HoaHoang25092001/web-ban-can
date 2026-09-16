@@ -237,17 +237,8 @@ export default function NewsDetailClient({ news, relatedNews }: NewsDetailClient
                     <Phone className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-semibold">Hotline kỹ thuật</p>
+                    <p className="text-[10px] text-slate-400 font-semibold">Hotline tư vấn</p>
                     <p className="text-sm font-extrabold text-white group-hover:text-blue-300 transition-colors">{BUSINESS.phones[0]}</p>
-                  </div>
-                </a>
-                <a href={telHref(BUSINESS.phones[1])} className="flex items-center gap-3 bg-slate-800/70 border border-slate-700/50 px-4 py-3 rounded-xl hover:bg-slate-800 transition-colors group">
-                  <div className="p-1.5 bg-pink-500/10 text-pink-400 rounded-lg">
-                    <Phone className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-semibold">Kinh doanh (Zalo)</p>
-                    <p className="text-sm font-extrabold text-white group-hover:text-pink-300 transition-colors">{BUSINESS.phones[1]}</p>
                   </div>
                 </a>
               </div>

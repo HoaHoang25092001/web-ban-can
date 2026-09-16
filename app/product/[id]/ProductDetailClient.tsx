@@ -417,31 +417,20 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 <Phone className="w-5 h-5 text-blue-400 animate-bounce" /> Tư vấn & Báo giá trực tiếp 24/7
               </h2>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 p-4 rounded-xl flex items-start gap-3">
-                  <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-lg">
-                    <Phone className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400 font-medium">Hotline 1 (Zalo)</p>
-                    <a href={telHref(BUSINESS.phones[0])} className="inline-flex items-center min-h-touch text-base font-extrabold text-white hover:text-blue-400 transition-colors mt-0.5">
-                      {BUSINESS.phones[0]}
-                    </a>
-                    <span className="text-[11px] text-slate-400 font-medium block">Mr. Thịnh (Kỹ thuật)</span>
-                  </div>
+              {/* Công ty chỉ công bố MỘT hotline nên khối này không còn chia
+                  đôi: một thẻ rộng hết hàng, số to hơn để dễ bấm và dễ đọc. */}
+              <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 p-4 rounded-xl flex items-start gap-3">
+                <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-lg">
+                  <Phone className="w-5 h-5" />
                 </div>
-
-                <div className="bg-slate-800/80 backdrop-blur border border-slate-700/50 p-4 rounded-xl flex items-start gap-3">
-                  <div className="p-2.5 bg-pink-500/10 text-pink-400 rounded-lg">
-                    <Phone className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400 font-medium">Hotline 2 (Zalo)</p>
-                    <a href={telHref(BUSINESS.phones[1])} className="inline-flex items-center min-h-touch text-base font-extrabold text-white hover:text-pink-400 transition-colors mt-0.5">
-                      {BUSINESS.phones[1]}
-                    </a>
-                    <span className="text-[11px] text-slate-400 font-medium block">Ms. Hằng (Kinh doanh)</span>
-                  </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-medium">Hotline tư vấn &amp; báo giá (có Zalo)</p>
+                  <a href={telHref(BUSINESS.phones[0])} className="inline-flex items-center min-h-touch text-lg font-extrabold text-white hover:text-blue-400 transition-colors mt-0.5">
+                    {BUSINESS.phones[0]}
+                  </a>
+                  <span className="text-[11px] text-slate-400 font-medium block">
+                    Gọi trong giờ làm việc để được báo giá nhanh nhất
+                  </span>
                 </div>
               </div>
 

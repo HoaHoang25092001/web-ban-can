@@ -15,6 +15,14 @@ interface SearchPageProps {
 export const metadata: Metadata = {
   title: 'Tìm Kiếm Sản Phẩm - Vạn Thịnh Phát',
   description: 'Tìm kiếm nhanh các thiết bị cân điện tử chính hãng từ thương hiệu uy tín chất lượng cao.',
+  /*
+   * KHÔNG cho Google lập chỉ mục trang kết quả tìm kiếm.
+   *
+   * Mỗi từ khoá tạo ra một URL riêng (?q=...), nên để mở là sinh vô số trang
+   * nội dung mỏng và trùng lặp — Google đánh giá thấp cả website vì điều này.
+   * `follow` vẫn bật để bot đi theo link sản phẩm bên trong.
+   */
+  robots: { index: false, follow: true },
 };
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {

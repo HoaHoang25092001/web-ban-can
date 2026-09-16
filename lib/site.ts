@@ -7,7 +7,7 @@
  */
 
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://canvanthinhphat.com';
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://cangiare.com';
 
 export const BUSINESS = {
   name: 'Cân Vạn Thịnh Phát',
@@ -27,10 +27,11 @@ export const BUSINESS = {
   },
 
   /**
-   * Số đầu tiên là hotline chính, dùng cho nút gọi nổi bật và Zalo.
-   * 0911.093.511 là số duy nhất được công bố trên canvanthinhphat.com.
+   * Hotline chính của công ty, dùng cho nút gọi, link Zalo và mã QR Zalo.
+   * Đổi số ở đây là toàn bộ website cập nhật theo; nhớ chạy lại
+   * `node scripts/gen-zalo-qr.mjs` để sinh mã QR Zalo mới.
    */
-  phones: ['0911.093.511', '0923.051.134'],
+  phones: ['0369.759.187'],
 
   email: 'canvanthinhphat@gmail.com',
 
@@ -102,13 +103,13 @@ export const BUSINESS = {
   ],
 } as const;
 
-/** Hotline chính, dạng hiển thị: "0911.093.511". */
+/** Hotline chính, dạng hiển thị: "0369.759.187". */
 export const PRIMARY_PHONE = BUSINESS.phones[0];
 
 /** Link chat Zalo dựng từ hotline chính. */
 export const ZALO_URL = `https://zalo.me/${PRIMARY_PHONE.replace(/\./g, '')}`;
 
-/** Chuyển "0911.093.511" thành "0911093511" để dùng trong href="tel:". */
+/** Chuyển "0369.759.187" thành "0369759187" để dùng trong href="tel:". */
 export function telHref(phone: string): string {
   return `tel:${phone.replace(/\./g, '')}`;
 }
@@ -179,5 +180,78 @@ export function buildLocalBusinessJsonLd() {
     // Mã số thuế giúp Google xác thực đây là doanh nghiệp có đăng ký
     taxID: BUSINESS.taxCode,
     vatID: BUSINESS.taxCode,
+  };
+}
+
+/**
+ * Dữ liệu có cấu trúc cho một sản phẩm (schema.org/Product).
+ *
+ * Giúp Google hiển thị sản phẩm kèm ảnh và tình trạng hàng ngay trên trang
+ * kết quả tìm kiếm, thay vì chỉ một dòng link chữ.
+ *
+ * Website không niêm yết giá công khai (khách phải liên hệ báo giá), nên KHÔNG
+ * khai báo `price`. Khai giá sai hoặc giá bịa sẽ khiến Google gỡ toàn bộ
+ * rich result của website — mất nhiều hơn được.
+ */
+export function buildProductJsonLd(product: {
+  id: number | string;
+  name: string;
+  description?: string | null;
+  image?: string | null;
+  brand?: string | null;
+  capacity?: string | null;
+  categoryName?: string | null;
+}) {
+  const url = `${SITE_URL}/product/${product.id}`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    url,
+    ...(product.image ? { image: [product.image] } : {}),
+    ...(product.description
+      ? { description: product.description.replace(/<[^>]+>/g, '').slice(0, 300) }
+      : {}),
+    ...(product.brand ? { brand: { '@type': 'Brand', name: product.brand } } : {}),
+    ...(product.categoryName ? { category: product.categoryName } : {}),
+    ...(product.capacity
+      ? {
+          additionalProperty: [
+            {
+              '@type': 'PropertyValue',
+              name: 'Mức cân tối đa',
+              value: product.capacity,
+            },
+          ],
+        }
+      : {}),
+    offers: {
+      '@type': 'Offer',
+      url,
+      priceCurrency: 'VND',
+      availability: 'https://schema.org/InStock',
+      // Giá liên hệ: khai 0 để báo "có bán, hỏi giá" thay vì bịa một con số.
+      price: '0',
+      seller: { '@type': 'Organization', name: BUSINESS.name },
+    },
+  };
+}
+
+/**
+ * Đường dẫn phân cấp (schema.org/BreadcrumbList).
+ *
+ * Google dùng nó để hiển thị "Trang chủ › Cân bàn › Tên sản phẩm" thay cho
+ * đường link dài khó đọc, giúp khách biết mình sẽ vào đâu trước khi bấm.
+ */
+export function buildBreadcrumbJsonLd(items: { name: string; path: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: `${SITE_URL}${item.path}`,
+    })),
   };
 }
