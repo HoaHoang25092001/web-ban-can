@@ -100,14 +100,3 @@ model Admin {
   @@map("admins")
 }
 
-model Review {
-  id           Int      @id @default(autoincrement())
-  reviewerName String
-  content      String
-  rating       Int      @default(5) // 1-5 sao
-  isVisible    Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@map("reviews")
-}
