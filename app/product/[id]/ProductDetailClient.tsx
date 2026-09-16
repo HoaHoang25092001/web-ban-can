@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ArrowLeft, Phone, Mail, Star, Package, Gauge, 
@@ -53,6 +53,70 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'policy'>('description');
   
   const formRef = useRef<HTMLDivElement>(null);
+
+  /*
+   * Băng chuyền "Sản phẩm liên quan".
+   *
+   * Bản trước là lưới cố định 4 cột: chỉ xem được 4 sản phẩm, số còn lại trong
+   * cùng danh mục không ai thấy. Nay cuộn ngang được và tự chạy, khách lướt qua
+   * là thấy thêm lựa chọn — vẫn giữ nút qua lại cho người muốn tự điều khiển
+   * (tiêu chí 1 & 6).
+   */
+  const relatedRef = useRef<HTMLDivElement>(null);
+  const relatedPaused = useRef(false);
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  /** Cập nhật trạng thái bật/tắt của hai nút mũi tên theo vị trí cuộn. */
+  const updateArrows = useCallback(() => {
+    const el = relatedRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  }, []);
+
+  /** Cuộn đi đúng một thẻ mỗi lần bấm, thay vì một khoảng cố định. */
+  const scrollRelated = (dir: 'prev' | 'next') => {
+    const el = relatedRef.current;
+    if (!el) return;
+    const card = el.querySelector('a');
+    const step = card ? card.getBoundingClientRect().width + 20 : 260;
+    el.scrollBy({ left: dir === 'next' ? step : -step, behavior: 'smooth' });
+    // Người dùng vừa tự bấm thì dừng tự chạy một lúc, tránh giành quyền điều khiển.
+    relatedPaused.current = true;
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    resumeTimer.current = setTimeout(() => { relatedPaused.current = false; }, 5000);
+  };
+
+  useEffect(() => {
+    const el = relatedRef.current;
+    if (!el || relatedProducts.length === 0) return;
+
+    updateArrows();
+    el.addEventListener('scroll', updateArrows, { passive: true });
+
+    // Người bật "giảm chuyển động" thì không tự chạy, chỉ dùng nút mũi tên.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return () => el.removeEventListener('scroll', updateArrows);
+    }
+
+    /* Cứ 4 giây trượt sang một thẻ; hết dãy thì quay về đầu. Đủ chậm để đọc
+     * được tên sản phẩm khi lướt qua. */
+    const timer = setInterval(() => {
+      if (relatedPaused.current || document.visibilityState !== 'visible') return;
+      const card = el.querySelector('a');
+      const step = card ? card.getBoundingClientRect().width + 20 : 260;
+      const atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 8;
+      el.scrollTo({ left: atEnd ? 0 : el.scrollLeft + step, behavior: 'smooth' });
+    }, 4000);
+
+    return () => {
+      clearInterval(timer);
+      el.removeEventListener('scroll', updateArrows);
+      if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    };
+  }, [relatedProducts.length, updateArrows]);
   const [quoteForm, setQuoteForm] = useState({
     name: '',
     phone: '',
@@ -827,21 +891,51 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               <h2 className="text-lg md:text-xl font-extrabold text-slate-900 flex items-center gap-2">
                 <Package className="w-6 h-6 text-blue-600" /> Sản phẩm liên quan khác
               </h2>
-              <Link 
-                href={`/category/${product.category.id}`}
-                className="inline-flex items-center gap-1 min-h-touch px-2 -mr-2 rounded-lg text-sm font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 group transition-colors"
-              >
-                Xem tất cả
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
+              <div className="flex items-center gap-2">
+                {/* Nút qua lại: mờ đi khi đã ở đầu/cuối dãy để khách biết
+                    không còn gì để xem thêm (tiêu chí 1). */}
+                <button
+                  type="button"
+                  onClick={() => scrollRelated('prev')}
+                  disabled={!canScrollLeft}
+                  aria-label="Xem sản phẩm trước đó"
+                  className="hidden sm:inline-flex items-center justify-center w-11 h-11 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollRelated('next')}
+                  disabled={!canScrollRight}
+                  aria-label="Xem sản phẩm tiếp theo"
+                  className="hidden sm:inline-flex items-center justify-center w-11 h-11 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" aria-hidden="true" />
+                </button>
+                <Link
+                  href={`/category/${product.category.id}`}
+                  className="inline-flex items-center gap-1 min-h-touch px-2 rounded-lg text-sm font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 group transition-colors"
+                >
+                  Xem tất cả
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+            {/* Dừng tự chạy khi rê chuột hoặc chạm vào, để khách kịp đọc. */}
+            <div
+              ref={relatedRef}
+              onMouseEnter={() => { relatedPaused.current = true; }}
+              onMouseLeave={() => { relatedPaused.current = false; }}
+              onTouchStart={() => { relatedPaused.current = true; }}
+              className="flex gap-5 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-2 -mx-1 px-1"
+              style={{ scrollbarWidth: 'none' }}
+            >
               {relatedProducts.map((p) => (
-                <Link 
-                  key={p.id} 
+                <Link
+                  key={p.id}
                   href={`/product/${p.id}`}
-                  className="group bg-white border border-slate-200/60 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full"
+                  className="group flex-shrink-0 w-[calc(50%-10px)] sm:w-[calc(33.333%-14px)] lg:w-[calc(25%-15px)] snap-start bg-white border border-slate-200/60 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
                 >
                   <div className="relative bg-slate-50 flex items-center justify-center h-40 md:h-48 overflow-hidden">
                     <Image
