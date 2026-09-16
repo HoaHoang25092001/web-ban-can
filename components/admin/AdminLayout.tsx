@@ -12,7 +12,6 @@ import {
   Images,
   MessageSquare,
   LogOut,
-  Star,
   Menu,
   X,
   ExternalLink,
@@ -24,7 +23,6 @@ const menuItems = [
   { href: '/admin/products', label: 'Sản phẩm', icon: Package },
   { href: '/admin/news', label: 'Tin tức', icon: Newspaper },
   { href: '/admin/media', label: 'Thư viện ảnh', icon: Images },
-  { href: '/admin/reviews', label: 'Đánh giá khách hàng', icon: Star },
   { href: '/admin/contacts', label: 'Liên hệ', icon: MessageSquare },
 ];
 

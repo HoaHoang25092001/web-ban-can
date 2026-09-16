@@ -77,7 +77,6 @@ export default function AdminDashboard() {
     { label: 'Thêm sản phẩm mới', href: '/admin/products/new', icon: Package },
     { label: 'Thêm danh mục mới', href: '/admin/categories/new', icon: Tags },
     { label: 'Viết tin tức mới', href: '/admin/news/new', icon: Newspaper },
-    { label: 'Thêm đánh giá', href: '/admin/reviews', icon: Star },
   ];
 
   return (
@@ -160,7 +159,7 @@ export default function AdminDashboard() {
             <li>Thêm, sửa, xóa sản phẩm và đánh dấu sản phẩm nổi bật để hiện trên trang chủ</li>
             <li>Quản lý danh mục sản phẩm hiển thị ở thanh điều hướng</li>
             <li>Đăng tin tức (nhớ bật &ldquo;Xuất bản&rdquo; thì bài mới hiện ra ngoài)</li>
-            <li>Xem liên hệ khách hàng gửi từ website và đánh giá hiển thị trên trang chủ</li>
+            <li>Xem và xử lý yêu cầu báo giá khách hàng gửi từ website</li>
           </ul>
         </section>
       </div>

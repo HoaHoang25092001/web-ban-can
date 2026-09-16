@@ -34,6 +34,9 @@ const slides = [
 ];
 
 const AUTOPLAY_MS = 6000;
+/* Chậm hơn cho người bật "giảm chuyển động": vẫn thấy được mọi slide nhưng
+ * không bị chuyển động dồn dập. */
+const AUTOPLAY_MS_REDUCED = 10000;
 
 interface HomeHeroProps {
   categories: Category[];
@@ -59,21 +62,28 @@ export default function HomeHero({ categories }: HomeHeroProps) {
   const next = useCallback(() => goTo(currentSlide + 1), [currentSlide, goTo]);
   const prev = useCallback(() => goTo(currentSlide - 1), [currentSlide, goTo]);
 
-  useEffect(() => {
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Máy bật "giảm chuyển động" thì chuyển chậm hơn và không dùng hiệu ứng mờ.
+  const [reducedMotion, setReducedMotion] = useState(false);
 
-    if (isPaused || prefersReducedMotion) return;
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    if (isPaused) return;
 
     const timer = setInterval(() => {
       if (document.visibilityState === 'visible') {
         setCurrentSlide((p) => (p + 1) % slides.length);
       }
-    }, AUTOPLAY_MS);
+    }, reducedMotion ? AUTOPLAY_MS_REDUCED : AUTOPLAY_MS);
 
     return () => clearInterval(timer);
-  }, [isPaused]);
+  }, [isPaused, reducedMotion]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowRight') {
@@ -165,7 +175,7 @@ export default function HomeHero({ categories }: HomeHeroProps) {
                   aria-roledescription="slide"
                   aria-label={`${idx + 1} / ${slides.length}: ${slide.title}`}
                   aria-hidden={!isActive}
-                  className={`absolute inset-0 transition-opacity duration-700 ${
+                  className={`absolute inset-0 ${reducedMotion ? '' : 'transition-opacity duration-700'} ${
                     isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
                   }`}
                 >

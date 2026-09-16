@@ -3,7 +3,6 @@ import HomeHero from '../components/HomeHero';
 import FeatureBadges from '../components/FeatureBadges';
 import FeaturedProductsDB from '../components/FeaturedProductsDB';
 import NewsSlider from '../components/NewsSlider';
-import CustomerReviews from '../components/CustomerReviews';
 import AboutSection from '../components/AboutSection';
 import ContactSection from '../components/ContactSection';
 import FloatingContactIcons from '../components/FloatingContactIcons';
@@ -36,7 +35,7 @@ const CATEGORIES_ON_HOME = 6;
 
 export default async function Home() {
   // Fetch song song toàn bộ dữ liệu trên Server
-  const [products, newsData, reviews, allCategories] = await Promise.all([
+  const [products, newsData, allCategories] = await Promise.all([
     prisma.product.findMany({
       // Chỉ lấy sản phẩm featured CÓ ẢNH: card không ảnh trên trang chủ trông
       // như lỗi hiển thị, làm giảm độ tin cậy ngay từ màn hình đầu tiên.
@@ -70,19 +69,6 @@ export default async function Home() {
       },
       orderBy: { createdAt: 'desc' },
       take: 6,
-    }),
-    prisma.review.findMany({
-      where: { isVisible: true },
-      select: {
-        id: true,
-        reviewerName: true,
-        content: true,
-        rating: true,
-        isVisible: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 20,
     }),
     // Danh mục render sẵn trên server: cột danh mục là nội dung chính của trang
     // chủ nên không để nó nhấp nháy chờ fetch ở trình duyệt (tiêu chí 7).
@@ -134,11 +120,6 @@ export default async function Home() {
     image: item.image || undefined,
   }));
 
-  const reviewsSerialized = reviews.map((item) => ({
-    ...item,
-    createdAt: item.createdAt.toISOString(),
-  }));
-
   return (
     <>
       {/* Hero: cột danh mục + slide giới thiệu, cùng một lưới (tiêu chí 1 & 3) */}
@@ -151,9 +132,6 @@ export default async function Home() {
       <div className="max-w-shell mx-auto px-4 sm:px-6 lg:px-8">
         <FeaturedProductsDB initialData={featuredProductsGrouped} />
       </div>
-
-      {/* Đánh giá khách hàng – bằng chứng xã hội (tiêu chí 9) */}
-      <CustomerReviews initialReviews={reviewsSerialized} />
 
       <div className="max-w-shell mx-auto px-4 sm:px-6 lg:px-8">
         <NewsSlider initialNews={news} />
