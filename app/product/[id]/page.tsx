@@ -108,8 +108,11 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       id: { not: product.id }
     },
     include: { category: true },
-    orderBy: { createdAt: 'desc' },
-    take: 4
+    orderBy: [
+      { image: { sort: 'desc', nulls: 'last' } },
+      { createdAt: 'desc' },
+    ],
+    take: 12
   });
 
   // Serialize dữ liệu để an toàn khi truyền qua Client Component boundary

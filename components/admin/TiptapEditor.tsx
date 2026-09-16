@@ -12,6 +12,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect, useState, useRef } from 'react';
 import { useUploadThing } from '@/lib/uploadthing-client';
 import { useToast } from '@/components/Toast';
+import MediaLibraryPicker from './MediaLibraryPicker';
 import {
   Bold,
   Italic,
@@ -33,6 +34,8 @@ import {
   Link as LinkIcon,
   Image as ImageIcon,
   Loader2,
+  UploadCloud,
+  ImagePlus,
   Smile,
   Palette,
   X,
@@ -78,7 +81,7 @@ function ToolbarButton({
       title={title}
       aria-label={title}
       aria-pressed={active}
-      className={`w-10 h-10 flex items-center justify-center rounded hover:bg-gray-200 transition-colors ${
+      className={`w-11 h-11 flex items-center justify-center rounded hover:bg-gray-200 transition-colors ${
         active ? 'bg-blue-100 text-blue-700' : 'text-gray-700'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
@@ -103,6 +106,9 @@ export default function TiptapEditor({
    * biến editor được, nhưng lúc callback thực sự chạy thì editor đã sẵn sàng. */
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showImageMenu, setShowImageMenu] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
+  const imageMenuRef = useRef<HTMLDivElement>(null);
 
   /*
    * Tải ảnh lên UploadThing rồi chèn vào bài viết.
@@ -247,10 +253,52 @@ export default function TiptapEditor({
     }
   };
 
-  // Bấm nút ảnh → mở hộp thoại chọn file trên máy.
+  /*
+   * Bấm nút ảnh → mở menu hai lựa chọn.
+   *
+   * Bản trước mở thẳng hộp thoại chọn file, nên muốn dùng lại ảnh đã có trên
+   * website thì phải tải lên lần nữa — sinh ra nhiều bản trùng của cùng một
+   * tấm ảnh và tốn dung lượng (tiêu chí 1).
+   */
   const addImage = () => {
-    imageInputRef.current?.click();
+    setShowImageMenu((v) => !v);
   };
+
+  // Chèn ảnh chọn từ thư viện vào đúng vị trí con trỏ.
+  const insertFromLibrary = (urls: string[]) => {
+    const ed = editorRef.current;
+    if (!ed || urls.length === 0) return;
+
+    /* Chèn tất cả ảnh trong MỘT lệnh.
+     * Gọi setImage nhiều lần không dùng được: `.focus()` mỗi lần lại đưa con
+     * trỏ về cùng vị trí nên ảnh sau đè lên ảnh trước — chọn 3 ảnh chỉ ra 1. */
+    const html = urls
+      .map((url) => `<img src="${url.replace(/"/g, '&quot;')}" alt="" />`)
+      .join('');
+    ed.chain().focus().insertContent(html).run();
+    toast.success(
+      urls.length === 1 ? 'Đã chèn ảnh vào bài viết' : `Đã chèn ${urls.length} ảnh vào bài viết`
+    );
+  };
+
+  // Bấm ra ngoài hoặc nhấn Esc thì đóng menu — không để người dùng bị kẹt.
+  useEffect(() => {
+    if (!showImageMenu) return;
+    const onDown = (e: MouseEvent) => {
+      if (imageMenuRef.current && !imageMenuRef.current.contains(e.target as Node)) {
+        setShowImageMenu(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowImageMenu(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [showImageMenu]);
 
   const handleImageSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -490,16 +538,54 @@ export default function TiptapEditor({
             <ToolbarButton onClick={setLink} active={editor.isActive('link')} title="Thêm liên kết">
               <LinkIcon size={18} />
             </ToolbarButton>
-            <ToolbarButton
-              onClick={addImage}
-              title={uploadingImage ? 'Đang tải ảnh lên…' : 'Chèn ảnh từ máy tính'}
-            >
-              {uploadingImage
-                ? <Loader2 size={18} className="animate-spin" />
-                : <ImageIcon size={18} />}
-            </ToolbarButton>
-            {/* Ô chọn file ẩn: nút ảnh phía trên bấm vào đây. Dùng input thật
-                thay vì window.prompt để người viết chọn ảnh ngay trên máy. */}
+            <div className="relative" ref={imageMenuRef}>
+              <ToolbarButton
+                onClick={addImage}
+                active={showImageMenu}
+                title={uploadingImage ? 'Đang tải ảnh lên…' : 'Chèn ảnh'}
+              >
+                {uploadingImage
+                  ? <Loader2 size={18} className="animate-spin" />
+                  : <ImageIcon size={18} />}
+              </ToolbarButton>
+
+              {/* Menu hai cách chèn ảnh. Đặt cạnh nhau để người viết thấy cả
+                  hai lựa chọn thay vì phải đoán (tiêu chí 1). */}
+              {showImageMenu && (
+                <div
+                  role="menu"
+                  aria-label="Cách chèn ảnh"
+                  className="absolute left-0 top-full mt-1 z-50 w-56 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setShowImageMenu(false);
+                      imageInputRef.current?.click();
+                    }}
+                    className="w-full flex items-center gap-3 min-h-touch px-4 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                  >
+                    <UploadCloud size={18} className="flex-shrink-0" aria-hidden="true" />
+                    Tải lên từ máy tính
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setShowImageMenu(false);
+                      setShowLibrary(true);
+                    }}
+                    className="w-full flex items-center gap-3 min-h-touch px-4 text-left text-sm font-medium text-gray-700 border-t border-gray-100 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                  >
+                    <ImagePlus size={18} className="flex-shrink-0" aria-hidden="true" />
+                    Chọn từ thư viện ảnh
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Ô chọn file ẩn, dùng cho lựa chọn "Tải lên từ máy tính". */}
             <input
               ref={imageInputRef}
               type="file"
@@ -508,6 +594,13 @@ export default function TiptapEditor({
               className="hidden"
               aria-hidden="true"
               tabIndex={-1}
+            />
+
+            <MediaLibraryPicker
+              isOpen={showLibrary}
+              onClose={() => setShowLibrary(false)}
+              onSelect={insertFromLibrary}
+              maxSelect={5}
             />
             <div className="relative">
               <ToolbarButton
@@ -562,7 +655,7 @@ export default function TiptapEditor({
                         type="button"
                         onClick={() => insertEmoji(emoji)}
                         aria-label={`Chèn emoji ${emoji}`}
-                        className="w-10 h-10 flex items-center justify-center text-xl leading-none hover:bg-gray-100 rounded transition-colors"
+                        className="w-11 h-11 flex items-center justify-center text-xl leading-none hover:bg-gray-100 rounded transition-colors"
                       >
                         {emoji}
                       </button>
