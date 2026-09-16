@@ -7,7 +7,7 @@ const features = [
   {
     icon: 'ri-shield-check-line',
     title: 'Sản phẩm chính hãng',
-    description: 'Đầy đủ giấy tờ nhập khẩu và tem kiểm định của cơ quan đo lường',
+    description: 'Đầy đủ giấy tờ nhập khẩu, hỗ trợ thủ tục kiểm định đo lường',
   },
   {
     icon: 'ri-tools-line',
@@ -50,7 +50,7 @@ export default function AboutSection() {
           <p className="mt-4 text-lg text-slate-600 leading-relaxed max-w-prose">
             Chúng tôi sản xuất, nhập khẩu và sửa chữa cân điện tử cùng thiết bị đo lường,
             phục vụ nhà máy, xí nghiệp và cửa hàng trên toàn quốc. Mỗi sản phẩm đều có tem
-            kiểm định, được lắp đặt tận nơi và bảo hành 12 tháng.
+            được lắp đặt tận nơi và bảo hành 12 tháng.
           </p>
 
           {/* Số liệu cụ thể tăng độ tin cậy (tiêu chí 9) */}

@@ -13,7 +13,7 @@ const features = [
     id: 2,
     icon: 'ri-shield-check-line',
     title: 'Hàng chính hãng',
-    subtitle: 'Có tem kiểm định',
+    subtitle: 'Nhập khẩu, có giấy tờ đầy đủ',
     href: '/introduce',
   },
   {
