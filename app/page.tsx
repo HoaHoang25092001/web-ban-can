@@ -26,7 +26,7 @@ export const revalidate = 300;
 const PRODUCTS_PER_CATEGORY = 4;
 
 /**
- * Số danh mục hiển thị ở khu "Sản phẩm bán chạy".
+ * Số danh mục hiển thị ở khu "Sản phẩm nổi bật".
  * Có 15 danh mục; hiện hết × 4 sản phẩm = 60 thẻ kèm 60 ảnh khiến trang chủ
  * tải mất gần 10 giây. Giới hạn 6 danh mục (24 thẻ) giữ trang nhẹ, khách vẫn
  * bấm "Xem tất cả" để vào từng danh mục đầy đủ (tiêu chí 7).
@@ -39,7 +39,13 @@ export default async function Home() {
     prisma.product.findMany({
       // Chỉ lấy sản phẩm featured CÓ ẢNH: card không ảnh trên trang chủ trông
       // như lỗi hiển thị, làm giảm độ tin cậy ngay từ màn hình đầu tiên.
-      where: { featured: true, image: { not: null } },
+      /* Chỉ lấy sản phẩm thuộc danh mục được BẬT hiển thị trên trang chủ.
+       * Người quản trị điều khiển việc này trong trang Danh mục sản phẩm. */
+      where: {
+        featured: true,
+        image: { not: null },
+        category: { showOnHome: true },
+      },
       take: CATEGORIES_ON_HOME * PRODUCTS_PER_CATEGORY * 3,
       // Chỉ lấy đúng các cột cần dùng thay vì toàn bộ bản ghi kèm quan hệ:
       // giảm dữ liệu truyền từ database và kích thước payload gửi xuống client.
@@ -52,7 +58,7 @@ export default async function Home() {
         image: true,
         featured: true,
         categoryId: true,
-        category: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true, homeOrder: true } },
       },
       orderBy: { createdAt: 'desc' },
     }),
@@ -81,7 +87,12 @@ export default async function Home() {
   // Group products by category cho FeaturedProductsDB
   const categoriesMap = new Map<
     number,
-    { id: number; name: string; products: Array<Record<string, unknown>> }
+    {
+      id: number;
+      name: string;
+      homeOrder: number;
+      products: Array<Record<string, unknown>>;
+    }
   >();
 
   for (const product of products) {
@@ -90,6 +101,7 @@ export default async function Home() {
       categoriesMap.set(categoryId, {
         id: categoryId,
         name: product.category.name,
+        homeOrder: product.category.homeOrder,
         products: [],
       });
     }
@@ -107,9 +119,15 @@ export default async function Home() {
       featured: product.featured,
     });
   }
+  /* Sắp theo thứ tự người quản trị đặt (homeOrder, số nhỏ lên trước).
+   * Bản trước tự sắp theo "danh mục nào nhiều sản phẩm nhất" — thứ tự đổi
+   * liên tục mỗi khi nhập hàng, và chủ shop không cách nào đưa mặt hàng chủ
+   * lực lên đầu (tiêu chí 1). Cùng số thứ tự thì xếp theo tên cho ổn định. */
   const featuredProductsGrouped = Array.from(categoriesMap.values())
-    // Ưu tiên danh mục có nhiều sản phẩm nhất, lấy đúng số đã giới hạn
-    .sort((a, b) => b.products.length - a.products.length)
+    .sort((a, b) =>
+      (a.homeOrder ?? 0) - (b.homeOrder ?? 0) ||
+      a.name.localeCompare(b.name, 'vi')
+    )
     .slice(0, CATEGORIES_ON_HOME) as never;
 
   // Chuẩn hóa DateTime thành ISO String để an toàn khi qua client boundary

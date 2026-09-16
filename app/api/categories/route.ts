@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 // GET /api/categories - Lấy danh sách categories
@@ -29,16 +30,26 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, description, icon } = body;
+    const { name, description, icon, showOnHome, homeOrder } = body;
 
     const category = await prisma.category.create({
       data: {
+        // Hai trường điều khiển hiển thị trên trang chủ. Mặc định bật để danh
+        // mục mới tạo vẫn xuất hiện mà không phải nhớ chỉnh thêm.
+        showOnHome: typeof showOnHome === 'boolean' ? showOnHome : true,
+        homeOrder: Number.isFinite(Number(homeOrder)) ? Number(homeOrder) : 0,
         name,
         description,
         icon,
       },
     });
 
+    /* Làm mới trang chủ ngay.
+     * Trang chủ cache 5 phút theo thời gian (revalidate = 300). Không có dòng
+     * này thì bật/tắt danh mục xong phải chờ tới 5 phút mới thấy thay đổi —
+     * người quản trị tưởng thao tác không ăn (tiêu chí 7). */
+    revalidatePath('/');
+    revalidateTag('products');
     return NextResponse.json(category, { status: 201 });
   } catch (error) {
     console.error('Error creating category:', error);

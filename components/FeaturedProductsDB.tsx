@@ -43,10 +43,10 @@ export default function FeaturedProducts({ initialData }: FeaturedProductsProps)
       {/* Tiêu chí 1 & 3: tiêu đề nói rõ đây là gì, phụ đề bổ sung ngữ cảnh */}
       <div className="text-center mb-8">
         <h2 id="featured-heading" className="section-title">
-          Sản phẩm bán chạy
+          Sản phẩm nổi bật
         </h2>
         <p className="section-subtitle mx-auto">
-          Các dòng cân được khách hàng lựa chọn nhiều nhất, có sẵn hàng và bảo hành 12 tháng
+          Các dòng cân điện tử chính hãng, có sẵn hàng và bảo hành 12 tháng
         </p>
       </div>
 

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 
@@ -155,6 +156,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    /* Xoá cache đếm sản phẩm theo danh mục.
+     * Cache này sống 1 tiếng (xem app/category/[id]/page.tsx). Không xoá thì
+     * số "N sản phẩm" trên trang danh mục giữ giá trị cũ suốt 1 tiếng sau khi
+     * thêm/sửa/xoá hàng — khách và cả người quản trị đều thấy con số sai
+     * (tiêu chí 7). */
+    revalidateTag('products');
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error('Error creating product:', error);

@@ -24,7 +24,7 @@ interface ProductCardProps {
   /**
    * Cấp heading của tên sản phẩm, đặt theo ngữ cảnh trang để không nhảy cấp
    * (tiêu chí 5). Trang danh mục: h1 tiêu đề danh mục → card dùng h2.
-   * Trang chủ: h2 "Sản phẩm bán chạy" → h3 tên danh mục → card dùng h4.
+   * Trang chủ: h2 "Sản phẩm nổi bật" → h3 tên danh mục → card dùng h4.
    */
   headingLevel?: 2 | 3 | 4;
 }

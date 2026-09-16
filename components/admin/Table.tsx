@@ -14,7 +14,7 @@ interface TableProps {
  */
 export function Table({ headers, children, caption }: TableProps) {
   return (
-    <div className="relative">
+    <div className="relative w-full min-w-0 max-w-full">
     <div
       tabIndex={0}
       role="region"

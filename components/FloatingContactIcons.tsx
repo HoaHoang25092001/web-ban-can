@@ -70,7 +70,7 @@ const CHANNELS = [
  *
  * Trên điện thoại, bản trước xếp 3 nút 52px thành cột dọc cao ~180px nằm đè
  * vĩnh viễn lên nội dung — đo được nó che mất chữ ở khối "Tư vấn miễn phí" và
- * tiêu đề "Sản phẩm bán chạy", khách không đọc được mà cũng không tắt đi được
+ * tiêu đề "Sản phẩm nổi bật", khách không đọc được mà cũng không tắt đi được
  * (tiêu chí 1 & 6).
  *
  * Nay trên màn hình nhỏ chỉ hiện MỘT nút; bấm vào mới mở ra ba kênh, bấm lại

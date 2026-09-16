@@ -13,6 +13,8 @@ interface Category {
   name: string;
   description: string;
   icon: string;
+  showOnHome: boolean;
+  homeOrder: number;
   _count?: { products: number };
   products?: { id: number }[];
   createdAt: string;
@@ -142,6 +144,49 @@ export default function CategoriesPage() {
     }
   };
 
+  /**
+   * Bật/tắt hiển thị danh mục trên trang chủ, hoặc đổi thứ tự.
+   *
+   * Cập nhật giao diện trước rồi mới gọi API: người dùng thấy phản hồi ngay,
+   * không phải chờ mạng. Nếu lưu thất bại thì trả lại giá trị cũ (tiêu chí 7).
+   */
+  const updateHomeSetting = async (
+    cat: Category,
+    patch: { showOnHome?: boolean; homeOrder?: number }
+  ) => {
+    const prev = { showOnHome: cat.showOnHome, homeOrder: cat.homeOrder };
+    setCategories((list) =>
+      list.map((c) => (c.id === cat.id ? { ...c, ...patch } : c))
+    );
+    try {
+      const res = await fetch(`/api/categories/${cat.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: cat.name,
+          description: cat.description,
+          icon: cat.icon,
+          ...prev,
+          ...patch,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      if (patch.showOnHome !== undefined) {
+        toast.success(
+          patch.showOnHome
+            ? `Đã hiện "${cat.name}" trên trang chủ`
+            : `Đã ẩn "${cat.name}" khỏi trang chủ`
+        );
+      }
+    } catch {
+      // Trả lại trạng thái cũ để giao diện không nói dối về dữ liệu đã lưu.
+      setCategories((list) =>
+        list.map((c) => (c.id === cat.id ? { ...c, ...prev } : c))
+      );
+      toast.error('Chưa lưu được', 'Vui lòng thử lại.');
+    }
+  };
+
   const getProductCount = (cat: Category) => cat.products?.length ?? cat._count?.products ?? 0;
 
   if (loading) {
@@ -261,7 +306,7 @@ export default function CategoriesPage() {
 
         {/* Table */}
         <div className="bg-white shadow rounded-lg">
-          <Table headers={['Icon', 'Tên danh mục', 'Mô tả', 'Số sản phẩm', 'Ngày tạo', 'Thao tác']}>
+          <Table headers={['Icon', 'Tên danh mục', 'Số sản phẩm', 'Hiện trang chủ', 'Thứ tự', 'Thao tác']}>
             {categories.map((category) => (
               <TableRow key={category.id}>
                 <TableCell>
@@ -277,17 +322,62 @@ export default function CategoriesPage() {
                   <span className="font-medium text-gray-900">{category.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm text-gray-600 max-w-xs line-clamp-2 block" title={category.description}>
-                    {category.description || <span className="text-gray-500 italic">Chưa có mô tả</span>}
-                  </span>
-                </TableCell>
-                <TableCell>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {getProductCount(category)} sản phẩm
                   </span>
                 </TableCell>
+
+                {/* Bật/tắt hiển thị trên trang chủ */}
                 <TableCell>
-                  {new Date(category.createdAt).toLocaleDateString('vi-VN')}
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={category.showOnHome}
+                    onClick={() =>
+                      updateHomeSetting(category, { showOnHome: !category.showOnHome })
+                    }
+                    aria-label={`${category.showOnHome ? 'Ẩn' : 'Hiện'} danh mục ${category.name} trên trang chủ`}
+                    className="inline-flex items-center gap-2 min-h-touch"
+                  >
+                    <span
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors ${
+                        category.showOnHome ? 'bg-emerald-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform mt-0.5 ${
+                          category.showOnHome ? 'translate-x-5' : 'translate-x-0.5'
+                        }`}
+                      />
+                    </span>
+                    {/* Kèm chữ, không chỉ dựa vào màu để truyền đạt trạng thái. */}
+                    <span className={`text-sm font-medium ${category.showOnHome ? 'text-emerald-700' : 'text-gray-500'}`}>
+                      {category.showOnHome ? 'Đang hiện' : 'Đang ẩn'}
+                    </span>
+                  </button>
+                </TableCell>
+
+                {/* Thứ tự hiển thị */}
+                <TableCell>
+                  <label className="sr-only" htmlFor={`order-${category.id}`}>
+                    Thứ tự hiển thị của {category.name}
+                  </label>
+                  <input
+                    id={`order-${category.id}`}
+                    type="number"
+                    min={0}
+                    max={99}
+                    defaultValue={category.homeOrder}
+                    disabled={!category.showOnHome}
+                    onBlur={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (Number.isFinite(v) && v !== category.homeOrder) {
+                        updateHomeSetting(category, { homeOrder: v });
+                      }
+                    }}
+                    title="Số nhỏ hiện trước. Bấm ra ngoài để lưu."
+                    className="w-20 min-h-touch px-3 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
+                  />
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
