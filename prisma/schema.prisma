@@ -14,10 +14,17 @@ model Category {
   description String?
   icon        String?
   image       String?
+  /// Có hiện danh mục này ở khối "Sản phẩm nổi bật" trên trang chủ không.
+  /// Mặc định bật để danh mục mới tạo vẫn xuất hiện mà không phải nhớ chỉnh.
+  showOnHome  Boolean   @default(true)
+  /// Thứ tự hiển thị trên trang chủ: số nhỏ lên trước. Cùng số thì xếp theo tên.
+  homeOrder   Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   products    Product[]
 
+  // Trang chủ luôn lọc theo showOnHome rồi sắp theo homeOrder.
+  @@index([showOnHome, homeOrder])
   @@map("categories")
 }
 

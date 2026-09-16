@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 // GET /api/categories/[id] - Lấy category theo ID
@@ -42,17 +43,23 @@ export async function PUT(
     const { id: idString } = await params;
     const id = parseInt(idString);
     const body = await request.json();
-    const { name, description, icon } = body;
+    const { name, description, icon, showOnHome, homeOrder } = body;
 
     const category = await prisma.category.update({
       where: { id },
       data: {
+        // Chỉ ghi khi client thực sự gửi lên, tránh vô tình đặt lại về mặc định.
+        ...(typeof showOnHome === 'boolean' ? { showOnHome } : {}),
+        ...(Number.isFinite(Number(homeOrder)) ? { homeOrder: Number(homeOrder) } : {}),
         name,
         description,
         icon,
       },
     });
 
+    // Làm mới trang chủ ngay (xem chú thích ở POST /api/categories).
+    revalidatePath('/');
+    revalidateTag('products');
     return NextResponse.json(category);
   } catch (error) {
     console.error('Error updating category:', error);
@@ -88,6 +95,9 @@ export async function DELETE(
       where: { id },
     });
 
+    // Làm mới trang chủ ngay (xem chú thích ở POST /api/categories).
+    revalidatePath('/');
+    revalidateTag('products');
     return NextResponse.json({ message: 'Category deleted successfully' });
   } catch (error) {
     console.error('Error deleting category:', error);
