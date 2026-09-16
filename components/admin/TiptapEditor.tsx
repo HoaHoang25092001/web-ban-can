@@ -10,6 +10,8 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect, useState, useRef } from 'react';
+import { useUploadThing } from '@/lib/uploadthing-client';
+import { useToast } from '@/components/Toast';
 import {
   Bold,
   Italic,
@@ -30,6 +32,7 @@ import {
   AlignJustify,
   Link as LinkIcon,
   Image as ImageIcon,
+  Loader2,
   Smile,
   Palette,
   X,
@@ -93,6 +96,36 @@ export default function TiptapEditor({
   height = 400,
 }: TiptapEditorProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const toast = useToast();
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  /* Giữ tham chiếu tới editor trong một ref: callback của hook upload được
+   * khai báo TRƯỚC `const editor = useEditor(...)` nên không đọc trực tiếp
+   * biến editor được, nhưng lúc callback thực sự chạy thì editor đã sẵn sàng. */
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  /*
+   * Tải ảnh lên UploadThing rồi chèn vào bài viết.
+   *
+   * Bản trước dùng window.prompt hỏi "Nhập URL hình ảnh" — người viết bài phải
+   * tự tìm chỗ lưu ảnh ở đâu đó rồi dán link vào, trong khi ảnh đang nằm trên
+   * máy họ. Nay bấm là mở thẳng hộp thoại chọn file như mọi trình soạn thảo
+   * khác (tiêu chí 1 & 8).
+   */
+  const { startUpload } = useUploadThing('imageUploader', {
+    onClientUploadComplete: (res) => {
+      setUploadingImage(false);
+      const url = res?.[0]?.ufsUrl;
+      if (url) {
+        editorRef.current?.chain().focus().setImage({ src: url }).run();
+        toast.success('Đã chèn ảnh vào bài viết');
+      }
+    },
+    onUploadError: (error: Error) => {
+      setUploadingImage(false);
+      toast.error('Tải ảnh thất bại', error.message);
+    },
+  });
   const [showColorPicker, setShowColorPicker] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
@@ -167,6 +200,10 @@ export default function TiptapEditor({
     },
   });
 
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
+
   // Update editor content when value changes externally
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
@@ -210,11 +247,28 @@ export default function TiptapEditor({
     }
   };
 
+  // Bấm nút ảnh → mở hộp thoại chọn file trên máy.
   const addImage = () => {
-    const url = window.prompt('Nhập URL hình ảnh:');
-    if (url) {
-      editor?.chain().focus().setImage({ src: url }).run();
+    imageInputRef.current?.click();
+  };
+
+  const handleImageSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // cho phép chọn lại cùng một file
+    if (!file) return;
+
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowed.includes(file.type)) {
+      toast.error('File không phải ảnh', `"${file.name}" không dùng được. Chỉ nhận JPG, PNG, WebP, GIF.`);
+      return;
     }
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error('Ảnh vượt quá 4MB', `"${file.name}" nặng ${(file.size / 1024 / 1024).toFixed(1)}MB. Hãy giảm dung lượng rồi thử lại.`);
+      return;
+    }
+
+    setUploadingImage(true);
+    await startUpload([file]);
   };
 
   if (!editor) {
@@ -436,9 +490,25 @@ export default function TiptapEditor({
             <ToolbarButton onClick={setLink} active={editor.isActive('link')} title="Thêm liên kết">
               <LinkIcon size={18} />
             </ToolbarButton>
-            <ToolbarButton onClick={addImage} title="Thêm hình ảnh">
-              <ImageIcon size={18} />
+            <ToolbarButton
+              onClick={addImage}
+              title={uploadingImage ? 'Đang tải ảnh lên…' : 'Chèn ảnh từ máy tính'}
+            >
+              {uploadingImage
+                ? <Loader2 size={18} className="animate-spin" />
+                : <ImageIcon size={18} />}
             </ToolbarButton>
+            {/* Ô chọn file ẩn: nút ảnh phía trên bấm vào đây. Dùng input thật
+                thay vì window.prompt để người viết chọn ảnh ngay trên máy. */}
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+              onChange={handleImageSelected}
+              className="hidden"
+              aria-hidden="true"
+              tabIndex={-1}
+            />
             <div className="relative">
               <ToolbarButton
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}

@@ -52,7 +52,7 @@ export default function Footer() {
             <Logo size="lg" tone="light" className="mb-4" />
             <p className="text-sm leading-relaxed text-slate-400">
               Cung cấp cân điện tử chính hãng cho nhà xưởng, cửa hàng và phòng thí nghiệm.
-              Có kiểm định, lắp đặt tận nơi, bảo hành 12 tháng.
+              Hỗ trợ thủ tục kiểm định, lắp đặt tận nơi, bảo hành 12 tháng.
             </p>
 
             <dl className="mt-5 pt-5 border-t border-slate-800 space-y-1.5 text-sm">
@@ -61,7 +61,7 @@ export default function Footer() {
                 <dd className="text-slate-300 leading-relaxed">{BUSINESS.legalName}</dd>
               </div>
               <div className="flex gap-2">
-                <dt className="text-slate-500">Mã số thuế:</dt>
+                <dt className="text-slate-400">Mã số thuế:</dt>
                 <dd className="font-mono tabular-nums text-slate-300">{BUSINESS.taxCode}</dd>
               </div>
             </dl>
@@ -181,10 +181,10 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-slate-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-400">
             © {new Date().getFullYear()} {BUSINESS.name}. Tất cả quyền được bảo lưu.
           </p>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-400">
             <Link href="/huong-dan-mua-hang" className="inline-flex items-center min-h-touch sm:min-h-0 px-1 hover:text-slate-300 hover:underline">
               Hướng dẫn mua hàng
             </Link>

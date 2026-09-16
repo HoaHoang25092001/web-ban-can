@@ -59,8 +59,8 @@ const FAQ_GROUPS: { group: string; icon: string; items: Faq[] }[] = [
     icon: 'ri-verified-badge-line',
     items: [
       {
-        q: 'Cân có tem kiểm định không?',
-        a: 'Có. Sản phẩm được kiểm định bởi cơ quan đo lường và có tem kiểm định hợp lệ. Cân dùng trong mua bán (cân siêu thị, cân tính tiền) bắt buộc phải có tem kiểm định còn hiệu lực.',
+        q: 'Cân có kiểm định được không?',
+        a: 'Có. Cân dùng trong mua bán (cân siêu thị, cân tính tiền) theo quy định phải có tem kiểm định còn hiệu lực do cơ quan đo lường cấp. Chúng tôi hỗ trợ khách hàng làm thủ tục kiểm định — vui lòng trao đổi khi đặt hàng để được hướng dẫn cụ thể cho từng loại cân.',
       },
       {
         q: 'Bao lâu phải kiểm định lại?',

@@ -59,8 +59,8 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
      * nhưng vẫn kèm "chính hãng" để không bị hiểu là hàng trôi nổi. */
     const title = `${category.name} Giá Rẻ Chính Hãng`;
     const description =
-      `${category.name} giá rẻ chính hãng tại TP.HCM. Có tem kiểm định, ` +
-      `bảo hành 12 tháng, giao lắp tận nơi. Gọi ${PRIMARY_PHONE} để được báo giá nhanh.`;
+      `${category.name} giá rẻ chính hãng tại TP.HCM. Bảo hành 12 tháng, ` +
+      `hỗ trợ kiểm định, giao lắp tận nơi. Gọi ${PRIMARY_PHONE} để được báo giá nhanh.`;
 
     return {
       title,

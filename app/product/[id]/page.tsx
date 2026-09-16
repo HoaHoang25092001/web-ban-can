@@ -29,8 +29,8 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       .replace(/s+/g, ' ')
       .trim();
     const desc = plain
-      ? `${plain.slice(0, 120)}… Chính hãng, có tem kiểm định, bảo hành 12 tháng.`
-      : `${product.name} chính hãng, giá tốt. Có tem kiểm định, bảo hành 12 tháng, giao lắp tận nơi TP.HCM.`;
+      ? `${plain.slice(0, 120)}… Chính hãng, bảo hành 12 tháng, hỗ trợ kiểm định.`
+      : `${product.name} chính hãng, giá tốt. Bảo hành 12 tháng, hỗ trợ kiểm định, giao lắp tận nơi TP.HCM.`;
 
     return {
       title: `${product.name} – Giá Rẻ Chính Hãng`,

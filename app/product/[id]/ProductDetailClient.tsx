@@ -226,7 +226,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
-          <div className="lg:col-span-7 space-y-4">
+          <div className="lg:col-span-6 space-y-4 lg:sticky lg:top-24">
             <div className="relative group aspect-w-4 aspect-h-3 overflow-hidden rounded-2xl bg-white border border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300">
               
               <div 
@@ -262,7 +262,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
               <button
                 onClick={() => setShowImageModal(true)}
-                className="absolute bottom-4 right-4 p-2.5 bg-black/60 hover:bg-black/85 backdrop-blur-sm text-white rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-md"
+                className="absolute bottom-4 right-4 inline-flex items-center justify-center w-11 h-11 bg-black/60 hover:bg-black/85 backdrop-blur-sm text-white rounded-xl opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-300 shadow-md"
                 title="Phóng to hình ảnh"
               >
                 <ZoomIn className="w-5 h-5" />
@@ -317,22 +317,18 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               </div>
             )}
             
-            <p className="text-center text-xs text-slate-400 font-medium">
+            <p className="text-center text-xs text-slate-500 font-medium">
               * Click vào ảnh chính hoặc nút zoom để phóng to xem chi tiết
             </p>
           </div>
 
-          <div className="lg:col-span-5 space-y-6 md:space-y-8 animate-fade-in">
+          <div className="lg:col-span-6 space-y-6 md:space-y-8 animate-fade-in">
             <div className="space-y-3">
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight tracking-tight">
                 {product.name}
               </h1>
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                 <span>Mã SP: CAN-{product.id.toString().padStart(4, '0')}</span>
-                <span>•</span>
-                <span className="text-emerald-600 flex items-center gap-0.5">
-                  <ShieldCheck className="w-4 h-4" /> Đã kiểm định chất lượng
-                </span>
               </div>
             </div>
 
@@ -366,7 +362,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                       <Scale className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Mức cân tối đa</p>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Mức cân tối đa</p>
                       <p className="text-sm font-extrabold text-slate-800">{product.capacity}</p>
                     </div>
                   </div>
@@ -378,7 +374,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                       <Gauge className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Độ chính xác (Sai số)</p>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Độ chính xác (Sai số)</p>
                       <p className="text-sm font-extrabold text-slate-800">{product.accuracy}</p>
                     </div>
                   </div>
@@ -390,7 +386,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                       <Factory className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Hãng sản xuất</p>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hãng sản xuất</p>
                       <p className="text-sm font-extrabold text-slate-800">{product.manufacturer}</p>
                     </div>
                   </div>
@@ -402,7 +398,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                       <MapPin className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Xuất xứ</p>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Xuất xứ</p>
                       <p className="text-sm font-extrabold text-slate-800">{product.origin}</p>
                     </div>
                   </div>
@@ -428,127 +424,79 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   <a href={telHref(BUSINESS.phones[0])} className="inline-flex items-center min-h-touch text-lg font-extrabold text-white hover:text-blue-400 transition-colors mt-0.5">
                     {BUSINESS.phones[0]}
                   </a>
-                  <span className="text-[11px] text-slate-400 font-medium block">
+                  <span className="text-xs text-slate-400 font-medium block">
                     Gọi trong giờ làm việc để được báo giá nhanh nhất
                   </span>
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-3">
-                <a
-                  href={ZALO_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 min-w-[140px] inline-flex items-center justify-center px-5 py-3 bg-sky-500 hover:bg-sky-600 active:scale-95 text-white font-bold rounded-xl transition-all shadow-md gap-2"
-                >
-                  <MessageSquare className="w-5 h-5" />
-                  Chat Zalo ngay
-                </a>
-                
-                <button
-                  onClick={scrollToQuoteForm}
-                  className="flex-1 min-w-[140px] inline-flex items-center justify-center px-5 py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold rounded-xl transition-all shadow-md gap-2"
-                >
-                  <Mail className="w-5 h-5" />
-                  Gửi yêu cầu báo giá
-                </button>
-              </div>
+              {/* Hành động CHÍNH: gọi trực tiếp. Với mặt hàng cần tư vấn mức
+                  cân và báo giá, gọi nhanh hơn mọi cách khác. */}
+              <a
+                href={telHref(BUSINESS.phones[0])}
+                className="mt-6 w-full inline-flex items-center justify-center gap-2 min-h-touch px-6 py-4 bg-accent-600 hover:bg-accent-700 active:scale-[0.98] text-white text-base font-bold rounded-xl transition-all shadow-lg"
+              >
+                <Phone className="w-5 h-5" aria-hidden="true" />
+                Gọi ngay {BUSINESS.phones[0]}
+              </a>
+
+              {/* Lựa chọn phụ: dùng viền thay vì nền đặc để không cạnh tranh
+                  với hành động chính (tiêu chí 3). */}
+              <a
+                href={ZALO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 w-full inline-flex items-center justify-center gap-2 min-h-touch px-6 py-3 border-2 border-slate-600 hover:border-slate-500 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition-all"
+              >
+                <MessageSquare className="w-5 h-5" aria-hidden="true" />
+                Hoặc nhắn tin qua Zalo
+              </a>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-white p-3 rounded-xl border border-slate-200/50 shadow-sm text-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white p-4 rounded-xl border border-slate-200/50 shadow-sm text-center">
                 <ShieldCheck className="w-6 h-6 text-amber-500 mx-auto mb-1.5" />
-                <span className="text-[11px] font-extrabold text-slate-800 block leading-tight">Chính hãng 100%</span>
-                <span className="text-[9px] text-slate-400 block mt-0.5">Đầy đủ CO, CQ</span>
+                <span className="text-xs font-extrabold text-slate-800 block leading-tight">Chính hãng 100%</span>
+                <span className="text-xs text-slate-500 block mt-0.5">Đầy đủ CO, CQ</span>
               </div>
-              <div className="bg-white p-3 rounded-xl border border-slate-200/50 shadow-sm text-center">
+              <div className="bg-white p-4 rounded-xl border border-slate-200/50 shadow-sm text-center">
                 <RotateCcw className="w-6 h-6 text-blue-500 mx-auto mb-1.5" />
-                <span className="text-[11px] font-extrabold text-slate-800 block leading-tight">Bảo hành 1 năm</span>
-                <span className="text-[9px] text-slate-400 block mt-0.5">Bảo trì trọn đời</span>
+                <span className="text-xs font-extrabold text-slate-800 block leading-tight">Bảo hành 1 năm</span>
+                <span className="text-xs text-slate-500 block mt-0.5">Bảo trì trọn đời</span>
               </div>
-              <div className="bg-white p-3 rounded-xl border border-slate-200/50 shadow-sm text-center">
+              <div className="bg-white p-4 rounded-xl border border-slate-200/50 shadow-sm text-center">
                 <Truck className="w-6 h-6 text-emerald-500 mx-auto mb-1.5" />
-                <span className="text-[11px] font-extrabold text-slate-800 block leading-tight">Giao hàng toàn quốc</span>
-                <span className="text-[9px] text-slate-400 block mt-0.5">Hỗ trợ lắp đặt</span>
+                <span className="text-xs font-extrabold text-slate-800 block leading-tight">Giao hàng toàn quốc</span>
+                <span className="text-xs text-slate-500 block mt-0.5">Hỗ trợ lắp đặt</span>
               </div>
-              <div className="bg-white p-3 rounded-xl border border-slate-200/50 shadow-sm text-center">
+              <div className="bg-white p-4 rounded-xl border border-slate-200/50 shadow-sm text-center">
                 <Headphones className="w-6 h-6 text-indigo-500 mx-auto mb-1.5" />
-                <span className="text-[11px] font-extrabold text-slate-800 block leading-tight">Kỹ thuật 24/7</span>
-                <span className="text-[9px] text-slate-400 block mt-0.5">Tư vấn chuyên nghiệp</span>
+                <span className="text-xs font-extrabold text-slate-800 block leading-tight">Kỹ thuật 24/7</span>
+                <span className="text-xs text-slate-500 block mt-0.5">Tư vấn chuyên nghiệp</span>
               </div>
             </div>
 
           </div>
         </div>
 
-        {/* Related Products - Full Width Section */}
-        {relatedProducts.length > 0 && (
-          <div className="mt-10 md:mt-12">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg md:text-xl font-extrabold text-slate-900 flex items-center gap-2">
-                <Package className="w-6 h-6 text-blue-600" /> Sản phẩm liên quan khác
-              </h2>
-              <Link 
-                href={`/category/${product.category.id}`}
-                className="text-xs md:text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 group transition-colors"
-              >
-                Xem tất cả
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-12 md:mt-16 items-start">
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-              {relatedProducts.map((p) => (
-                <Link 
-                  key={p.id} 
-                  href={`/product/${p.id}`}
-                  className="group bg-white border border-slate-200/60 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full"
-                >
-                  <div className="relative bg-slate-50 flex items-center justify-center h-40 md:h-48 overflow-hidden">
-                    <Image
-                      src={p.image || getDefaultImage()}
-                      alt={p.name}
-                      width={300}
-                      height={225}
-                      unoptimized={!isOptimizableImage(p.image)}
-                      className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = getDefaultImage();
-                      }}
-                    />
-                  </div>
-
-                  <div className="p-4 flex flex-col flex-1 justify-between border-t border-slate-100">
-                    <div className="space-y-1">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{p.category.name}</span>
-                      <h4 className="text-xs md:text-sm font-bold text-slate-800 line-clamp-2 group-hover:text-blue-600 transition-colors leading-snug">
-                        {p.name}
-                      </h4>
-                    </div>
-
-                    <div className="flex items-center justify-between border-t border-slate-100 mt-3 pt-3">
-                      <span className={`text-xs font-extrabold ${p.price && p.price.toLowerCase().trim() !== 'liên hệ' ? 'text-red-600' : 'text-blue-600'}`}>
-                        {formatPrice(p.price)}
-                      </span>
-                      <span className="text-[10px] font-bold text-blue-600 group-hover:underline flex items-center gap-0.5">
-                        Chi tiết <ChevronRight className="w-3 h-3" />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mt-12 md:mt-16 items-start">
-          
-          <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/60 shadow-md overflow-hidden">
-            <div className="flex border-b border-slate-200 bg-slate-50/80">
+          <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/60 shadow-md overflow-hidden">
+            {/* Khối này là nội dung chính của sản phẩm nhưng trước đây không có
+                heading nào — screen reader nhảy thẳng từ "Thông số nổi bật" sang
+                "Sản phẩm liên quan", bỏ qua toàn bộ mô tả (tiêu chí 5). */}
+            <h2 className="sr-only-text">Thông tin chi tiết sản phẩm</h2>
+            {/* role="tablist" cho biết ba nút này là một nhóm lựa chọn loại trừ
+                nhau, không phải ba nút bấm rời rạc. */}
+            <div role="tablist" aria-label="Thông tin chi tiết sản phẩm" className="flex border-b border-slate-200 bg-slate-50/80">
               <button
+                type="button"
+                role="tab"
+                id={`tab-description`}
+                aria-selected={activeTab === 'description'}
+                aria-controls="tab-panel"
                 onClick={() => setActiveTab('description')}
-                className={`flex-1 py-4 px-6 text-xs md:text-sm font-bold border-b-2 transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 min-h-touch py-4 px-4 sm:px-6 text-sm font-bold border-b-2 transition-all flex items-center justify-center gap-2 ${
                   activeTab === 'description'
                     ? 'border-blue-600 text-blue-600 bg-white'
                     : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
@@ -559,8 +507,13 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               </button>
               
               <button
+                type="button"
+                role="tab"
+                id={`tab-specs`}
+                aria-selected={activeTab === 'specs'}
+                aria-controls="tab-panel"
                 onClick={() => setActiveTab('specs')}
-                className={`flex-1 py-4 px-6 text-xs md:text-sm font-bold border-b-2 transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 min-h-touch py-4 px-4 sm:px-6 text-sm font-bold border-b-2 transition-all flex items-center justify-center gap-2 ${
                   activeTab === 'specs'
                     ? 'border-blue-600 text-blue-600 bg-white'
                     : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
@@ -571,8 +524,13 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               </button>
 
               <button
+                type="button"
+                role="tab"
+                id={`tab-policy`}
+                aria-selected={activeTab === 'policy'}
+                aria-controls="tab-panel"
                 onClick={() => setActiveTab('policy')}
-                className={`flex-1 py-4 px-6 text-xs md:text-sm font-bold border-b-2 transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 min-h-touch py-4 px-4 sm:px-6 text-sm font-bold border-b-2 transition-all flex items-center justify-center gap-2 ${
                   activeTab === 'policy'
                     ? 'border-blue-600 text-blue-600 bg-white'
                     : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
@@ -583,7 +541,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               </button>
             </div>
 
-            <div className="p-6 md:p-8">
+            <div role="tabpanel" id="tab-panel" aria-labelledby={`tab-${activeTab}`} className="p-6 md:p-8">
               
               {activeTab === 'description' && (
                 <div className="space-y-4">
@@ -592,7 +550,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                       <RichContentDisplay content={product.description} />
                     </article>
                   ) : (
-                    <div className="text-center py-8 text-slate-400 font-medium">
+                    <div className="text-center py-8 text-slate-500 font-medium">
                       <Package className="w-12 h-12 mx-auto mb-2 text-slate-300" />
                       Chưa có mô tả chi tiết cho sản phẩm này.
                     </div>
@@ -701,7 +659,9 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
             </div>
           </div>
 
-          <div ref={formRef} className="lg:col-span-4 lg:sticky lg:top-24">
+          {/* Form chiếm trọn chiều ngang nhưng giới hạn độ rộng nội dung:
+              ô nhập kéo dài 1.200px rất khó nhìn (tiêu chí 2 — độ dài dòng). */}
+          <div ref={formRef} className="lg:col-span-5 lg:sticky lg:top-24">
             <div className="bg-white border border-slate-200/60 shadow-lg rounded-2xl overflow-hidden p-6 md:p-7 space-y-6">
               
               <div className="space-y-1.5">
@@ -836,7 +796,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5 bg-emerald-100 rounded-full p-0.5" />
                   <div>
                     <h5 className="font-bold text-emerald-800 text-xs">Gửi yêu cầu thành công!</h5>
-                    <p className="text-[10px] text-emerald-700 leading-tight mt-0.5">
+                    <p className="text-xs text-emerald-700 leading-tight mt-0.5">
                       Cảm ơn quý khách. Đội ngũ tư vấn sẽ gọi lại hỗ trợ lập tức trong vài phút.
                     </p>
                   </div>
@@ -848,7 +808,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <h5 className="font-bold text-red-800 text-xs">Không thể gửi yêu cầu!</h5>
-                    <p className="text-[10px] text-red-700 leading-tight mt-0.5">
+                    <p className="text-xs text-red-700 leading-tight mt-0.5">
                       Đã có lỗi xảy ra. Quý khách vui lòng thử lại hoặc bấm gọi hotline để được hỗ trợ trực tiếp.
                     </p>
                   </div>
@@ -860,6 +820,66 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
         </div>
 
+        {/* Related Products - Full Width Section */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-10 md:mt-12">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg md:text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                <Package className="w-6 h-6 text-blue-600" /> Sản phẩm liên quan khác
+              </h2>
+              <Link 
+                href={`/category/${product.category.id}`}
+                className="inline-flex items-center gap-1 min-h-touch px-2 -mr-2 rounded-lg text-sm font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 group transition-colors"
+              >
+                Xem tất cả
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+              {relatedProducts.map((p) => (
+                <Link 
+                  key={p.id} 
+                  href={`/product/${p.id}`}
+                  className="group bg-white border border-slate-200/60 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full"
+                >
+                  <div className="relative bg-slate-50 flex items-center justify-center h-40 md:h-48 overflow-hidden">
+                    <Image
+                      src={p.image || getDefaultImage()}
+                      alt={p.name}
+                      width={300}
+                      height={225}
+                      unoptimized={!isOptimizableImage(p.image)}
+                      className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = getDefaultImage();
+                      }}
+                    />
+                  </div>
+
+                  <div className="p-4 flex flex-col flex-1 justify-between border-t border-slate-100">
+                    <div className="space-y-1">
+                      <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">{p.category.name}</span>
+                      <h3 className="text-sm font-bold text-slate-800 line-clamp-2 group-hover:text-blue-600 transition-colors leading-snug">
+                        {p.name}
+                      </h3>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-slate-100 mt-3 pt-3">
+                      <span className={`text-xs font-extrabold ${p.price && p.price.toLowerCase().trim() !== 'liên hệ' ? 'text-red-600' : 'text-blue-600'}`}>
+                        {formatPrice(p.price)}
+                      </span>
+                      <span className="text-xs font-bold text-blue-600 group-hover:underline flex items-center gap-0.5">
+                        Chi tiết <ChevronRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[45] bg-white border-t border-slate-200 p-2.5 flex gap-2.5 shadow-[0_-5px_15px_rgba(0,0,0,0.08)]">
@@ -986,7 +1006,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               </div>
             )}
             <p 
-              className="text-white/40 text-[11px] font-semibold cursor-default"
+              className="text-white/40 text-xs font-semibold cursor-default"
               onClick={e => e.stopPropagation()}
             >
               Click ngoài vùng ảnh hoặc bấm nút X để đóng chế độ phóng to

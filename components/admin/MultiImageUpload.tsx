@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useUploadThing } from '@/lib/uploadthing-client';
 import { X, Loader2, UploadCloud, ImagePlus, Star } from 'lucide-react';
 import { useToast } from '@/components/Toast';
+import MediaLibraryPicker from './MediaLibraryPicker';
 
 interface MultiImageUploadProps {
   label?: string;
@@ -19,6 +20,7 @@ export default function MultiImageUpload({
   maxImages = 10,
 }: MultiImageUploadProps) {
   const toast = useToast();
+  const [showLibrary, setShowLibrary] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
@@ -119,6 +121,37 @@ export default function MultiImageUpload({
       if (files.length) await handleFiles(files);
     },
     [handleFiles]
+  );
+
+  /**
+   * Nhận ảnh chọn từ thư viện.
+   *
+   * Bỏ qua ảnh đã có trong danh sách: chọn trùng thì sản phẩm hiện hai lần
+   * cùng một tấm, trông như lỗi.
+   */
+  const handleLibrarySelect = useCallback(
+    (urls: string[]) => {
+      const fresh = urls.filter((u) => !values.includes(u));
+      const skipped = urls.length - fresh.length;
+      const room = maxImages - values.length;
+
+      if (room <= 0) {
+        toast.warning(`Đã đủ ${maxImages} ảnh`, 'Xoá bớt ảnh hiện có nếu muốn thêm ảnh khác.');
+        return;
+      }
+      if (skipped > 0) {
+        toast.info(`Bỏ qua ${skipped} ảnh đã có`, 'Những ảnh này đã nằm trong danh sách.');
+      }
+      const added = fresh.slice(0, room);
+      if (added.length < fresh.length) {
+        toast.warning(`Chỉ thêm ${added.length} ảnh`, `Còn trống ${room} chỗ trong tổng số ${maxImages} ảnh.`);
+      }
+      if (added.length > 0) {
+        onChange([...values, ...added]);
+        toast.success(`Đã thêm ${added.length} ảnh từ thư viện`);
+      }
+    },
+    [values, onChange, maxImages, toast]
   );
 
   const handleRemove = useCallback(
@@ -257,6 +290,33 @@ export default function MultiImageUpload({
           </label>
         </div>
       )}
+
+      {/* Hai cách thêm ảnh, đặt cạnh nhau để người dùng thấy cả hai lựa chọn
+          thay vì phải đoán (tiêu chí 1). */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <label
+          htmlFor="multi-upload-input"
+          className="flex-1 inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
+        >
+          <UploadCloud className="h-4 w-4" aria-hidden="true" />
+          Tải lên từ tệp
+        </label>
+        <button
+          type="button"
+          onClick={() => setShowLibrary(true)}
+          className="flex-1 inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <ImagePlus className="h-4 w-4" aria-hidden="true" />
+          Chọn từ thư viện
+        </button>
+      </div>
+
+      <MediaLibraryPicker
+        isOpen={showLibrary}
+        onClose={() => setShowLibrary(false)}
+        onSelect={handleLibrarySelect}
+        maxSelect={Math.max(1, maxImages - values.length)}
+      />
 
       {/* Upload progress bar when images exist */}
       {isUploading && values.length > 0 && (

@@ -146,7 +146,7 @@ export default function PurchaseGuidePage() {
                 {[
                   `${BUSINESS.priceNote}. Chúng tôi báo giá cuối cùng đã gồm VAT khi bạn yêu cầu xuất hóa đơn.`,
                   'Chúng tôi không bán hàng tự động trực tuyến — mọi đơn hàng đều được tư vấn trực tiếp để chọn đúng loại cân.',
-                  'Sản phẩm có tem kiểm định và giấy tờ nhập khẩu đầy đủ, xuất hóa đơn VAT theo yêu cầu.',
+                  'Sản phẩm có giấy tờ nhập khẩu đầy đủ, xuất hóa đơn VAT theo yêu cầu. Hỗ trợ làm thủ tục kiểm định khi khách cần.',
                   'Quà tặng kèm (nếu có) được ghi rõ trong báo giá.',
                 ].map((note) => (
                   <li key={note} className="flex items-start gap-2.5">

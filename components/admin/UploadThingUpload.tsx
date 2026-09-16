@@ -2,8 +2,9 @@
 
 import { useState, useCallback } from 'react';
 import { useUploadThing } from '@/lib/uploadthing-client';
-import { X, Loader2, UploadCloud } from 'lucide-react';
+import { X, Loader2, UploadCloud , ImagePlus } from 'lucide-react';
 import { useToast } from '@/components/Toast';
+import MediaLibraryPicker from './MediaLibraryPicker';
 
 interface UploadThingUploadProps {
   label: string;
@@ -18,6 +19,7 @@ export default function UploadThingUpload({
   onChange,
 }: UploadThingUploadProps) {
   const toast = useToast();
+  const [showLibrary, setShowLibrary] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
@@ -138,6 +140,39 @@ export default function UploadThingUpload({
           )}
         </label>
       )}
+
+      {/* Hai cách thêm ảnh đặt cạnh nhau (tiêu chí 1). */}
+      {!value && (
+        <div className="flex flex-col sm:flex-row gap-2">
+          <label
+            htmlFor={`upload-${label}`}
+            className="flex-1 inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
+          >
+            <UploadCloud className="h-4 w-4" aria-hidden="true" />
+            Tải lên từ tệp
+          </label>
+          <button
+            type="button"
+            onClick={() => setShowLibrary(true)}
+            className="flex-1 inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <ImagePlus className="h-4 w-4" aria-hidden="true" />
+            Chọn từ thư viện
+          </button>
+        </div>
+      )}
+
+      <MediaLibraryPicker
+        isOpen={showLibrary}
+        onClose={() => setShowLibrary(false)}
+        onSelect={(urls) => {
+          if (urls[0]) {
+            onChange(urls[0]);
+            toast.success('Đã chọn ảnh từ thư viện');
+          }
+        }}
+        maxSelect={1}
+      />
     </div>
   );
 }
