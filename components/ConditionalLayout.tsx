@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
 import MobileActionBar from './MobileActionBar';
+import FloatingContactIcons from './FloatingContactIcons';
 
 
 /**
@@ -45,6 +46,16 @@ export default function ConditionalLayout({
       <Footer />
       {/* Thanh hành động đáy: chỉ hiện trên điện thoại (xem MobileActionBar). */}
       <MobileActionBar />
+      {/*
+        Nút liên hệ nổi bên phải: trước đây chỉ đặt trong app/page.tsx nên khách
+        đang xem chi tiết sản phẩm, danh mục hay tin tức — đúng lúc muốn hỏi giá
+        nhất — lại không thấy nút gọi nào. Đặt ở đây để có mặt trên MỌI trang
+        bán hàng (tiêu chí 1: hành động chính luôn trong tầm tay).
+
+        Chỉ hiện từ `sm` trở lên; trên điện thoại MobileActionBar đã lo việc này,
+        hiện cả hai sẽ chồng lên nhau ở góc phải dưới.
+      */}
+      <FloatingContactIcons />
     </div>
   );
 }

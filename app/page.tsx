@@ -5,7 +5,6 @@ import FeaturedProductsDB from '../components/FeaturedProductsDB';
 import NewsSlider from '../components/NewsSlider';
 import AboutSection from '../components/AboutSection';
 import ContactSection from '../components/ContactSection';
-import FloatingContactIcons from '../components/FloatingContactIcons';
 
 /**
  * Cache trang chủ 5 phút.
@@ -164,8 +163,7 @@ export default async function Home() {
       <div className="max-w-shell mx-auto px-4 sm:px-6 lg:px-8">
         <ContactSection />
       </div>
-
-      <FloatingContactIcons />
+      {/* FloatingContactIcons đã chuyển vào ConditionalLayout để có ở mọi trang. */}
     </>
   );
 }
