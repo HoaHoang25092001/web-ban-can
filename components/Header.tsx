@@ -17,6 +17,10 @@ const navLinks = [
   { label: 'Bảo hành & đổi trả', href: '/chinh-sach' },
   { label: 'Câu hỏi thường gặp', href: '/cau-hoi-thuong-gap' },
   { label: 'Tin tức', href: '/news' },
+  /* Trên điện thoại menu là danh sách xổ dọc, không bị giới hạn bề ngang như
+     thanh ngang trên máy tính, nên để phẳng một cấp cho khách bấm một chạm là
+     tới — không cần gom vào menu con như bản desktop (tiêu chí 4 & 6). */
+  { label: 'Trang thông tin', href: '/trang' },
   { label: 'Liên hệ', href: '/contact' },
 ];
 
