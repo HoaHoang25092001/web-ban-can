@@ -9,6 +9,7 @@ import {
   Package,
   Tags,
   Newspaper,
+  FileText,
   Images,
   MessageSquare,
   LogOut,
@@ -22,6 +23,7 @@ const menuItems = [
   { href: '/admin/categories', label: 'Danh mục sản phẩm', icon: Tags },
   { href: '/admin/products', label: 'Sản phẩm', icon: Package },
   { href: '/admin/news', label: 'Tin tức', icon: Newspaper },
+  { href: '/admin/pages', label: 'Trang', icon: FileText },
   { href: '/admin/media', label: 'Thư viện ảnh', icon: Images },
   { href: '/admin/contacts', label: 'Liên hệ', icon: MessageSquare },
 ];

@@ -73,6 +73,39 @@ model News {
   @@map("news")
 }
 
+/// Trang nội dung tự tạo từ khu quản trị.
+///
+/// Website cũ (WordPress) có hơn 1.600 trang kiểu "Bán cân điện tử giá rẻ tại
+/// Quy Nhơn" — mỗi tỉnh/dòng hàng một trang để hứng tìm kiếm Google. Bản React
+/// hiện tại chỉ có 5 trang viết cứng trong code, muốn thêm một trang mới phải
+/// nhờ lập trình viên sửa mã nguồn rồi triển khai lại.
+///
+/// Bảng này cho phép tự soạn trang ngay trên web, tự sinh đường dẫn thân thiện
+/// và tự vào sitemap để Google tìm thấy (tiêu chí 1 & 9).
+model Page {
+  id          Int      @id @default(autoincrement())
+  title       String
+  /// Đường dẫn thân thiện, ví dụ "ban-can-dien-tu-tai-quy-nhon".
+  /// Dùng slug thay cho id vì Google xếp hạng tốt hơn khi URL chứa từ khoá,
+  /// và khách nhìn đường dẫn là đoán được nội dung.
+  slug        String   @unique
+  content     String
+  /// Tóm tắt hiện ở danh sách trang và dùng làm mô tả dự phòng cho Google.
+  excerpt     String?
+  image       String?
+  /// Tiêu đề và mô tả riêng cho kết quả tìm kiếm. Để trống thì lấy title và
+  /// excerpt — tách riêng vì tiêu đề đẹp trên trang thường quá dài cho Google.
+  metaTitle       String?
+  metaDescription String?
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Trang công khai tra cứu theo slug; danh sách lọc published rồi sắp theo ngày.
+  @@index([published, createdAt(sort: Desc)])
+  @@map("pages")
+}
+
 model ContactRequest {
   id        Int      @id @default(autoincrement())
   name      String
