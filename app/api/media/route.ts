@@ -60,10 +60,19 @@ export async function GET(request: NextRequest) {
     /** Rút phần key ở cuối đường dẫn: ".../f/<key>" → "<key>". */
     const keyOf = (url: string) => url.split('/f/').pop()?.split('?')[0] ?? url;
 
+    /*
+     * Ghi nhận một nơi đang dùng ảnh, BỎ QUA nếu đã ghi rồi.
+     *
+     * Sản phẩm thường để ảnh chính (`image`) nằm luôn trong thư viện ảnh
+     * (`images[]`) — cùng một tấm, hai cột. Không lọc thì thư viện hiện sản
+     * phẩm đó hai dòng y hệt nhau, người quản trị tưởng dữ liệu bị nhân đôi
+     * hoặc có hai sản phẩm trùng tên (tiêu chí 1).
+     */
     const add = (url: string | null, entry: { type: string; id: number; label: string }) => {
       if (!url) return;
       const k = keyOf(url);
       const list = usage.get(k) ?? [];
+      if (list.some((e) => e.type === entry.type && e.id === entry.id)) return;
       list.push(entry);
       usage.set(k, list);
     };
