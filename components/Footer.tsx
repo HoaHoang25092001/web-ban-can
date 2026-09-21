@@ -17,6 +17,10 @@ const quickLinks = [
   { label: 'Bảo hành & đổi trả', href: '/chinh-sach' },
   { label: 'Câu hỏi thường gặp', href: '/cau-hoi-thuong-gap' },
   { label: 'Tin tức', href: '/news' },
+  /* Đặt ở chân trang chứ không phải thanh điều hướng trên cùng: thanh trên đã
+     đủ 7 mục — thêm nữa là vượt ngưỡng dễ quét mắt (tiêu chí 4). Trang nội dung
+     chủ yếu để khách vào từ Google, không phải lối đi chính trong website. */
+  { label: 'Trang thông tin', href: '/trang' },
   { label: 'Liên hệ', href: '/contact' },
 ];
 

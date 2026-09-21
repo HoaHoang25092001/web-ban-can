@@ -19,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/chinh-sach`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/cau-hoi-thuong-gap`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/news`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE_URL}/trang`, changeFrequency: 'weekly', priority: 0.6 },
     { url: `${SITE_URL}/contact`, changeFrequency: 'monthly', priority: 0.8 },
   ];
 
@@ -31,18 +32,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
      * 3 lần độ trễ mạng (~2,5s). Một truy vấn chỉ tốn một vòng đi-về (tiêu chí 7).
      */
     const rows = await prisma.$queryRaw<Array<{
-      kind: string; id: number; updated_at: Date;
+      kind: string; id: number; slug: string | null; updated_at: Date;
     }>>`
-      SELECT 'category' AS kind, id, "updatedAt" AS updated_at FROM categories
+      SELECT 'category' AS kind, id, NULL::text AS slug, "updatedAt" AS updated_at FROM categories
       UNION ALL
-      SELECT 'product', id, "updatedAt" FROM products
+      SELECT 'product', id, NULL::text, "updatedAt" FROM products
       UNION ALL
-      SELECT 'news', id, "updatedAt" FROM news WHERE published = true
+      SELECT 'news', id, NULL::text, "updatedAt" FROM news WHERE published = true
+      UNION ALL
+      SELECT 'page', id, slug, "updatedAt" FROM pages WHERE published = true
     `;
 
     const categories = rows.filter((r) => r.kind === 'category');
     const products = rows.filter((r) => r.kind === 'product');
     const news = rows.filter((r) => r.kind === 'news');
+    // Trang nội dung định địa chỉ bằng slug chứ không phải id, nên phải bỏ qua
+    // bản ghi thiếu slug — nếu không sẽ sinh ra URL "/trang/null" hỏng.
+    const pages = rows.filter((r) => r.kind === 'page' && r.slug);
 
     return [
       ...staticRoutes,
@@ -63,6 +69,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: n.updated_at,
         changeFrequency: 'monthly' as const,
         priority: 0.5,
+      })),
+      ...pages.map((p) => ({
+        url: `${SITE_URL}/trang/${p.slug}`,
+        lastModified: p.updated_at,
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
       })),
     ];
   } catch (error) {

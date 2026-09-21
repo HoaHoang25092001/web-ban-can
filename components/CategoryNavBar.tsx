@@ -11,8 +11,39 @@ interface Category {
   icon: string;
 }
 
+/*
+ * `children` = menu con. "Trang thông tin" gom vào đây thay vì thành mục thứ
+ * 6 riêng: thanh này giữ tối đa 5–7 mục để khách quét mắt được trong một nhịp
+ * (tiêu chí 4). Trang nội dung chủ yếu để khách vào từ Google chứ không phải
+ * lối đi chính, nên nằm ở cấp hai là hợp lý.
+ */
+/*
+ * Kiểu của một mục trên thanh điều hướng.
+ *
+ * Mục ĐANG XEM phải khác được với mục chỉ đang rê chuột. Bản trước cả hai
+ * cùng dùng nền brand-700 — mà brand-700 cũng chính là màu nút "Danh mục sản
+ * phẩm" — nên khi đứng ở một trang con, mục cha và nút danh mục đậm y hệt
+ * nhau, nhìn như cả hai cùng được chọn.
+ *
+ * Nay mục đang xem có thêm VẠCH DƯỚI CHÂN, thứ mà trạng thái rê chuột không
+ * có. Dấu hiệu không chỉ dựa vào sắc độ nền nên phân biệt được cả khi màn
+ * hình chỉnh màu lệch hoặc người dùng khó phân biệt màu (tiêu chí 3 & 5).
+ */
+const NAV_ITEM =
+  'relative text-white text-sm font-semibold uppercase min-h-touch flex items-center whitespace-nowrap transition-colors';
+const NAV_ACTIVE =
+  'bg-brand-800 after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:bg-white';
+const NAV_IDLE = 'hover:bg-brand-700';
+
 const navLinks = [
-  { label: 'Giới thiệu', href: '/introduce' },
+  {
+    label: 'Giới thiệu',
+    href: '/introduce',
+    children: [
+      { label: 'Về công ty', href: '/introduce' },
+      { label: 'Trang thông tin', href: '/trang' },
+    ],
+  },
   { label: 'Hướng dẫn mua hàng', href: '/huong-dan-mua-hang' },
   { label: 'Chính sách', href: '/chinh-sach' },
   { label: 'Tin tức', href: '/news' },
@@ -176,21 +207,23 @@ export default function CategoryNavBar({ initialCategories }: CategoryNavBarProp
         <div className="relative flex-1 min-w-0">
           <nav aria-label="Điều hướng chính" className="flex items-center overflow-x-auto no-scrollbar scroll-smooth">
             <ul className="flex items-stretch">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
+            {navLinks.map((link) =>
+              link.children ? (
+                <NavDropdown key={link.href} link={link} pathname={pathname} />
+              ) : (
                 <li key={link.href} className="flex">
                   <Link
                     href={link.href}
-                    aria-current={isActive ? 'page' : undefined}
-                    className={`text-white text-sm font-semibold uppercase px-5 min-h-touch flex items-center whitespace-nowrap transition-colors
-                      ${isActive ? 'bg-brand-700' : 'hover:bg-brand-700'}`}
+                    aria-current={pathname === link.href ? 'page' : undefined}
+                    className={`${NAV_ITEM} px-5 ${
+                      pathname === link.href ? NAV_ACTIVE : NAV_IDLE
+                    }`}
                   >
                     {link.label}
                   </Link>
                 </li>
-              );
-            })}
+              )
+            )}
             </ul>
           </nav>
           <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-brand-600 to-transparent lg:hidden" />
@@ -228,5 +261,203 @@ export default function CategoryNavBar({ initialCategories }: CategoryNavBarProp
         </div>
       </div>
     </div>
+  );
+}
+
+interface NavChild {
+  label: string;
+  href: string;
+}
+
+/**
+ * Mục điều hướng có menu con.
+ *
+ * Mở bằng CẢ ba cách: rê chuột, bấm, và bàn phím (Enter/Space/mũi tên xuống).
+ * Chỉ dùng hover thì người dùng bàn phím và màn hình cảm ứng không mở được —
+ * trên điện thoại không có trạng thái "rê chuột" nào cả (tiêu chí 5).
+ *
+ * Nút cha vẫn giữ link tới trang giới thiệu: bấm vào chữ là đi thẳng, không
+ * bắt khách phải chọn thêm một cấp nữa mới tới được nội dung chính.
+ */
+function NavDropdown({
+  link,
+  pathname,
+}: {
+  link: { label: string; href: string; children?: NavChild[] };
+  pathname: string;
+}) {
+  const [open, setOpen] = useState(false);
+  /*
+   * Vị trí bảng menu con, đo từ nút cha.
+   *
+   * Phải dùng `fixed` + toạ độ đo được chứ không dùng `absolute`: thanh điều
+   * hướng này có `overflow-x-auto` để cuộn ngang trên màn hình hẹp, mà phần tử
+   * `absolute` nằm trong vùng cuộn sẽ bị CẮT mất — đo ra bảng menu không hề
+   * hiện dưới nút, dù trình duyệt vẫn coi nó là "visible".
+   */
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  /** Đã mở bằng cách BẤM (hoặc bàn phím) → không tự đóng khi chuột rời đi. */
+  const [pinned, setPinned] = useState(false);
+  const itemRef = useRef<HTMLLIElement>(null);
+  const children = link.children ?? [];
+
+  /*
+   * Mục cha sáng lên khi đang ở chính nó hoặc ở một trang con.
+   *
+   * Dùng so khớp theo ĐOẠN đường dẫn, không phải startsWith thuần: "/trang"
+   * là tiền tố của "/trang-chu", "/trangtri"… nên startsWith sẽ bật sáng nhầm.
+   * Đo được lỗi này khi đứng ở /trang mà mục "GIỚI THIỆU" vẫn đậm ngang với
+   * nút "Danh mục sản phẩm", nhìn như cả hai cùng được chọn.
+   */
+  const inSection = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = inSection(link.href) || children.some((c) => inSection(c.href));
+
+  // Đổi trang thì đóng lại, tránh menu treo lơ lửng sau khi điều hướng.
+  useEffect(() => {
+    setOpen(false);
+    setPinned(false);
+  }, [pathname]);
+
+  /*
+   * Đo lại vị trí mỗi khi mở, và khi cuộn/đổi kích thước cửa sổ. Bảng dùng
+   * `fixed` nên toạ độ tính theo cửa sổ: không đo lại thì khi khách cuộn
+   * trang, bảng sẽ đứng yên một chỗ còn nút cha trôi đi mất.
+   */
+  useEffect(() => {
+    if (!open) return;
+    const measure = () => {
+      const r = itemRef.current?.getBoundingClientRect();
+      if (r) setPos({ top: r.bottom, left: r.left });
+    };
+    measure();
+    window.addEventListener('scroll', measure, { passive: true });
+    window.addEventListener('resize', measure);
+    return () => {
+      window.removeEventListener('scroll', measure);
+      window.removeEventListener('resize', measure);
+    };
+  }, [open]);
+
+  // Bấm ra ngoài thì đóng.
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!itemRef.current?.contains(e.target as Node)) {
+        setOpen(false);
+        setPinned(false);
+      }
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [open]);
+
+  // Esc đóng menu và trả tiêu điểm về nút cha (tiêu chí 5).
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        setPinned(false);
+        itemRef.current?.querySelector('button')?.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open]);
+
+  const menuId = `nav-submenu-${link.href.replace(/\W/g, '')}`;
+
+  return (
+    <li
+      ref={itemRef}
+      /* Nền và vạch đặt trên cả <li> để trải hết chữ LẪN nút mũi tên — đặt
+         riêng trên từng phần tử sẽ ra hai mảng màu rời, vạch dưới bị đứt. */
+      className={`flex relative ${isActive ? NAV_ACTIVE : ''}`}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => {
+        // Menu được mở bằng CHUỘT BẤM thì giữ nguyên khi chuột rời đi; chỉ
+        // menu mở do rê chuột mới tự đóng. Không phân biệt thì thao tác bấm
+        // sẽ bị chính trạng thái hover ghi đè và menu không bao giờ mở được.
+        if (!pinned) setOpen(false);
+      }}
+    >
+      <Link
+        href={link.href}
+        aria-current={pathname === link.href ? 'page' : undefined}
+        className={`${NAV_ITEM} pl-5 pr-1 ${isActive ? '' : NAV_IDLE}`}
+      >
+        {link.label}
+      </Link>
+
+      <button
+        type="button"
+        onClick={() => {
+          /*
+           * Chỉ đóng khi menu đang được GHIM (tức lần bấm trước đã mở nó).
+           *
+           * Nếu chỉ đảo trạng thái đơn thuần: trên máy tính, di chuột tới nút
+           * đã làm menu mở sẵn, cú bấm ngay sau đó lại đóng nó — người dùng
+           * bấm mà thấy menu biến mất. Cùng lỗi đó xảy ra trên màn hình cảm
+           * ứng vì trình duyệt phát một sự kiện hover ngay trước cú chạm.
+           */
+          if (pinned) {
+            setOpen(false);
+            setPinned(false);
+          } else {
+            setOpen(true);
+            setPinned(true);
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setOpen(true);
+            setPinned(true);
+          }
+        }}
+        aria-expanded={open}
+        aria-controls={menuId}
+        aria-label={`${open ? 'Đóng' : 'Mở'} menu con của ${link.label}`}
+        /* min-w-touch: bề ngang phải đủ 44px như chiều cao. Đo ra nút chỉ
+           34px ngang — ngón tay dễ bấm trượt sang mục bên cạnh (tiêu chí 5). */
+        className={`text-white pr-3 pl-1 min-h-touch min-w-touch flex items-center justify-center transition-colors
+          ${isActive ? '' : NAV_IDLE}`}
+      >
+        <i
+          className={`ri-arrow-down-s-line text-lg transition-transform ${open ? 'rotate-180' : ''}`}
+          aria-hidden="true"
+        />
+      </button>
+
+      {open && pos && (
+        <ul
+          id={menuId}
+          style={{ top: pos.top, left: pos.left }}
+          /* Bóng đổ đậm: bảng này nổi ĐÈ lên cột danh mục phía dưới, thiếu
+             bóng thì hai khối trắng dính vào nhau, nhìn như bảng là một phần
+             của cột danh mục chứ không phải menu đang mở (tiêu chí 3). */
+          className="fixed min-w-[220px] bg-white rounded-b-card shadow-2xl ring-1 ring-slate-900/10 border-t-0 py-1 z-[60]"
+        >
+          {children.map((child) => {
+            const childActive = pathname === child.href;
+            return (
+              <li key={child.href}>
+                <Link
+                  href={child.href}
+                  aria-current={childActive ? 'page' : undefined}
+                  className={`flex items-center min-h-touch px-4 text-sm font-medium transition-colors
+                    ${childActive
+                      ? 'text-brand-700 bg-brand-50'
+                      : 'text-slate-700 hover:bg-surface-sunken hover:text-brand-700'}`}
+                >
+                  {child.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </li>
   );
 }
