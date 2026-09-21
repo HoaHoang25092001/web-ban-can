@@ -404,7 +404,10 @@ function NavDropdown({
         <ul
           id={menuId}
           style={{ top: pos.top, left: pos.left }}
-          className="fixed min-w-[220px] bg-white rounded-b-card shadow-card border border-surface-border border-t-0 py-1 z-[60]"
+          /* Bóng đổ đậm: bảng này nổi ĐÈ lên cột danh mục phía dưới, thiếu
+             bóng thì hai khối trắng dính vào nhau, nhìn như bảng là một phần
+             của cột danh mục chứ không phải menu đang mở (tiêu chí 3). */
+          className="fixed min-w-[220px] bg-white rounded-b-card shadow-2xl ring-1 ring-slate-900/10 border-t-0 py-1 z-[60]"
         >
           {children.map((child) => {
             const childActive = pathname === child.href;
