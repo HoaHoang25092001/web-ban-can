@@ -17,6 +17,24 @@ interface Category {
  * (tiêu chí 4). Trang nội dung chủ yếu để khách vào từ Google chứ không phải
  * lối đi chính, nên nằm ở cấp hai là hợp lý.
  */
+/*
+ * Kiểu của một mục trên thanh điều hướng.
+ *
+ * Mục ĐANG XEM phải khác được với mục chỉ đang rê chuột. Bản trước cả hai
+ * cùng dùng nền brand-700 — mà brand-700 cũng chính là màu nút "Danh mục sản
+ * phẩm" — nên khi đứng ở một trang con, mục cha và nút danh mục đậm y hệt
+ * nhau, nhìn như cả hai cùng được chọn.
+ *
+ * Nay mục đang xem có thêm VẠCH DƯỚI CHÂN, thứ mà trạng thái rê chuột không
+ * có. Dấu hiệu không chỉ dựa vào sắc độ nền nên phân biệt được cả khi màn
+ * hình chỉnh màu lệch hoặc người dùng khó phân biệt màu (tiêu chí 3 & 5).
+ */
+const NAV_ITEM =
+  'relative text-white text-sm font-semibold uppercase min-h-touch flex items-center whitespace-nowrap transition-colors';
+const NAV_ACTIVE =
+  'bg-brand-800 after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:bg-white';
+const NAV_IDLE = 'hover:bg-brand-700';
+
 const navLinks = [
   {
     label: 'Giới thiệu',
@@ -197,8 +215,9 @@ export default function CategoryNavBar({ initialCategories }: CategoryNavBarProp
                   <Link
                     href={link.href}
                     aria-current={pathname === link.href ? 'page' : undefined}
-                    className={`text-white text-sm font-semibold uppercase px-5 min-h-touch flex items-center whitespace-nowrap transition-colors
-                      ${pathname === link.href ? 'bg-brand-700' : 'hover:bg-brand-700'}`}
+                    className={`${NAV_ITEM} px-5 ${
+                      pathname === link.href ? NAV_ACTIVE : NAV_IDLE
+                    }`}
                   >
                     {link.label}
                   </Link>
@@ -282,9 +301,17 @@ function NavDropdown({
   const itemRef = useRef<HTMLLIElement>(null);
   const children = link.children ?? [];
 
-  // Mục cha sáng lên khi đang ở bất kỳ trang con nào, không chỉ trang của nó.
-  const isActive =
-    pathname === link.href || children.some((c) => pathname.startsWith(c.href));
+  /*
+   * Mục cha sáng lên khi đang ở chính nó hoặc ở một trang con.
+   *
+   * Dùng so khớp theo ĐOẠN đường dẫn, không phải startsWith thuần: "/trang"
+   * là tiền tố của "/trang-chu", "/trangtri"… nên startsWith sẽ bật sáng nhầm.
+   * Đo được lỗi này khi đứng ở /trang mà mục "GIỚI THIỆU" vẫn đậm ngang với
+   * nút "Danh mục sản phẩm", nhìn như cả hai cùng được chọn.
+   */
+  const inSection = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = inSection(link.href) || children.some((c) => inSection(c.href));
 
   // Đổi trang thì đóng lại, tránh menu treo lơ lửng sau khi điều hướng.
   useEffect(() => {
@@ -344,7 +371,9 @@ function NavDropdown({
   return (
     <li
       ref={itemRef}
-      className="flex relative"
+      /* Nền và vạch đặt trên cả <li> để trải hết chữ LẪN nút mũi tên — đặt
+         riêng trên từng phần tử sẽ ra hai mảng màu rời, vạch dưới bị đứt. */
+      className={`flex relative ${isActive ? NAV_ACTIVE : ''}`}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => {
         // Menu được mở bằng CHUỘT BẤM thì giữ nguyên khi chuột rời đi; chỉ
@@ -356,8 +385,7 @@ function NavDropdown({
       <Link
         href={link.href}
         aria-current={pathname === link.href ? 'page' : undefined}
-        className={`text-white text-sm font-semibold uppercase pl-5 pr-1 min-h-touch flex items-center whitespace-nowrap transition-colors
-          ${isActive ? 'bg-brand-700' : 'hover:bg-brand-700'}`}
+        className={`${NAV_ITEM} pl-5 pr-1 ${isActive ? '' : NAV_IDLE}`}
       >
         {link.label}
       </Link>
@@ -391,8 +419,10 @@ function NavDropdown({
         aria-expanded={open}
         aria-controls={menuId}
         aria-label={`${open ? 'Đóng' : 'Mở'} menu con của ${link.label}`}
-        className={`text-white pr-3 pl-1 min-h-touch flex items-center transition-colors
-          ${isActive ? 'bg-brand-700' : 'hover:bg-brand-700'}`}
+        /* min-w-touch: bề ngang phải đủ 44px như chiều cao. Đo ra nút chỉ
+           34px ngang — ngón tay dễ bấm trượt sang mục bên cạnh (tiêu chí 5). */
+        className={`text-white pr-3 pl-1 min-h-touch min-w-touch flex items-center justify-center transition-colors
+          ${isActive ? '' : NAV_IDLE}`}
       >
         <i
           className={`ri-arrow-down-s-line text-lg transition-transform ${open ? 'rotate-180' : ''}`}
