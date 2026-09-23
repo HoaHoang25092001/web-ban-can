@@ -40,6 +40,25 @@ export const metadata: Metadata = {
     'cân công nghiệp', 'cân điện tử chính hãng', 'bán cân điện tử TPHCM',
     'Cân Vạn Thịnh Phát',
   ],
+  /*
+   * Biểu tượng hiển thị cạnh tên miền trên kết quả tìm kiếm Google.
+   *
+   * Trước đây chỉ có icon.svg. Google Search KHÔNG đọc được SVG — tài liệu
+   * chính thức chỉ liệt kê BMP, GIF, ICO, PNG, JPEG, PPM, TIFF — nên kết quả
+   * tìm kiếm hiện biểu tượng quả địa cầu mặc định thay vì logo công ty.
+   *
+   * Thứ tự khai báo có chủ đích: SVG đứng trước cho trình duyệt (sắc nét ở
+   * mọi kích thước), PNG 512px đứng sau cho Google và các máy không đọc SVG.
+   */
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+      { url: '/favicon.ico', sizes: '48x48' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/apple-icon.png',
+  },
   authors: [{ name: BUSINESS.name }],
   creator: BUSINESS.name,
   publisher: BUSINESS.legalName,
