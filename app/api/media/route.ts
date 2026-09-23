@@ -146,8 +146,28 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    await utapi.deleteFiles([key]);
-    return NextResponse.json({ ok: true });
+    /*
+     * PHẢI kiểm tra `deletedCount`, không được chỉ nhìn `success`.
+     *
+     * UploadThing trả về `{success: true, deletedCount: 0}` khi không xoá được
+     * gì cả — `success` chỉ có nghĩa "yêu cầu gửi đi thành công", không phải
+     * "đã xoá xong". Bản trước bỏ qua kết quả này nên luôn trả 200: giao diện
+     * gỡ thẻ ảnh khỏi màn hình và báo "Đã xoá ảnh", nhưng ảnh vẫn nằm nguyên
+     * trên máy chủ và hiện lại ngay khi tải lại trang (tiêu chí 8).
+     */
+    const result = await utapi.deleteFiles([key]);
+    if (!result.success || result.deletedCount === 0) {
+      console.error('Xoá ảnh không thành công:', { key, result });
+      return NextResponse.json(
+        {
+          error:
+            'Máy chủ lưu trữ không xoá được ảnh này. Ảnh có thể đã bị xoá trước đó — hãy tải lại trang để xem danh sách mới nhất.',
+        },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ ok: true, deletedCount: result.deletedCount });
   } catch (error) {
     console.error('Error deleting media:', error);
     return NextResponse.json({ error: 'Không xoá được ảnh' }, { status: 500 });
