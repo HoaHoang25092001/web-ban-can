@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -9,8 +9,9 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import { isOptimizableImage } from '@/lib/image';
 import {
   Images, Search, Trash2, Copy, ExternalLink, ImageOff,
-  Loader2, HardDrive, Link2,
+  Loader2, HardDrive, Link2, Upload,
 } from 'lucide-react';
+import { useUploadThing } from '@/lib/uploadthing-client';
 
 interface MediaFile {
   key: string;
@@ -62,6 +63,13 @@ export default function MediaPage() {
     isOpen: false,
     file: null,
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  /* Hiện "Đang tải 3/8…" thay vì chỉ một vòng xoay: tải 20 ảnh mất khá lâu,
+     không có tiến độ thì người dùng tưởng máy treo và bấm lại (tiêu chí 8). */
+  const [uploadTotal, setUploadTotal] = useState(0);
+  const [uploadDone, setUploadDone] = useState(0);
 
   const load = useCallback(async (p: number) => {
     if (p === 1) setLoading(true);
@@ -92,6 +100,94 @@ export default function MediaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const { startUpload } = useUploadThing('libraryUploader');
+
+  const MAX_MB = 4;
+  const MAX_FILES = 20;
+  const ALLOWED = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+
+  /**
+   * Tải một loạt ảnh lên kho.
+   *
+   * Lọc bỏ file không hợp lệ TRƯỚC khi gửi đi và nói rõ từng file sai ở đâu.
+   * Nếu để máy chủ từ chối thì người dùng chỉ nhận một lỗi chung chung, không
+   * biết tấm nào có vấn đề trong 20 tấm vừa chọn (tiêu chí 8).
+   */
+  const uploadFiles = useCallback(
+    async (fileList: File[]) => {
+      if (!fileList.length || uploading) return;
+
+      const tooMany = fileList.length > MAX_FILES;
+      const batch = tooMany ? fileList.slice(0, MAX_FILES) : fileList;
+      if (tooMany) {
+        toast.error(
+          `Chỉ tải được ${MAX_FILES} ảnh một lượt`,
+          `Bạn chọn ${fileList.length} ảnh. Hệ thống sẽ tải ${MAX_FILES} ảnh đầu, phần còn lại hãy tải tiếp sau.`
+        );
+      }
+
+      const wrongType = batch.filter((f) => !ALLOWED.includes(f.type));
+      const tooBig = batch.filter((f) => ALLOWED.includes(f.type) && f.size > MAX_MB * 1024 * 1024);
+      const ok = batch.filter((f) => ALLOWED.includes(f.type) && f.size <= MAX_MB * 1024 * 1024);
+
+      if (wrongType.length) {
+        toast.error(
+          `${wrongType.length} tệp không phải ảnh`,
+          `${wrongType.slice(0, 3).map((f) => f.name).join(', ')}${wrongType.length > 3 ? '…' : ''} — chỉ nhận JPG, PNG, WebP, GIF.`
+        );
+      }
+      if (tooBig.length) {
+        toast.error(
+          `${tooBig.length} ảnh vượt quá ${MAX_MB}MB`,
+          `${tooBig.slice(0, 3).map((f) => `${f.name} (${(f.size / 1048576).toFixed(1)}MB)`).join(', ')}${tooBig.length > 3 ? '…' : ''}`
+        );
+      }
+      if (!ok.length) return;
+
+      setUploading(true);
+      setUploadTotal(ok.length);
+      setUploadDone(0);
+      try {
+        const res = await startUpload(ok);
+        if (!res) {
+          toast.error('Tải ảnh thất bại', 'Máy chủ không nhận được ảnh. Vui lòng thử lại.');
+          return;
+        }
+        setUploadDone(res.length);
+        toast.success(
+          `Đã tải lên ${res.length} ảnh`,
+          res.length === 1 ? ok[0].name : 'Ảnh đã có trong thư viện.'
+        );
+        // Đọc lại từ máy chủ để thấy ảnh mới, thay vì tự chèn vào danh sách.
+        setPage(1);
+        await load(1);
+      } catch (err) {
+        toast.error(
+          'Tải ảnh thất bại',
+          err instanceof Error ? err.message : 'Vui lòng kiểm tra kết nối rồi thử lại.'
+        );
+      } finally {
+        setUploading(false);
+        setUploadTotal(0);
+        setUploadDone(0);
+      }
+    },
+    [startUpload, toast, uploading, load]
+  );
+
+  const onPickFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const list = Array.from(e.target.files ?? []);
+    // Xoá giá trị để chọn LẠI đúng tệp vừa rồi vẫn kích hoạt onChange.
+    e.target.value = '';
+    uploadFiles(list);
+  };
+
+  const onDropFiles = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    uploadFiles(Array.from(e.dataTransfer.files ?? []));
+  };
+
   const copyUrl = async (url: string) => {
     try {
       await navigator.clipboard.writeText(url);
@@ -114,8 +210,21 @@ export default function MediaPage() {
       if (res.ok) {
         setFiles((prev) => prev.filter((f) => f.key !== file.key));
         toast.success('Đã xoá ảnh', file.name);
+        /*
+         * Tải lại danh sách từ máy chủ sau khi xoá.
+         *
+         * Trước đây chỉ gỡ thẻ ảnh khỏi màn hình rồi thôi. Nếu máy chủ không
+         * thực sự xoá được, người dùng vẫn thấy "đã xoá" cho tới khi tải lại
+         * trang — lúc đó ảnh hiện lại và không hiểu vì sao. Đọc lại từ nguồn
+         * thật để màn hình luôn khớp với dữ liệu trên máy chủ (tiêu chí 8).
+         */
+        load(1);
+        setPage(1);
       } else {
         toast.error('Không xoá được', data.error || 'Vui lòng thử lại.');
+        // Xoá hụt thì danh sách hiện tại có thể đã sai — đọc lại cho chắc.
+        load(1);
+        setPage(1);
       }
     } catch {
       toast.error('Không xoá được', 'Không kết nối được tới máy chủ.');
@@ -157,11 +266,71 @@ export default function MediaPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Tiêu đề */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Thư viện ảnh</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Toàn bộ ảnh đã tải lên website. Bấm vào ảnh để xem nơi đang sử dụng.
+        {/* Tiêu đề + nút tải lên */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Thư viện ảnh</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Toàn bộ ảnh đã tải lên website. Bấm vào ảnh để xem nơi đang sử dụng.
+            </p>
+          </div>
+
+          {/* Nút tải lên là hành động chính của trang này → đặt nổi bật ở góc
+              phải trên, đúng chỗ người dùng quen tìm (tiêu chí 1). */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="inline-flex items-center justify-center gap-2 min-h-touch px-5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Đang tải {uploadDone}/{uploadTotal}…
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4" aria-hidden="true" />
+                Tải ảnh lên
+              </>
+            )}
+          </button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+            multiple
+            hidden
+            onChange={onPickFiles}
+          />
+        </div>
+
+        {/* Vùng kéo-thả: người dùng quen kéo cả thư mục ảnh vào thay vì bấm
+            nút rồi tìm lại trong hộp thoại chọn tệp. */}
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDropFiles}
+          className={`rounded-xl border-2 border-dashed p-5 text-center transition-colors ${
+            dragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'
+          }`}
+        >
+          <p className="text-sm text-gray-600">
+            Kéo ảnh vào đây để tải lên, hoặc{' '}
+            {/* py-2.5 nới vùng chạm cho đủ 44px: đây là chữ nằm giữa câu nên
+                không đặt thành khối vuông được, nhưng vẫn phải bấm trúng
+                bằng ngón tay (tiêu chí 5). */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center min-h-touch px-1 font-semibold text-blue-700 hover:underline"
+            >
+              chọn từ máy tính
+            </button>
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            JPG, PNG, WebP, GIF · tối đa 4MB mỗi ảnh · tối đa 20 ảnh một lượt
           </p>
         </div>
 
