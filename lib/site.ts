@@ -152,6 +152,11 @@ export function buildLocalBusinessJsonLd() {
     name: BUSINESS.name,
     legalName: BUSINESS.legalName,
     url: SITE_URL,
+    /* Logo dạng PNG (không dùng SVG): Google chỉ đọc được ảnh raster cho
+     * biểu tượng và logo doanh nghiệp. Đường dẫn tuyệt đối vì dữ liệu có
+     * cấu trúc được đọc ngoài ngữ cảnh trang. */
+    logo: `${SITE_URL}/icon.png`,
+    image: `${SITE_URL}/icon.png`,
     telephone: BUSINESS.phones.map((p) => p.replace(/\./g, '')),
     email: BUSINESS.email,
     address: {
