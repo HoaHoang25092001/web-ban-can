@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AdminLayout from '@/components/admin/AdminLayout';
+import VisitStats from '@/components/admin/VisitStats';
 import { Package, Tags, Newspaper, MessageSquare, Star, Plus } from 'lucide-react';
 
 interface Stats {
@@ -129,6 +130,10 @@ export default function AdminDashboard() {
             );
           })}
         </div>
+
+        {/* Thống kê truy cập: đặt ngay dưới các thẻ đếm, trên "Thao tác nhanh",
+            vì đây là thứ chủ shop muốn liếc qua đầu tiên mỗi sáng (tiêu chí 3). */}
+        <VisitStats />
 
         {/* Thao tác nhanh */}
         <section className="bg-white rounded-lg border border-gray-200 p-5 sm:p-6">

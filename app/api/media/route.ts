@@ -112,8 +112,17 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/** Số ảnh tối đa xoá trong một lượt: đủ cho một trang lưới, mà vẫn giữ
+ *  thời gian phản hồi ngắn và giới hạn thiệt hại nếu bấm nhầm. */
+const MAX_DELETE_BATCH = 50;
+
 /**
- * Xoá ảnh khỏi UploadThing.
+ * Xoá một hoặc nhiều ảnh khỏi UploadThing.
+ *
+ * Nhận `{ key, url }` cho một ảnh, hoặc `{ keys: [{key, url}, ...] }` cho
+ * nhiều ảnh. Xoá hàng loạt gom vào MỘT lượt gọi thay vì gọi lần lượt: kho
+ * lưu trữ đặt ở Mỹ nên mỗi lượt tốn vài trăm mili-giây, xoá 20 ảnh riêng lẻ
+ * sẽ mất hàng chục giây (tiêu chí 7).
  *
  * Từ chối xoá ảnh đang được sản phẩm hoặc bài viết sử dụng: xoá đi thì trang
  * đó hiện ô vỡ, mà người xoá thường không biết mình vừa làm hỏng trang nào.
@@ -123,27 +132,71 @@ export async function DELETE(request: NextRequest) {
   if (denied) return denied;
 
   try {
-    const { key, url } = await request.json();
-    if (!key) {
+    const body = await request.json();
+
+    // Gộp hai dạng đầu vào về cùng một danh sách để xử lý chung một luồng.
+    const items: { key: string; url?: string }[] = Array.isArray(body.keys)
+      ? body.keys.filter((k: unknown): k is { key: string; url?: string } =>
+          Boolean(k && typeof k === 'object' && typeof (k as { key?: unknown }).key === 'string')
+        )
+      : body.key
+      ? [{ key: String(body.key), url: body.url }]
+      : [];
+
+    if (items.length === 0) {
       return NextResponse.json({ error: 'Thiếu mã ảnh' }, { status: 400 });
     }
+    if (items.length > MAX_DELETE_BATCH) {
+      return NextResponse.json(
+        { error: `Chỉ xoá được tối đa ${MAX_DELETE_BATCH} ảnh một lượt.` },
+        { status: 400 }
+      );
+    }
 
-    if (url) {
-      // Dùng `contains: key` để bắt được mọi biến thể URL của cùng một ảnh.
-      const [usedByProduct, usedByNews] = await Promise.all([
-        prisma.product.findFirst({
-          where: { OR: [{ image: { contains: key } }, { images: { has: url } }] },
-          select: { name: true },
-        }),
-        prisma.news.findFirst({ where: { image: { contains: key } }, select: { title: true } }),
-      ]);
-      const owner = usedByProduct?.name ?? usedByNews?.title;
-      if (owner) {
-        return NextResponse.json(
-          { error: `Ảnh đang được dùng ở "${owner}". Hãy gỡ khỏi đó trước khi xoá.` },
-          { status: 409 }
-        );
-      }
+    /*
+     * Kiểm tra ảnh đang được dùng.
+     *
+     * Đọc TOÀN BỘ cột ảnh một lần rồi đối chiếu trong bộ nhớ, thay vì truy vấn
+     * riêng cho từng ảnh: xoá 50 ảnh mà truy vấn từng cái là 100 lượt đi-về
+     * database, mỗi lượt ~0,5s tới Neon.
+     */
+    const [products, news, categories] = await Promise.all([
+      prisma.product.findMany({ select: { name: true, image: true, images: true } }),
+      prisma.news.findMany({ select: { title: true, image: true } }),
+      prisma.category.findMany({ select: { name: true, image: true } }),
+    ]);
+
+    const keyOf = (url: string) => url.split('/f/').pop()?.split('?')[0] ?? url;
+    const owners = new Map<string, string>();
+    const claim = (url: string | null, label: string) => {
+      if (!url) return;
+      const k = keyOf(url);
+      if (!owners.has(k)) owners.set(k, label);
+    };
+    for (const p of products) {
+      claim(p.image, p.name);
+      for (const img of p.images ?? []) claim(img, p.name);
+    }
+    for (const n of news) claim(n.image, n.title);
+    for (const c of categories) claim(c.image, c.name);
+
+    const blocked = items.filter((it) => owners.has(it.key));
+    const deletable = items.filter((it) => !owners.has(it.key));
+
+    /* Chỉ xoá một ảnh mà ảnh đó đang được dùng → báo lỗi luôn, đúng như trước.
+     * Xoá nhiều ảnh → vẫn xoá những ảnh hợp lệ rồi báo lại số bị bỏ qua, để
+     * một ảnh vướng không chặn cả lượt. */
+    if (deletable.length === 0) {
+      const first = blocked[0];
+      return NextResponse.json(
+        {
+          error:
+            blocked.length === 1
+              ? `Ảnh đang được dùng ở "${owners.get(first.key)}". Hãy gỡ khỏi đó trước khi xoá.`
+              : `Cả ${blocked.length} ảnh đều đang được sử dụng, không xoá được ảnh nào.`,
+        },
+        { status: 409 }
+      );
     }
 
     /*
@@ -155,9 +208,9 @@ export async function DELETE(request: NextRequest) {
      * gỡ thẻ ảnh khỏi màn hình và báo "Đã xoá ảnh", nhưng ảnh vẫn nằm nguyên
      * trên máy chủ và hiện lại ngay khi tải lại trang (tiêu chí 8).
      */
-    const result = await utapi.deleteFiles([key]);
+    const result = await utapi.deleteFiles(deletable.map((it) => it.key));
     if (!result.success || result.deletedCount === 0) {
-      console.error('Xoá ảnh không thành công:', { key, result });
+      console.error('Xoá ảnh không thành công:', { keys: deletable.map((i) => i.key), result });
       return NextResponse.json(
         {
           error:
@@ -167,7 +220,13 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ ok: true, deletedCount: result.deletedCount });
+    return NextResponse.json({
+      ok: true,
+      deletedCount: result.deletedCount,
+      deletedKeys: deletable.map((it) => it.key),
+      // Danh sách ảnh bị bỏ qua kèm nơi đang dùng, để giao diện nói rõ vì sao.
+      skipped: blocked.map((it) => ({ key: it.key, owner: owners.get(it.key) })),
+    });
   } catch (error) {
     console.error('Error deleting media:', error);
     return NextResponse.json({ error: 'Không xoá được ảnh' }, { status: 500 });

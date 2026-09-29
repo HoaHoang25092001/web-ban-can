@@ -10,7 +10,7 @@ import { isOptimizableImage } from '@/lib/image';
 import {
   Images, Search, Trash2, Copy, ExternalLink, ImageOff,
   Loader2, HardDrive, Link2, Upload, X, ChevronLeft, ChevronRight,
-  LayoutGrid, Grid2x2, Rows3,
+  LayoutGrid, Grid2x2, Rows3, CheckSquare, Check,
 } from 'lucide-react';
 import { useUploadThing } from '@/lib/uploadthing-client';
 
@@ -91,6 +91,44 @@ export default function MediaPage() {
   /* Cỡ hiển thị: ảnh nhỏ thì thấy được nhiều tấm một lúc, ảnh lớn thì nhìn
      rõ chi tiết. Nhớ lựa chọn để lần sau vào không phải chỉnh lại. */
   const [size, setSize] = useState<'S' | 'M' | 'L'>('M');
+  /*
+   * Chế độ chọn nhiều ảnh.
+   *
+   * Tách riêng khỏi việc "đã chọn ảnh nào": khi TẮT chế độ chọn, bấm vào ảnh
+   * là xem phóng to như thường. Nếu để ô chọn hiện thường trực thì mỗi lần
+   * muốn xem ảnh lại dễ bấm nhầm vào ô chọn (tiêu chí 1).
+   */
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkConfirm, setBulkConfirm] = useState(false);
+
+  /*
+   * Quét chọn bằng cách kéo chuột (rubber band).
+   *
+   * Chọn 30 ảnh liền nhau mà phải bấm từng tấm là 30 cú bấm. Kéo một khung
+   * bao quanh chúng là xong trong một thao tác (tiêu chí 1).
+   *
+   * `dragRect` là khung đang kéo tính theo toạ độ TRANG (kèm cuộn), không
+   * phải toạ độ cửa sổ: người dùng thường kéo tới mép rồi trang tự cuộn
+   * xuống, nếu dùng toạ độ cửa sổ thì khung sẽ trượt khỏi vùng đã quét.
+   */
+  const gridRef = useRef<HTMLUListElement>(null);
+  const [dragRect, setDragRect] = useState<
+    { x0: number; y0: number; x1: number; y1: number } | null
+  >(null);
+  /** Đang trong một lượt kéo hay không — tách khỏi `dragRect` để effect gắn
+   *  listener chỉ chạy một lần mỗi lượt, không chạy lại sau mỗi pixel. */
+  const [dragging, setDragging] = useState(false);
+  /** Điểm đặt chuột, giữ trong ref để trình xử lý pointermove đọc được ngay
+   *  mà không phụ thuộc vào chu kỳ dựng lại giao diện của React. */
+  const dragStartRef = useRef({ x0: 0, y0: 0, x1: 0, y1: 0 });
+  /** Danh sách đã chọn TRƯỚC khi bắt đầu kéo, để kéo thêm mà không mất chọn cũ. */
+  const dragBaseRef = useRef<Set<string>>(new Set());
+  /* Đánh dấu vừa kéo xong. Nhả chuột sau khi kéo vẫn phát ra sự kiện `click`
+     trên thẻ ảnh bên dưới — không chặn thì ảnh vừa quét chọn sẽ bị bỏ chọn
+     ngay lập tức. */
+  const didDragRef = useRef(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('media-size');
@@ -133,7 +171,8 @@ export default function MediaPage() {
   const { startUpload } = useUploadThing('libraryUploader');
 
   const MAX_MB = 4;
-  const MAX_FILES = 20;
+  /* Phải khớp với maxFileCount của libraryUploader trong lib/uploadthing.ts. */
+  const MAX_FILES = 50;
   const ALLOWED = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
 
   /**
@@ -263,6 +302,176 @@ export default function MediaPage() {
     }
   };
 
+  const toggleSelect = (key: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  /** Thoát chế độ chọn và bỏ hết ảnh đã đánh dấu. */
+  const exitSelect = () => {
+    setSelectMode(false);
+    setSelected(new Set());
+    setDragRect(null);
+    setDragging(false);
+  };
+
+  /**
+   * Bắt đầu quét chọn: ghi lại điểm đặt chuột theo toạ độ trang.
+   *
+   * Chỉ nhận chuột TRÁI và chỉ khi đang ở chế độ chọn. Bỏ qua nếu bấm trúng
+   * một nút/liên kết — nếu không thì cú bấm vào ô ảnh sẽ vừa chọn vừa khởi
+   * động quét, gây nhấp nháy.
+   */
+  const onGridPointerDown = (e: React.PointerEvent) => {
+    if (!selectMode || e.button !== 0) return;
+    if ((e.target as HTMLElement).closest('a')) return;
+
+    /*
+     * Chặn thao tác kéo-thả ảnh mặc định của trình duyệt.
+     *
+     * Đo được: khi bắt đầu kéo trên một tấm <img>, Chrome coi đó là kéo-thả
+     * ảnh và phát `pointercancel` ngay sau lần di chuột ĐẦU TIÊN — lượt quét
+     * bị huỷ giữa chừng, khung biến mất và chỉ chọn được đúng một ảnh.
+     * preventDefault ở pointerdown ngăn hành vi đó ngay từ đầu.
+     */
+    e.preventDefault();
+
+    dragBaseRef.current = new Set(selected);
+    didDragRef.current = false;
+    const start = { x0: e.pageX, y0: e.pageY, x1: e.pageX, y1: e.pageY };
+    dragStartRef.current = start;
+    setDragRect(start);
+    setDragging(true);
+  };
+
+  /**
+   * Tính những ảnh nằm trong khung quét và cập nhật lựa chọn.
+   *
+   * Gọi thẳng từ trình xử lý sự kiện, KHÔNG đặt trong useEffect theo dõi
+   * `dragRect`. Bản trước làm theo cách đó: pointermove gọi setDragRect, rồi
+   * một effect khác chờ `dragRect` đổi để tính vùng. Đo ra effect chỉ chạy
+   * đúng một lần cho khung kích thước 0 lúc mới đặt chuột, các lần di chuột
+   * sau không kích hoạt lại — kéo chuột không chọn được ảnh nào.
+   *
+   * Cộng dồn vào danh sách đã chọn trước lúc kéo, nên kéo nhiều lần sẽ chọn
+   * thêm chứ không xoá lựa chọn cũ.
+   */
+  const applyDragSelection = useCallback(
+    (rect: { x0: number; y0: number; x1: number; y1: number }) => {
+      if (!gridRef.current) return;
+
+      const left = Math.min(rect.x0, rect.x1);
+      const right = Math.max(rect.x0, rect.x1);
+      const top = Math.min(rect.y0, rect.y1);
+      const bottom = Math.max(rect.y0, rect.y1);
+
+      // Kéo vài pixel do tay rung thì bỏ qua, tránh vô tình chọn khi chỉ bấm.
+      if (right - left < 6 && bottom - top < 6) return;
+      didDragRef.current = true;
+
+      const hit = new Set(dragBaseRef.current);
+      for (const li of gridRef.current.querySelectorAll<HTMLElement>('li[data-key]')) {
+        const r = li.getBoundingClientRect();
+        // Đổi sang toạ độ trang để so với khung quét.
+        const l = r.left + window.scrollX;
+        const t = r.top + window.scrollY;
+        const rr = r.right + window.scrollX;
+        const bb = r.bottom + window.scrollY;
+        const overlap = !(rr < left || l > right || bb < top || t > bottom);
+        if (overlap) hit.add(li.dataset.key!);
+      }
+      setSelected(hit);
+    },
+    []
+  );
+
+  /*
+   * Theo dõi chuột trên TOÀN TRANG, không chỉ trong lưới.
+   *
+   * Gắn vào lưới thì kéo ra ngoài mép là mất sự kiện, khung quét đứng im
+   * giữa chừng. `pointerup` cũng phải bắt ở window vì người dùng hay nhả
+   * chuột bên ngoài vùng lưới.
+   *
+   * Dùng `dragging` (boolean) làm điều kiện chạy thay vì chính `dragRect`:
+   * effect chỉ cần gắn/gỡ listener một lần cho mỗi lượt kéo, không phải chạy
+   * lại sau mỗi pixel di chuột.
+   */
+  useEffect(() => {
+    if (!dragging) return;
+
+    const onMove = (e: PointerEvent) => {
+      const next = { ...dragStartRef.current, x1: e.pageX, y1: e.pageY };
+      setDragRect(next);
+      applyDragSelection(next);
+    };
+    const onUp = () => {
+      setDragging(false);
+      setDragRect(null);
+    };
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+    };
+  }, [dragging, applyDragSelection]);
+
+  /**
+   * Xoá tất cả ảnh đang chọn trong MỘT lượt gọi máy chủ.
+   *
+   * Ảnh đang được sản phẩm/bài viết dùng sẽ bị máy chủ bỏ qua thay vì chặn
+   * cả lượt — người dùng chọn 20 ảnh không nên bị một ảnh vướng làm hỏng
+   * toàn bộ thao tác (tiêu chí 8).
+   */
+  const confirmBulkDelete = async () => {
+    /* Lọc từ `files` (toàn bộ đã tải) chứ không từ `visible` (đã qua bộ lọc):
+     * `visible` khai báo sau hàm này nên dùng ở đây là dựa vào thứ tự chạy —
+     * dễ vỡ khi ai đó sắp xếp lại code. Ảnh đã chọn luôn nằm trong `files`. */
+    const keys = files.filter((f) => selected.has(f.key)).map((f) => ({ key: f.key, url: f.url }));
+    if (keys.length === 0) return;
+
+    setBulkDeleting(true);
+    try {
+      const res = await fetch('/api/media', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keys }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        const n = data.deletedCount ?? keys.length;
+        const skipped = data.skipped?.length ?? 0;
+        if (skipped > 0) {
+          toast.success(
+            `Đã xoá ${n} ảnh`,
+            `${skipped} ảnh được giữ lại vì đang được sử dụng.`
+          );
+        } else {
+          toast.success(`Đã xoá ${n} ảnh`, 'Các ảnh đã được gỡ khỏi máy chủ lưu trữ.');
+        }
+      } else {
+        toast.error('Không xoá được', data.error || 'Vui lòng thử lại.');
+      }
+    } catch {
+      toast.error('Không xoá được', 'Không kết nối được tới máy chủ.');
+    } finally {
+      setBulkDeleting(false);
+      setBulkConfirm(false);
+      exitSelect();
+      // Dù thành công hay thất bại đều đọc lại để màn hình khớp máy chủ.
+      setPage(1);
+      load(1);
+    }
+  };
+
   /**
    * Đóng/chuyển ảnh trong khung xem phóng to bằng bàn phím.
    *
@@ -301,6 +510,10 @@ export default function MediaPage() {
   useEffect(() => {
     if (viewerIndex !== null && viewerIndex >= visible.length) setViewerIndex(null);
   }, [viewerIndex, visible.length]);
+
+  /* Số ảnh đang chọn mà lại đang được dùng — máy chủ sẽ bỏ qua những ảnh này.
+     Tính sẵn để hộp thoại xác nhận nói đúng con số sẽ thực sự bị xoá. */
+  const selectedInUse = files.filter((f) => selected.has(f.key) && f.usedBy.length > 0).length;
 
   const counts = {
     all: files.length,
@@ -395,7 +608,7 @@ export default function MediaPage() {
             </button>
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            JPG, PNG, WebP, GIF · tối đa 4MB mỗi ảnh · tối đa 20 ảnh một lượt
+            JPG, PNG, WebP, GIF · tối đa 4MB mỗi ảnh · tối đa {MAX_FILES} ảnh một lượt
           </p>
         </div>
 
@@ -495,7 +708,79 @@ export default function MediaPage() {
               </button>
             ))}
           </div>
+
+          {/* Bật/tắt chế độ chọn nhiều ảnh */}
+          <button
+            type="button"
+            onClick={() => (selectMode ? exitSelect() : setSelectMode(true))}
+            aria-pressed={selectMode}
+            className={`inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg text-sm font-medium border shadow-sm transition-colors flex-shrink-0 ${
+              selectMode
+                ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <CheckSquare className="h-4 w-4" aria-hidden="true" />
+            {selectMode ? 'Xong' : 'Chọn nhiều'}
+          </button>
         </div>
+
+        {/*
+          Thanh thao tác khi đang chọn ảnh.
+
+          Dính ở đầu màn hình: lưới ảnh dài nhiều màn hình, nếu thanh này cuộn
+          mất thì chọn tới ảnh thứ 40 phải cuộn ngược lên đầu mới bấm xoá được
+          (tiêu chí 1 & 3).
+        */}
+        {selectMode && (
+          <div className="sticky top-0 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-blue-50 border-y border-blue-200 flex flex-wrap items-center gap-3">
+            <div>
+              <p className="text-sm font-semibold text-blue-900" aria-live="polite">
+                Đã chọn {selected.size} ảnh
+              </p>
+              {/* Gợi ý cách quét chọn: tính năng kéo chuột không có dấu hiệu
+                  nào trên màn hình, không nói ra thì không ai biết là có. */}
+              <p className="hidden sm:block text-xs text-blue-700 mt-0.5">
+                Bấm từng ảnh, hoặc kéo chuột để quét chọn nhiều ảnh liền nhau
+              </p>
+            </div>
+
+            {/* whitespace-nowrap: trên điện thoại nhãn "Chọn tất cả (48)" và
+                "Xoá 1 ảnh" bị ngắt giữa chừng thành hai dòng, trông như lỗi
+                hiển thị và khó bấm trúng (tiêu chí 6). */}
+            <div className="flex items-center gap-1 ml-auto">
+              <button
+                type="button"
+                onClick={() => setSelected(new Set(visible.map((f) => f.key)))}
+                disabled={visible.length === 0 || selected.size === visible.length}
+                className="inline-flex items-center min-h-touch px-2.5 rounded-lg text-sm font-medium text-blue-800 whitespace-nowrap hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Chọn tất cả
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelected(new Set())}
+                disabled={selected.size === 0}
+                className="inline-flex items-center min-h-touch px-2.5 rounded-lg text-sm font-medium text-blue-800 whitespace-nowrap hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Bỏ chọn
+              </button>
+              <button
+                type="button"
+                onClick={() => setBulkConfirm(true)}
+                disabled={selected.size === 0 || bulkDeleting}
+                className="inline-flex items-center gap-1.5 min-h-touch px-3.5 rounded-lg bg-red-600 text-white text-sm font-semibold whitespace-nowrap hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {bulkDeleting ? (
+                  <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Trash2 className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                )}
+                {bulkDeleting ? 'Đang xoá…' : `Xoá ${selected.size > 0 ? selected.size : ''} ảnh`}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Lưới ảnh */}
         {loading ? (
@@ -527,17 +812,50 @@ export default function MediaPage() {
               chuột (máy tính) hoặc nằm trong khung xem phóng to. Bấm vào ảnh
               là phóng to ngay tại chỗ (tiêu chí 1 & 3).
             */}
-            <ul className={`grid gap-3 ${GRID_COLS[size]}`}>
+            {/* select-none khi đang chọn: kéo chuột qua ảnh mà không tắt bôi
+                đen thì trình duyệt tô xanh cả vùng, nhìn như lỗi. */}
+            <ul
+              ref={gridRef}
+              onPointerDown={onGridPointerDown}
+              /* p-2 -m-2: chừa một vành trống quanh lưới để bắt đầu kéo từ
+                 ngay bên ngoài thẻ ảnh. Không có vành này thì lưới trùng khít
+                 mép thẻ đầu tiên — đặt chuột lệch vài pixel là rơi ra ngoài
+                 <ul>, trình xử lý không chạy và không quét chọn được.
+                 Lề âm bù lại để bố cục không xê dịch. */
+              className={`relative grid gap-3 p-2 -m-2 ${GRID_COLS[size]} ${
+                selectMode ? 'select-none' : ''
+              }`}
+            >
               {visible.map((f, idx) => (
                 <li
                   key={f.key}
-                  className="relative group bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+                  data-key={f.key}
+                  className={`relative group bg-white rounded-xl border shadow-sm overflow-hidden transition-colors ${
+                    selectMode && selected.has(f.key)
+                      ? 'border-blue-500 ring-2 ring-blue-500'
+                      : 'border-gray-200'
+                  }`}
                 >
                   <button
                     type="button"
-                    onClick={() => setViewerIndex(idx)}
-                    aria-label={`Xem lớn ảnh ${f.name}`}
-                    className="block w-full relative aspect-square bg-gray-50 cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
+                    onClick={() => {
+                      // Vừa quét chọn xong thì bỏ qua cú click kèm theo.
+                      if (didDragRef.current) {
+                        didDragRef.current = false;
+                        return;
+                      }
+                      if (selectMode) toggleSelect(f.key);
+                      else setViewerIndex(idx);
+                    }}
+                    aria-label={
+                      selectMode
+                        ? `${selected.has(f.key) ? 'Bỏ chọn' : 'Chọn'} ảnh ${f.name}`
+                        : `Xem lớn ảnh ${f.name}`
+                    }
+                    aria-pressed={selectMode ? selected.has(f.key) : undefined}
+                    className={`block w-full relative aspect-square bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset ${
+                      selectMode ? 'cursor-pointer' : 'cursor-zoom-in'
+                    }`}
                   >
                     <Image
                       src={f.url}
@@ -548,7 +866,30 @@ export default function MediaPage() {
                       unoptimized={!isOptimizableImage(f.url)}
                       className="object-contain p-1.5"
                     />
+
+                    {/* Lớp phủ xanh nhạt cho ảnh đã chọn: nhìn lướt là biết
+                        ngay tấm nào đang chọn, không phải soi từng ô vuông. */}
+                    {selectMode && selected.has(f.key) && (
+                      <span className="absolute inset-0 bg-blue-500/20" aria-hidden="true" />
+                    )}
                   </button>
+
+                  {/* Ô đánh dấu: chỉ hiện khi đang ở chế độ chọn. Dùng
+                      pointer-events-none để cú bấm rơi xuống nút ảnh bên dưới
+                      — bấm vào đâu trên thẻ cũng chọn được, không bắt người
+                      dùng nhắm đúng ô vuông nhỏ (tiêu chí 5). */}
+                  {selectMode && (
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none absolute top-2 right-2 w-6 h-6 rounded-md border-2 flex items-center justify-center shadow-sm ${
+                        selected.has(f.key)
+                          ? 'bg-blue-600 border-blue-600'
+                          : 'bg-white/90 border-gray-400'
+                      }`}
+                    >
+                      {selected.has(f.key) && <Check className="h-4 w-4 text-white" strokeWidth={3} />}
+                    </span>
+                  )}
 
                   {/* Chấm trạng thái nhỏ, kèm title để biết nghĩa khi rê chuột.
                       Nhãn chữ đầy đủ nằm trong khung xem phóng to. */}
@@ -566,9 +907,14 @@ export default function MediaPage() {
                   {/* Thanh nút: ẩn cho tới khi rê chuột trên máy tính, nhưng
                       LUÔN hiện trên cảm ứng — màn hình cảm ứng không có trạng
                       thái "rê chuột" nên ẩn đi là không bấm được (tiêu chí 5). */}
-                  {/* Không dùng padding ngang: thẻ trên điện thoại chỉ rộng
+                  {/* Ẩn hẳn thanh nút khi đang chọn nhiều: ba nút này nằm đè
+                      lên ảnh, để lại thì bấm vào thẻ dễ trúng nút xoá/sao chép
+                      thay vì chọn ảnh.
+                      Không dùng padding ngang: thẻ trên điện thoại chỉ rộng
                       173px, thêm padding là ba nút 44px bị bóp còn 40px. */}
-                  <div className="absolute inset-x-0 bottom-0 flex items-center bg-gradient-to-t from-black/70 to-transparent opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
+                  <div className={`absolute inset-x-0 bottom-0 items-center bg-gradient-to-t from-black/70 to-transparent opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity ${
+                    selectMode ? 'hidden' : 'flex'
+                  }`}>
                     <button
                       type="button"
                       onClick={() => copyUrl(f.url)}
@@ -606,6 +952,24 @@ export default function MediaPage() {
                 </li>
               ))}
             </ul>
+
+            {/* Khung quét chọn. Dùng `fixed` nên toạ độ phải trừ đi độ cuộn
+                (dragRect lưu theo toạ độ trang). Bỏ qua khi kéo chưa đủ 6px
+                để cú bấm thường không vẽ ra một chấm nhỏ nhấp nháy. */}
+            {dragRect &&
+              (Math.abs(dragRect.x1 - dragRect.x0) >= 6 ||
+                Math.abs(dragRect.y1 - dragRect.y0) >= 6) && (
+                <div
+                  aria-hidden="true"
+                  className="fixed z-40 pointer-events-none border-2 border-blue-500 bg-blue-500/15 rounded"
+                  style={{
+                    left: Math.min(dragRect.x0, dragRect.x1) - window.scrollX,
+                    top: Math.min(dragRect.y0, dragRect.y1) - window.scrollY,
+                    width: Math.abs(dragRect.x1 - dragRect.x0),
+                    height: Math.abs(dragRect.y1 - dragRect.y0),
+                  }}
+                />
+              )}
 
             {hasMore && !search && filter === 'all' && (
               <div className="text-center">
@@ -788,6 +1152,25 @@ export default function MediaPage() {
             : ''
         }
         confirmText="Xoá vĩnh viễn"
+        cancelText="Giữ lại"
+        variant="danger"
+      />
+
+      <ConfirmDialog
+        isOpen={bulkConfirm}
+        onCancel={() => setBulkConfirm(false)}
+        onConfirm={confirmBulkDelete}
+        title={`Xoá ${selected.size} ảnh khỏi thư viện?`}
+        /* Nói rõ SỐ ảnh sẽ bị giữ lại vì đang dùng, thay vì chỉ cảnh báo
+           chung chung — người dùng biết trước kết quả trước khi bấm. */
+        message={
+          selectedInUse > 0
+            ? `${selected.size - selectedInUse} ảnh sẽ bị xoá vĩnh viễn và không khôi phục được. ${selectedInUse} ảnh còn lại đang được sản phẩm hoặc bài viết sử dụng nên sẽ được giữ lại.`
+            : `${selected.size} ảnh sẽ bị xoá vĩnh viễn khỏi máy chủ lưu trữ và không khôi phục được.`
+        }
+        confirmText={
+          selectedInUse > 0 ? `Xoá ${selected.size - selectedInUse} ảnh` : `Xoá ${selected.size} ảnh`
+        }
         cancelText="Giữ lại"
         variant="danger"
       />

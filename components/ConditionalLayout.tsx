@@ -5,6 +5,7 @@ import Header from './Header';
 import Footer from './Footer';
 import MobileActionBar from './MobileActionBar';
 import FloatingContactIcons from './FloatingContactIcons';
+import VisitTracker from './VisitTracker';
 
 
 /**
@@ -56,6 +57,8 @@ export default function ConditionalLayout({
         hiện cả hai sẽ chồng lên nhau ở góc phải dưới.
       */}
       <FloatingContactIcons />
+      {/* Đếm lượt xem trang để hiện thống kê trong khu quản trị. */}
+      <VisitTracker />
     </div>
   );
 }

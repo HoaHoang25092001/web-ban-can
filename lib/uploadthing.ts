@@ -51,13 +51,17 @@ export const ourFileRouter = {
    * Tải ảnh thẳng vào Thư viện ảnh.
    *
    * Khác hai route trên ở chỗ ảnh không gắn với một sản phẩm hay bài viết nào
-   * — chỉ đưa vào kho để dùng dần. Cho phép 20 ảnh mỗi lượt vì người dùng
+   * — chỉ đưa vào kho để dùng dần. Cho phép 50 ảnh mỗi lượt vì người dùng
    * thường chọn cả một thư mục ảnh sản phẩm mới chụp.
+   *
+   * Con số này phải KHỚP với MAX_FILES bên app/admin/media/page.tsx: giao
+   * diện lọc trước rồi mới gửi, nhưng nếu giao diện cho qua nhiều hơn mức máy
+   * chủ nhận thì cả lượt tải bị từ chối kèm lỗi khó hiểu.
    */
   libraryUploader: f({
     image: {
       maxFileSize: '4MB',
-      maxFileCount: 20,
+      maxFileCount: 50,
     },
   })
     .middleware(requireAdminSession)

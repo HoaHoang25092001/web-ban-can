@@ -129,6 +129,38 @@ model ContactRequest {
   @@map("contact_requests")
 }
 
+/// Một lượt xem trang của khách.
+///
+/// Ghi ở mức thô (mỗi lượt một dòng) thay vì chỉ cộng dồn một con số: có
+/// dòng chi tiết mới thống kê được theo tỉnh, theo ngày, theo trang. Bản
+/// tổng hợp tính từ đây khi cần.
+///
+/// KHÔNG lưu địa chỉ IP đầy đủ. Theo Nghị định 13/2023/NĐ-CP, IP là dữ liệu
+/// cá nhân; lưu lại kéo theo nghĩa vụ bảo vệ và thông báo mà website bán cân
+/// không cần gánh. Chỉ lưu mã băm không đảo ngược được, đủ để phân biệt
+/// khách này với khách khác trong ngày.
+model PageView {
+  id        Int      @id @default(autoincrement())
+  /// Đường dẫn được xem, ví dụ "/product/3270".
+  path      String
+  /// Mã tỉnh/thành theo Vercel (ví dụ "SG" cho TP.HCM). Rỗng nếu không xác định.
+  region    String?
+  /// Tên tỉnh/thành đã dịch sang tiếng Việt, để không phải tra lại khi hiển thị.
+  regionName String?
+  /// Mã quốc gia hai chữ, ví dụ "VN".
+  country   String?
+  /// Mã băm của IP + ngày, dùng để đếm "khách khác nhau" mà không lưu IP.
+  /// Đổi mỗi ngày nên không theo dõi được một người qua nhiều ngày.
+  visitorHash String
+  createdAt DateTime @default(now())
+
+  // Thống kê luôn lọc theo khoảng thời gian, rồi gom theo tỉnh hoặc đếm tổng.
+  @@index([createdAt(sort: Desc)])
+  @@index([region, createdAt(sort: Desc)])
+  @@index([visitorHash, createdAt(sort: Desc)])
+  @@map("page_views")
+}
+
 model Admin {
   id        Int      @id @default(autoincrement())
   email     String   @unique
