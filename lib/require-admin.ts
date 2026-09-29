@@ -28,5 +28,23 @@ export async function requireAdmin(): Promise<NextResponse | null> {
     );
   }
 
+  /*
+   * Phải đúng LOẠI tài khoản quản trị.
+   *
+   * Từ khi có thêm tài khoản khách hàng dùng phần cân điện tử, chỉ kiểm tra
+   * "đã đăng nhập" là không đủ: đo được một khách hàng đăng nhập ở
+   * /can-dien-tu vẫn gọi được API quản trị và đọc danh sách toàn bộ tài khoản
+   * khách khác. Tài khoản cân phải bị chặn khỏi mọi API quản trị website.
+   *
+   * Phiên cũ (tạo trước khi thêm trường `kind`) không có giá trị này; coi như
+   * quản trị viên vì trước đó chỉ có một loại tài khoản duy nhất.
+   */
+  if (session.user.kind === 'scale') {
+    return NextResponse.json(
+      { error: 'Tài khoản này không có quyền truy cập khu quản trị' },
+      { status: 403 }
+    );
+  }
+
   return null;
 }

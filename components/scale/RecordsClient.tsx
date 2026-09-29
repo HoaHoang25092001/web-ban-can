@@ -1,0 +1,264 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { Search, Trash2, Loader2, ClipboardList, ChevronLeft, ChevronRight, Scale } from 'lucide-react';
+
+interface Record {
+  id: number;
+  productCode: string;
+  productName: string;
+  weight: number;
+  unit: string;
+  employeeName: string | null;
+  note: string | null;
+  weighedAt: string;
+}
+
+const fmtNum = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 3 });
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleString('vi-VN', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+
+/**
+ * Danh sách bản ghi cân của khách đang đăng nhập.
+ *
+ * Máy chủ luôn lọc theo tài khoản (xem app/api/scale/records), nên trang này
+ * không bao giờ nhận được dữ liệu của khách khác dù có sửa tham số trên URL.
+ */
+export default function RecordsClient() {
+  const [records, setRecords] = useState<Record[]>([]);
+  const [totalWeight, setTotalWeight] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<number | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: '50' });
+      if (search.trim()) params.set('search', search.trim());
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+
+      const res = await fetch(`/api/scale/records?${params}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setRecords(data.records ?? []);
+      setTotalWeight(data.totalWeight ?? 0);
+      setTotal(data.pagination?.total ?? 0);
+      setPages(Math.max(1, data.pagination?.pages ?? 1));
+    } catch {
+      /* Lỗi mạng: giữ nguyên danh sách cũ thay vì xoá trắng màn hình. */
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search, from, to]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const remove = async (id: number) => {
+    setDeleting(id);
+    try {
+      const res = await fetch('/api/scale/records', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) load();
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Tổng hợp: tổng khối lượng tính trên TOÀN BỘ kết quả lọc, không chỉ
+          trang đang xem — nếu không, đổi trang là con số nhảy lung tung. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-4">
+          <span className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <ClipboardList className="w-5 h-5 text-blue-700" aria-hidden="true" />
+          </span>
+          <div>
+            <div className="text-2xl font-bold text-slate-900">{fmtNum(total)}</div>
+            <div className="text-xs text-slate-600">Lần cân</div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-4">
+          <span className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+            <Scale className="w-5 h-5 text-emerald-700" aria-hidden="true" />
+          </span>
+          <div>
+            <div className="text-2xl font-bold text-slate-900">{fmtNum(totalWeight)} kg</div>
+            <div className="text-xs text-slate-600">Tổng khối lượng</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bộ lọc */}
+      <form
+        onSubmit={(e) => { e.preventDefault(); setPage(1); load(); }}
+        className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 grid gap-3 sm:grid-cols-[1fr_auto_auto_auto]"
+      >
+        <div className="relative">
+          <label htmlFor="rec-search" className="sr-only">Tìm theo mặt hàng</label>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" aria-hidden="true" />
+          <input
+            id="rec-search"
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Tìm theo tên hàng, mã hàng, người cân…"
+            className="w-full min-h-touch pl-9 pr-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="rec-from" className="sr-only">Từ ngày</label>
+          <input
+            id="rec-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)}
+            className="min-h-touch px-3 rounded-lg border border-slate-300 text-sm w-full focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
+        <div>
+          <label htmlFor="rec-to" className="sr-only">Đến ngày</label>
+          <input
+            id="rec-to" type="date" value={to} onChange={(e) => setTo(e.target.value)}
+            className="min-h-touch px-3 rounded-lg border border-slate-300 text-sm w-full focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
+        <button
+          type="submit"
+          className="inline-flex items-center justify-center min-h-touch px-5 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
+        >
+          Lọc
+        </button>
+      </form>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-16 gap-3 text-slate-500">
+          <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+          <span className="text-sm">Đang tải bản ghi…</span>
+        </div>
+      ) : records.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+          <ClipboardList className="w-10 h-10 text-slate-300 mx-auto mb-3" aria-hidden="true" />
+          <p className="font-semibold text-slate-900">Chưa có bản ghi nào</p>
+          <p className="text-sm text-slate-600 mt-1">
+            Vào <strong>Màn hình cân</strong> để kết nối cân và lưu lần cân đầu tiên.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Máy tính: bảng. Điện thoại: thẻ xếp dọc — bảng 6 cột trên màn
+              hình 390px buộc phải cuộn ngang mới đọc được (tiêu chí 6). */}
+          <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr className="text-left text-slate-600">
+                  <th scope="col" className="px-4 py-3 font-semibold">Thời gian</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Mặt hàng</th>
+                  <th scope="col" className="px-4 py-3 font-semibold text-right">Khối lượng</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Người cân</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Ghi chú</th>
+                  <th scope="col" className="px-4 py-3 font-semibold text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {records.map((r) => (
+                  <tr key={r.id} className="hover:bg-slate-50/70">
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-600">{fmtDate(r.weighedAt)}</td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-slate-900">{r.productName}</div>
+                      {r.productCode && <div className="text-xs text-slate-500">{r.productCode}</div>}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono font-semibold text-slate-900 whitespace-nowrap">
+                      {fmtNum(r.weight)} {r.unit}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{r.employeeName || '—'}</td>
+                    <td className="px-4 py-3 text-slate-600 max-w-[200px] truncate">{r.note || '—'}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => remove(r.id)}
+                        disabled={deleting === r.id}
+                        aria-label={`Xoá bản ghi ${r.productName} lúc ${fmtDate(r.weighedAt)}`}
+                        className="inline-flex items-center justify-center min-w-touch min-h-touch rounded-lg text-slate-500 hover:text-red-700 hover:bg-red-50 disabled:opacity-40 transition-colors"
+                      >
+                        {deleting === r.id
+                          ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                          : <Trash2 className="w-4 h-4" aria-hidden="true" />}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <ul className="md:hidden space-y-3">
+            {records.map((r) => (
+              <li key={r.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-slate-900">{r.productName}</div>
+                    {r.productCode && <div className="text-xs text-slate-500">{r.productCode}</div>}
+                  </div>
+                  <div className="font-mono font-bold text-slate-900 whitespace-nowrap">
+                    {fmtNum(r.weight)} {r.unit}
+                  </div>
+                </div>
+                <div className="text-xs text-slate-500 mt-2">{fmtDate(r.weighedAt)}</div>
+                {(r.employeeName || r.note) && (
+                  <div className="text-xs text-slate-600 mt-1">
+                    {r.employeeName && <span>Người cân: {r.employeeName}</span>}
+                    {r.employeeName && r.note && <span> · </span>}
+                    {r.note && <span>{r.note}</span>}
+                  </div>
+                )}
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => remove(r.id)}
+                    disabled={deleting === r.id}
+                    className="inline-flex items-center gap-1.5 min-h-touch px-3 rounded-lg text-sm text-red-700 hover:bg-red-50 disabled:opacity-40 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" aria-hidden="true" /> Xoá
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          {pages > 1 && (
+            <nav aria-label="Phân trang bản ghi" className="flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-sm text-slate-600">Trang {page} / {pages} · {fmtNum(total)} bản ghi</p>
+              <div className="flex gap-2">
+                <button
+                  type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
+                  className="inline-flex items-center gap-1 min-h-touch px-4 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:border-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-4 h-4" aria-hidden="true" /> Trước
+                </button>
+                <button
+                  type="button" onClick={() => setPage((p) => Math.min(pages, p + 1))} disabled={page >= pages}
+                  className="inline-flex items-center gap-1 min-h-touch px-4 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:border-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Sau <ChevronRight className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </div>
+            </nav>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

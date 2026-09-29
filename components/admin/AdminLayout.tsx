@@ -12,6 +12,7 @@ import {
   FileText,
   Images,
   MessageSquare,
+  Scale,
   LogOut,
   Menu,
   X,
@@ -26,6 +27,7 @@ const menuItems = [
   { href: '/admin/pages', label: 'Trang', icon: FileText },
   { href: '/admin/media', label: 'Thư viện ảnh', icon: Images },
   { href: '/admin/contacts', label: 'Liên hệ', icon: MessageSquare },
+  { href: '/admin/tai-khoan-can', label: 'Tài khoản cân', icon: Scale },
 ];
 
 /**

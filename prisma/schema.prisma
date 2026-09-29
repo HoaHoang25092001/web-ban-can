@@ -172,3 +172,101 @@ model Admin {
   @@map("admins")
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHẦN CÂN ĐIỆN TỬ (/can-dien-tu)
+//
+// Khu vực riêng cho KHÁCH HÀNG đã mua cân: họ đăng nhập để ghi lại số liệu cân
+// hàng của mình. Hoàn toàn tách khỏi phần bán hàng của website.
+//
+// Nguyên tắc xuyên suốt: mỗi bản ghi gắn với đúng một tài khoản khách, và mọi
+// truy vấn đều lọc theo tài khoản đang đăng nhập. Khách A không có đường nào
+// nhìn thấy dữ liệu của khách B, kể cả khi tự sửa địa chỉ trên trình duyệt.
+//
+// Tên bảng đều có tiền tố `scale_` để không đụng với bảng của website: dự án
+// gốc đặt tên `users` và `products`, trùng với bảng sẵn có.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Tài khoản khách hàng dùng phần cân điện tử.
+///
+/// Do quản trị viên website cấp — khách KHÔNG tự đăng ký được. Chủ shop tạo
+/// tài khoản, đặt lại mật khẩu và khoá khi hết hạn dịch vụ, nhưng không đọc
+/// được số liệu cân hàng của khách (bí mật kinh doanh của họ).
+model ScaleUser {
+  id        Int      @id @default(autoincrement())
+  /// Tên đăng nhập, khách dùng để vào hệ thống.
+  username  String   @unique
+  /// Mật khẩu đã băm bằng bcrypt. KHÔNG bao giờ lưu dạng chữ thường.
+  password  String
+  /// Tên khách hàng hoặc tên công ty, hiện trên giao diện.
+  fullName  String
+  /// Số điện thoại liên hệ, để chủ shop gọi khi cần hỗ trợ.
+  phone     String?
+  /// Ghi chú nội bộ: đã mua cân gì, hết hạn khi nào...
+  note      String?
+  /// Khoá tài khoản mà không xoá dữ liệu — dùng khi khách hết hạn dịch vụ.
+  isActive  Boolean  @default(true)
+  /// Lần đăng nhập gần nhất, giúp biết tài khoản nào còn dùng thật.
+  lastLoginAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products ScaleProduct[]
+  records  WeighingRecord[]
+
+  @@index([isActive, createdAt(sort: Desc)])
+  @@map("scale_users")
+}
+
+/// Danh mục mặt hàng của riêng từng khách.
+///
+/// Mã hàng chỉ cần duy nhất TRONG PHẠM VI một khách: hai công ty khác nhau
+/// hoàn toàn có thể cùng dùng mã "SP001" cho hai mặt hàng khác nhau.
+model ScaleProduct {
+  id     Int    @id @default(autoincrement())
+  code   String
+  name   String
+  userId Int
+
+  user    ScaleUser        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  records WeighingRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, code])
+  @@index([userId, name])
+  @@map("scale_products")
+}
+
+/// Một lần cân hàng.
+///
+/// Lưu kèm tên và mã hàng dưới dạng chữ (không chỉ khoá ngoại): khách đổi tên
+/// mặt hàng hay xoá nó khỏi danh mục thì bản ghi cũ vẫn giữ nguyên thông tin
+/// tại thời điểm cân — sổ sách không được thay đổi theo thời gian.
+model WeighingRecord {
+  id           Int      @id @default(autoincrement())
+  productCode  String
+  productName  String
+  weight       Float
+  unit         String   @default("kg")
+  /// Người trực tiếp cân, khách tự nhập. Hữu ích khi một công ty có nhiều
+  /// người dùng chung một tài khoản.
+  employeeName String?
+  note         String?
+  weighedAt    DateTime @default(now())
+
+  userId    Int
+  user      ScaleUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Liên kết tới danh mục nếu mặt hàng còn tồn tại; xoá mặt hàng thì để trống
+  /// chứ không xoá bản ghi cân.
+  productId Int?
+  product   ScaleProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  // Mọi truy vấn đều bắt đầu bằng "của tài khoản này", rồi mới sắp theo thời gian.
+  @@index([userId, weighedAt(sort: Desc)])
+  @@index([userId, productCode])
+  @@map("weighing_records")
+}
