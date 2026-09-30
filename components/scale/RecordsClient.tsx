@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Trash2, Loader2, ClipboardList, ChevronLeft, ChevronRight, Scale } from 'lucide-react';
+import { Search, Trash2, Loader2, ClipboardList, ChevronLeft, ChevronRight, Scale, FileSpreadsheet } from 'lucide-react';
 
 interface Record {
   id: number;
@@ -38,6 +38,53 @@ export default function RecordsClient() {
   const [to, setTo] = useState('');
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  /**
+   * Tải tệp Excel theo ĐÚNG bộ lọc đang xem.
+   *
+   * Không dùng thẻ <a href> thường: trình duyệt sẽ mở tab mới rồi tải, và nếu
+   * phiên hết hạn thì khách nhận về một trang JSON lỗi khó hiểu thay vì tệp.
+   * Tải bằng fetch để bắt được lỗi và báo bằng tiếng Việt.
+   */
+  const exportExcel = async () => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (search.trim()) params.set('search', search.trim());
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+
+      const res = await fetch(`/api/scale/records/export?${params}`);
+      if (!res.ok) {
+        alert(res.status === 401
+          ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+          : 'Không xuất được tệp Excel. Vui lòng thử lại.');
+        return;
+      }
+
+      /* Lấy tên tệp máy chủ đặt (có kèm ngày giờ); không lấy được thì dùng
+         tên dự phòng để việc tải vẫn chạy. */
+      const disposition = res.headers.get('Content-Disposition') ?? '';
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match?.[1] ?? 'ban-ghi-can.xlsx';
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      // Giải phóng bộ nhớ: blob của tệp vài nghìn dòng có thể nặng vài MB.
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Không kết nối được tới máy chủ.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -135,12 +182,28 @@ export default function RecordsClient() {
             className="min-h-touch px-3 rounded-lg border border-slate-300 text-sm w-full focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
-        <button
-          type="submit"
-          className="inline-flex items-center justify-center min-h-touch px-5 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
-        >
-          Lọc
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center min-h-touch px-5 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
+          >
+            Lọc
+          </button>
+          {/* Nút xuất đặt cạnh nút Lọc để thấy rõ hai việc liên quan nhau:
+              lọc ra cái cần xem, rồi xuất đúng phần đó (tiêu chí 1). */}
+          <button
+            type="button"
+            onClick={exportExcel}
+            disabled={exporting || total === 0}
+            title={total === 0 ? 'Chưa có bản ghi nào để xuất' : 'Tải tệp Excel theo bộ lọc hiện tại'}
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg border border-emerald-600 text-emerald-700 text-sm font-semibold hover:bg-emerald-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+          >
+            {exporting
+              ? <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" aria-hidden="true" />
+              : <FileSpreadsheet className="w-4 h-4 flex-shrink-0" aria-hidden="true" />}
+            {exporting ? 'Đang xuất…' : 'Xuất Excel'}
+          </button>
+        </div>
       </form>
 
       {loading ? (
