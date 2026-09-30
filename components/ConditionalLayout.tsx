@@ -30,9 +30,18 @@ export default function ConditionalLayout({
   categoryNav: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAdminRoute = pathname?.startsWith('/admin');
+  /*
+   * Hai khu vực có khung riêng, không dùng header/footer của trang bán hàng:
+   * /admin là khu quản trị, /can-dien-tu là khu làm việc của khách đã mua cân.
+   * Để lọt vào đây thì màn hình cân sẽ đội thêm thanh danh mục, chân trang và
+   * nút gọi nổi — vừa chiếm chỗ vừa sai ngữ cảnh.
+   */
+  const hasOwnLayout =
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/can-dien-tu') ||
+    pathname === '/dang-nhap';
 
-  if (isAdminRoute) {
+  if (hasOwnLayout) {
     return <>{children}</>;
   }
 

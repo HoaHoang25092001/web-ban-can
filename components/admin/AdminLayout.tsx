@@ -12,6 +12,7 @@ import {
   FileText,
   Images,
   MessageSquare,
+  Scale,
   LogOut,
   Menu,
   X,
@@ -26,6 +27,7 @@ const menuItems = [
   { href: '/admin/pages', label: 'Trang', icon: FileText },
   { href: '/admin/media', label: 'Thư viện ảnh', icon: Images },
   { href: '/admin/contacts', label: 'Liên hệ', icon: MessageSquare },
+  { href: '/admin/tai-khoan-can', label: 'Tài khoản cân', icon: Scale },
 ];
 
 /**
@@ -41,6 +43,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { data: session } = useSession();
   const pathname = usePathname();
   const [newContacts, setNewContacts] = useState(0);
+
+  // Việc chặn tài khoản cân vào khu quản trị nằm ở app/admin/layout.tsx —
+  // kiểm tra trên máy chủ nên trang không bao giờ được gửi đi.
 
   /*
    * Đếm yêu cầu báo giá chưa xử lý để hiện huy hiệu trên menu.
@@ -210,7 +215,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               )}
               <button
                 type="button"
-                onClick={() => signOut({ callbackUrl: '/admin/login' })}
+                onClick={() => signOut({ callbackUrl: '/dang-nhap' })}
                 className="inline-flex items-center justify-center gap-2 min-h-touch min-w-touch px-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
               >
                 <LogOut className="h-4 w-4" aria-hidden="true" />
