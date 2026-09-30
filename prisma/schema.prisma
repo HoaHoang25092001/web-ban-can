@@ -211,8 +211,9 @@ model ScaleUser {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  products ScaleProduct[]
-  records  WeighingRecord[]
+  products  ScaleProduct[]
+  records   WeighingRecord[]
+  employees ScaleEmployee[]
 
   @@index([isActive, createdAt(sort: Desc)])
   @@map("scale_users")
@@ -269,4 +270,30 @@ model WeighingRecord {
   @@index([userId, weighedAt(sort: Desc)])
   @@index([userId, productCode])
   @@map("weighing_records")
+}
+
+/// Nhân viên cân hàng của một khách hàng.
+///
+/// Chỉ là DANH SÁCH TÊN để chọn nhanh lúc cân — nhân viên KHÔNG đăng nhập
+/// được. Dự án gốc cho nhân viên có tài khoản riêng kèm vai trò, nhưng ở đây
+/// mỗi khách hàng dùng chung một tài khoản nên không cần.
+///
+/// Nhờ vậy lúc cân chỉ việc chọn tên từ danh sách thay vì gõ tay mỗi lần —
+/// nhanh hơn và không sai chính tả giữa các bản ghi.
+model ScaleEmployee {
+  id     Int    @id @default(autoincrement())
+  /// Mã nhân viên do khách tự đặt, ví dụ "NV01".
+  code   String
+  name   String
+  userId Int
+
+  user ScaleUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Mã chỉ cần duy nhất trong phạm vi một khách, giống mã mặt hàng.
+  @@unique([userId, code])
+  @@index([userId, name])
+  @@map("scale_employees")
 }

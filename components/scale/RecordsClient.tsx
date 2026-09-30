@@ -131,22 +131,22 @@ export default function RecordsClient() {
       {/* Tổng hợp: tổng khối lượng tính trên TOÀN BỘ kết quả lọc, không chỉ
           trang đang xem — nếu không, đổi trang là con số nhảy lung tung. */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-4">
+        <div className="bg-scale-card rounded-xl border border-scale-border p-4 flex items-center gap-4">
           <span className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
             <ClipboardList className="w-5 h-5 text-blue-700" aria-hidden="true" />
           </span>
           <div>
-            <div className="text-2xl font-bold text-slate-900">{fmtNum(total)}</div>
-            <div className="text-xs text-slate-600">Lần cân</div>
+            <div className="text-2xl font-bold text-scale-fg">{fmtNum(total)}</div>
+            <div className="text-xs text-scale-muted-fg">Lần cân</div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-4">
+        <div className="bg-scale-card rounded-xl border border-scale-border p-4 flex items-center gap-4">
           <span className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-            <Scale className="w-5 h-5 text-emerald-700" aria-hidden="true" />
+            <Scale className="w-5 h-5 text-scale-success" aria-hidden="true" />
           </span>
           <div>
-            <div className="text-2xl font-bold text-slate-900">{fmtNum(totalWeight)} kg</div>
-            <div className="text-xs text-slate-600">Tổng khối lượng</div>
+            <div className="text-2xl font-bold text-scale-fg">{fmtNum(totalWeight)} kg</div>
+            <div className="text-xs text-scale-muted-fg">Tổng khối lượng</div>
           </div>
         </div>
       </div>
@@ -154,38 +154,38 @@ export default function RecordsClient() {
       {/* Bộ lọc */}
       <form
         onSubmit={(e) => { e.preventDefault(); setPage(1); load(); }}
-        className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 grid gap-3 sm:grid-cols-[1fr_auto_auto_auto]"
+        className="bg-scale-card rounded-xl border border-scale-border p-4 grid gap-3 sm:grid-cols-[1fr_auto_auto_auto]"
       >
         <div className="relative">
           <label htmlFor="rec-search" className="sr-only">Tìm theo mặt hàng</label>
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" aria-hidden="true" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-scale-muted-fg pointer-events-none" aria-hidden="true" />
           <input
             id="rec-search"
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm theo tên hàng, mã hàng, người cân…"
-            className="w-full min-h-touch pl-9 pr-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full min-h-touch pl-9 pr-3 rounded-lg border border-scale-input text-sm focus:outline-none focus:ring-2 focus:ring-scale-ring"
           />
         </div>
         <div>
           <label htmlFor="rec-from" className="sr-only">Từ ngày</label>
           <input
             id="rec-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-            className="min-h-touch px-3 rounded-lg border border-slate-300 text-sm w-full focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="min-h-touch px-3 rounded-lg border border-scale-input text-sm w-full focus:outline-none focus:ring-2 focus:ring-scale-ring"
           />
         </div>
         <div>
           <label htmlFor="rec-to" className="sr-only">Đến ngày</label>
           <input
             id="rec-to" type="date" value={to} onChange={(e) => setTo(e.target.value)}
-            className="min-h-touch px-3 rounded-lg border border-slate-300 text-sm w-full focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="min-h-touch px-3 rounded-lg border border-scale-input text-sm w-full focus:outline-none focus:ring-2 focus:ring-scale-ring"
           />
         </div>
         <div className="flex gap-2">
           <button
             type="submit"
-            className="flex-1 sm:flex-none inline-flex items-center justify-center min-h-touch px-5 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center min-h-touch px-5 rounded-lg bg-scale-primary text-white text-sm font-semibold hover:bg-scale-primary-hover transition-colors"
           >
             Lọc
           </button>
@@ -196,7 +196,7 @@ export default function RecordsClient() {
             onClick={exportExcel}
             disabled={exporting || total === 0}
             title={total === 0 ? 'Chưa có bản ghi nào để xuất' : 'Tải tệp Excel theo bộ lọc hiện tại'}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg border border-emerald-600 text-emerald-700 text-sm font-semibold hover:bg-emerald-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg border border-emerald-600 text-scale-success text-sm font-semibold hover:bg-emerald-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
           >
             {exporting
               ? <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" aria-hidden="true" />
@@ -207,15 +207,15 @@ export default function RecordsClient() {
       </form>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 gap-3 text-slate-500">
+        <div className="flex items-center justify-center py-16 gap-3 text-scale-muted-fg">
           <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
           <span className="text-sm">Đang tải bản ghi…</span>
         </div>
       ) : records.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-          <ClipboardList className="w-10 h-10 text-slate-300 mx-auto mb-3" aria-hidden="true" />
-          <p className="font-semibold text-slate-900">Chưa có bản ghi nào</p>
-          <p className="text-sm text-slate-600 mt-1">
+        <div className="bg-white rounded-xl border border-scale-border p-12 text-center">
+          <ClipboardList className="w-10 h-10 text-scale-muted-fg mx-auto mb-3" aria-hidden="true" />
+          <p className="font-semibold text-scale-fg">Chưa có bản ghi nào</p>
+          <p className="text-sm text-scale-muted-fg mt-1">
             Vào <strong>Màn hình cân</strong> để kết nối cân và lưu lần cân đầu tiên.
           </p>
         </div>
@@ -223,10 +223,10 @@ export default function RecordsClient() {
         <>
           {/* Máy tính: bảng. Điện thoại: thẻ xếp dọc — bảng 6 cột trên màn
               hình 390px buộc phải cuộn ngang mới đọc được (tiêu chí 6). */}
-          <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="hidden md:block bg-scale-card rounded-xl border border-scale-border overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr className="text-left text-slate-600">
+              <thead className="bg-scale-muted border-b border-scale-border">
+                <tr className="text-left text-scale-muted-fg">
                   <th scope="col" className="px-4 py-3 font-semibold">Thời gian</th>
                   <th scope="col" className="px-4 py-3 font-semibold">Mặt hàng</th>
                   <th scope="col" className="px-4 py-3 font-semibold text-right">Khối lượng</th>
@@ -235,26 +235,26 @@ export default function RecordsClient() {
                   <th scope="col" className="px-4 py-3 font-semibold text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-scale-border">
                 {records.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/70">
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-600">{fmtDate(r.weighedAt)}</td>
+                  <tr key={r.id} className="hover:bg-scale-muted/70">
+                    <td className="px-4 py-3 whitespace-nowrap text-scale-muted-fg">{fmtDate(r.weighedAt)}</td>
                     <td className="px-4 py-3">
-                      <div className="font-medium text-slate-900">{r.productName}</div>
-                      {r.productCode && <div className="text-xs text-slate-500">{r.productCode}</div>}
+                      <div className="font-medium text-scale-fg">{r.productName}</div>
+                      {r.productCode && <div className="text-xs text-scale-muted-fg">{r.productCode}</div>}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono font-semibold text-slate-900 whitespace-nowrap">
+                    <td className="px-4 py-3 text-right font-mono font-semibold text-scale-fg whitespace-nowrap">
                       {fmtNum(r.weight)} {r.unit}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{r.employeeName || '—'}</td>
-                    <td className="px-4 py-3 text-slate-600 max-w-[200px] truncate">{r.note || '—'}</td>
+                    <td className="px-4 py-3 text-scale-muted-fg">{r.employeeName || '—'}</td>
+                    <td className="px-4 py-3 text-scale-muted-fg max-w-[200px] truncate">{r.note || '—'}</td>
                     <td className="px-4 py-3 text-right">
                       <button
                         type="button"
                         onClick={() => remove(r.id)}
                         disabled={deleting === r.id}
                         aria-label={`Xoá bản ghi ${r.productName} lúc ${fmtDate(r.weighedAt)}`}
-                        className="inline-flex items-center justify-center min-w-touch min-h-touch rounded-lg text-slate-500 hover:text-red-700 hover:bg-red-50 disabled:opacity-40 transition-colors"
+                        className="inline-flex items-center justify-center min-w-touch min-h-touch rounded-lg text-scale-muted-fg hover:text-scale-danger hover:bg-scale-danger-soft disabled:opacity-40 transition-colors"
                       >
                         {deleting === r.id
                           ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
@@ -269,30 +269,30 @@ export default function RecordsClient() {
 
           <ul className="md:hidden space-y-3">
             {records.map((r) => (
-              <li key={r.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+              <li key={r.id} className="bg-scale-card rounded-xl border border-scale-border p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="font-semibold text-slate-900">{r.productName}</div>
-                    {r.productCode && <div className="text-xs text-slate-500">{r.productCode}</div>}
+                    <div className="font-semibold text-scale-fg">{r.productName}</div>
+                    {r.productCode && <div className="text-xs text-scale-muted-fg">{r.productCode}</div>}
                   </div>
-                  <div className="font-mono font-bold text-slate-900 whitespace-nowrap">
+                  <div className="font-mono font-bold text-scale-fg whitespace-nowrap">
                     {fmtNum(r.weight)} {r.unit}
                   </div>
                 </div>
-                <div className="text-xs text-slate-500 mt-2">{fmtDate(r.weighedAt)}</div>
+                <div className="text-xs text-scale-muted-fg mt-2">{fmtDate(r.weighedAt)}</div>
                 {(r.employeeName || r.note) && (
-                  <div className="text-xs text-slate-600 mt-1">
+                  <div className="text-xs text-scale-muted-fg mt-1">
                     {r.employeeName && <span>Người cân: {r.employeeName}</span>}
                     {r.employeeName && r.note && <span> · </span>}
                     {r.note && <span>{r.note}</span>}
                   </div>
                 )}
-                <div className="mt-3 pt-3 border-t border-slate-100">
+                <div className="mt-3 pt-3 border-t border-scale-border">
                   <button
                     type="button"
                     onClick={() => remove(r.id)}
                     disabled={deleting === r.id}
-                    className="inline-flex items-center gap-1.5 min-h-touch px-3 rounded-lg text-sm text-red-700 hover:bg-red-50 disabled:opacity-40 transition-colors"
+                    className="inline-flex items-center gap-1.5 min-h-touch px-3 rounded-lg text-sm text-scale-danger hover:bg-scale-danger-soft disabled:opacity-40 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" aria-hidden="true" /> Xoá
                   </button>
@@ -303,17 +303,17 @@ export default function RecordsClient() {
 
           {pages > 1 && (
             <nav aria-label="Phân trang bản ghi" className="flex items-center justify-between gap-3 flex-wrap">
-              <p className="text-sm text-slate-600">Trang {page} / {pages} · {fmtNum(total)} bản ghi</p>
+              <p className="text-sm text-scale-muted-fg">Trang {page} / {pages} · {fmtNum(total)} bản ghi</p>
               <div className="flex gap-2">
                 <button
                   type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                  className="inline-flex items-center gap-1 min-h-touch px-4 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:border-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1 min-h-touch px-4 rounded-lg border border-scale-input bg-white text-sm font-medium text-scale-fg hover:border-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <ChevronLeft className="w-4 h-4" aria-hidden="true" /> Trước
                 </button>
                 <button
                   type="button" onClick={() => setPage((p) => Math.min(pages, p + 1))} disabled={page >= pages}
-                  className="inline-flex items-center gap-1 min-h-touch px-4 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:border-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1 min-h-touch px-4 rounded-lg border border-scale-input bg-white text-sm font-medium text-scale-fg hover:border-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Sau <ChevronRight className="w-4 h-4" aria-hidden="true" />
                 </button>

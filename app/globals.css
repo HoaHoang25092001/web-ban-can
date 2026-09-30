@@ -380,3 +380,70 @@
 .ProseMirror a:hover {
   color: #1d4ed8;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   KHU CÂN ĐIỆN TỬ (/can-dien-tu)
+   
+   Bảng màu chép từ dự án digital-scale gốc, kể cả các tỷ lệ tương phản đã đo.
+   Tiền tố `--scale-` để không đụng biến của trang bán hàng.
+
+   Dự án gốc dùng Tailwind 4 (khai báo màu trong CSS); website này dùng
+   Tailwind 3. Biến CSS chạy giống nhau ở cả hai phiên bản, nên giữ nguyên
+   được bảng màu mà không phải nâng cấp Tailwind — nâng cấp sẽ có nguy cơ làm
+   vỡ giao diện toàn bộ trang bán hàng.
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Tương phản đo trên nền --scale-card (#fff) và --scale-background (#f1f5f9).
+     Chữ >= 4.5:1, viền và vòng focus >= 3:1 (WCAG 1.4.3 / 1.4.11). */
+  --scale-background: #f1f5f9;
+  --scale-foreground: #0f172a;
+  --scale-card: #ffffff;
+  --scale-card-foreground: #0f172a;
+  --scale-primary: #0e7490;
+  --scale-primary-hover: #155e75;
+  --scale-primary-foreground: #ffffff;
+  --scale-secondary: #e2e8f0;
+  --scale-muted: #f8fafc;
+  --scale-muted-foreground: #475569;
+  --scale-accent: #ecfeff;
+  --scale-accent-foreground: #164e63;
+  --scale-destructive: #b91c1c;
+  --scale-destructive-hover: #991b1b;
+  --scale-destructive-foreground: #ffffff;
+  --scale-destructive-soft: #fef2f2;
+  --scale-success: #15803d;
+  --scale-success-soft: #f0fdf4;
+  --scale-warning: #92400e;
+  --scale-warning-soft: #fffbeb;
+  --scale-border: #cbd5e1;
+  --scale-input: #64748b;
+  --scale-ring: #0e7490;
+}
+
+/* Chế độ tối: bật bằng class `dark` trên <html>. Cùng ngưỡng tương phản. */
+.dark {
+  color-scheme: dark;
+  --scale-background: #020617;
+  --scale-foreground: #f1f5f9;          /* 18,4:1 trên nền */
+  --scale-card: #0f172a;
+  --scale-card-foreground: #f1f5f9;
+  --scale-primary: #22d3ee;             /* 9,9:1 trên thẻ */
+  --scale-primary-hover: #67e8f9;
+  --scale-primary-foreground: #083344;  /* 7,4:1 trên màu chính */
+  --scale-secondary: #1e293b;
+  --scale-muted: #1e293b;
+  --scale-muted-foreground: #94a3b8;    /* 5,7:1 trên nền mờ */
+  --scale-accent: #083344;
+  --scale-accent-foreground: #a5f3fc;
+  --scale-destructive: #f87171;         /* 6,5:1 trên thẻ */
+  --scale-destructive-hover: #fca5a5;
+  --scale-destructive-foreground: #450a0a;
+  --scale-destructive-soft: #2a0f14;
+  --scale-success: #4ade80;
+  --scale-success-soft: #052e16;
+  --scale-warning: #fbbf24;
+  --scale-warning-soft: #2a1d05;
+  --scale-border: #334155;
+  --scale-input: #64748b;
+  --scale-ring: #22d3ee;
+}
