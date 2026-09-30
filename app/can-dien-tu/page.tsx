@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
  */
 export default async function ScaleHomePage() {
   const user = await getScaleUser();
-  if (!user) redirect('/can-dien-tu/dang-nhap');
+  if (!user) redirect('/dang-nhap');
 
   return (
     <ScaleShell userName={user.fullName}>

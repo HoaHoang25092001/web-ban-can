@@ -147,7 +147,7 @@ export default function ScaleAccountsPage() {
       <AdminLayout>
         <div className="max-w-md mx-auto mt-12 bg-white rounded-2xl border border-amber-200 p-8 text-center">
           <h1 className="text-lg font-bold text-gray-900 mb-2">Phiên đăng nhập đã hết hạn</h1>
-          <a href="/admin/login" className="inline-flex items-center justify-center min-h-touch px-5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700">
+          <a href="/dang-nhap" className="inline-flex items-center justify-center min-h-touch px-5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700">
             Đăng nhập lại
           </a>
         </div>

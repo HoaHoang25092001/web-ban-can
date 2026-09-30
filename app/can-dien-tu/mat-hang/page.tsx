@@ -8,7 +8,7 @@ export const metadata = { title: 'Mặt hàng' };
 
 export default async function ScaleProductsPage() {
   const user = await getScaleUser();
-  if (!user) redirect('/can-dien-tu/dang-nhap');
+  if (!user) redirect('/dang-nhap');
 
   return (
     <ScaleShell userName={user.fullName}>

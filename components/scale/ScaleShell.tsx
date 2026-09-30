@@ -74,7 +74,7 @@ export default function ScaleShell({
               </span>
               <button
                 type="button"
-                onClick={() => signOut({ callbackUrl: '/can-dien-tu/dang-nhap' })}
+                onClick={() => signOut({ callbackUrl: '/dang-nhap' })}
                 /* Tương tự nút đăng xuất: chữ ẩn trên điện thoại, còn lại
                    biểu tượng 16px nên phải ép đủ bề ngang 44px. */
                 className="inline-flex items-center justify-center gap-1.5 min-h-touch min-w-touch px-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"

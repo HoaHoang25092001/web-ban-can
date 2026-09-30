@@ -139,7 +139,7 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
   },
   pages: {
-    signIn: '/admin/login',
+    signIn: '/dang-nhap',
   },
   callbacks: {
     async jwt({ token, user }) {

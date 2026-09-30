@@ -8,7 +8,7 @@ export const metadata = { title: 'Bản ghi cân' };
 
 export default async function RecordsPage() {
   const user = await getScaleUser();
-  if (!user) redirect('/can-dien-tu/dang-nhap');
+  if (!user) redirect('/dang-nhap');
 
   return (
     <ScaleShell userName={user.fullName}>

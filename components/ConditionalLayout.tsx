@@ -36,7 +36,10 @@ export default function ConditionalLayout({
    * Để lọt vào đây thì màn hình cân sẽ đội thêm thanh danh mục, chân trang và
    * nút gọi nổi — vừa chiếm chỗ vừa sai ngữ cảnh.
    */
-  const hasOwnLayout = pathname?.startsWith('/admin') || pathname?.startsWith('/can-dien-tu');
+  const hasOwnLayout =
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/can-dien-tu') ||
+    pathname === '/dang-nhap';
 
   if (hasOwnLayout) {
     return <>{children}</>;

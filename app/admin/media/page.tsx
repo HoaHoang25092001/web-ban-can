@@ -531,7 +531,7 @@ export default function MediaPage() {
             Ảnh vẫn còn nguyên. Bạn chỉ cần đăng nhập lại để tiếp tục.
           </p>
           <a
-            href="/admin/login"
+            href="/dang-nhap"
             className="inline-flex items-center justify-center min-h-touch px-5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
           >
             Đăng nhập lại
