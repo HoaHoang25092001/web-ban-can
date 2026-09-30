@@ -98,9 +98,9 @@ export default function ScaleConsole({ canSave = true }: { canSave?: boolean }) 
    */
   if (hasWebSerial === false) {
     return (
-      <div className="bg-white rounded-2xl border border-amber-300 p-6 sm:p-8">
+      <div className="bg-scale-card rounded-2xl border border-scale-warning p-6 sm:p-8">
         <div className="flex items-start gap-4">
-          <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <AlertTriangle className="w-6 h-6 text-scale-warning flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div>
             <h2 className="text-lg font-bold text-scale-fg">Trình duyệt này không kết nối được với cân</h2>
             <p className="text-sm text-scale-fg mt-2 leading-relaxed max-w-prose">
@@ -130,8 +130,8 @@ export default function ScaleConsole({ canSave = true }: { canSave?: boolean }) 
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
                 reading.stable
-                  ? 'bg-emerald-50 text-scale-success border border-emerald-200'
-                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  ? 'bg-scale-success-soft text-scale-success border border-scale-success'
+                  : 'bg-scale-warning-soft text-scale-warning border border-scale-warning'
               }`}
             >
               {reading.stable ? 'Đã ổn định' : 'Đang dao động'}
@@ -190,7 +190,7 @@ export default function ScaleConsole({ canSave = true }: { canSave?: boolean }) 
             value={scaleModel}
             onChange={(e) => setScaleModel(e.target.value as ScaleModel)}
             disabled={isConnected}
-            className="w-full min-h-touch px-3 rounded-lg border border-scale-input text-sm mb-4 disabled:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-scale-ring"
+            className="w-full min-h-touch px-3 rounded-lg border border-scale-input text-sm mb-4 disabled:bg-scale-secondary focus:outline-none focus:ring-2 focus:ring-scale-ring"
           >
             {Object.entries(SCALE_MODEL_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
@@ -204,8 +204,8 @@ export default function ScaleConsole({ canSave = true }: { canSave?: boolean }) 
             onClick={() => (isConnected ? disconnect() : connect())}
             className={`w-full inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg font-semibold text-sm transition-colors ${
               isConnected
-                ? 'bg-slate-100 text-scale-fg hover:bg-slate-200'
-                : 'bg-scale-primary text-white hover:bg-scale-primary-hover'
+                ? 'bg-scale-secondary text-scale-fg hover:bg-scale-muted'
+                : 'bg-scale-primary text-scale-primary-fg hover:bg-scale-primary-hover'
             }`}
           >
             {isConnected ? (
@@ -329,7 +329,7 @@ export default function ScaleConsole({ canSave = true }: { canSave?: boolean }) 
             type="button"
             onClick={save}
             disabled={saving || !reading}
-            className="w-full inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg bg-scale-primary text-white font-semibold text-sm hover:bg-scale-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg bg-scale-primary text-scale-primary-fg font-semibold text-sm hover:bg-scale-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />

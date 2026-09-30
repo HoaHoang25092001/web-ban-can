@@ -132,8 +132,8 @@ export default function RecordsClient() {
           trang đang xem — nếu không, đổi trang là con số nhảy lung tung. */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div className="bg-scale-card rounded-xl border border-scale-border p-4 flex items-center gap-4">
-          <span className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <ClipboardList className="w-5 h-5 text-blue-700" aria-hidden="true" />
+          <span className="w-10 h-10 rounded-xl bg-scale-accent flex items-center justify-center flex-shrink-0">
+            <ClipboardList className="w-5 h-5 text-scale-primary" aria-hidden="true" />
           </span>
           <div>
             <div className="text-2xl font-bold text-scale-fg">{fmtNum(total)}</div>
@@ -141,7 +141,7 @@ export default function RecordsClient() {
           </div>
         </div>
         <div className="bg-scale-card rounded-xl border border-scale-border p-4 flex items-center gap-4">
-          <span className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+          <span className="w-10 h-10 rounded-xl bg-scale-success-soft flex items-center justify-center flex-shrink-0">
             <Scale className="w-5 h-5 text-scale-success" aria-hidden="true" />
           </span>
           <div>
@@ -185,7 +185,7 @@ export default function RecordsClient() {
         <div className="flex gap-2">
           <button
             type="submit"
-            className="flex-1 sm:flex-none inline-flex items-center justify-center min-h-touch px-5 rounded-lg bg-scale-primary text-white text-sm font-semibold hover:bg-scale-primary-hover transition-colors"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center min-h-touch px-5 rounded-lg bg-scale-primary text-scale-primary-fg text-sm font-semibold hover:bg-scale-primary-hover transition-colors"
           >
             Lọc
           </button>
@@ -196,7 +196,7 @@ export default function RecordsClient() {
             onClick={exportExcel}
             disabled={exporting || total === 0}
             title={total === 0 ? 'Chưa có bản ghi nào để xuất' : 'Tải tệp Excel theo bộ lọc hiện tại'}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg border border-emerald-600 text-scale-success text-sm font-semibold hover:bg-emerald-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 min-h-touch px-4 rounded-lg border border-scale-success text-scale-success text-sm font-semibold hover:bg-scale-success-soft disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
           >
             {exporting
               ? <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" aria-hidden="true" />
@@ -212,7 +212,7 @@ export default function RecordsClient() {
           <span className="text-sm">Đang tải bản ghi…</span>
         </div>
       ) : records.length === 0 ? (
-        <div className="bg-white rounded-xl border border-scale-border p-12 text-center">
+        <div className="bg-scale-card rounded-xl border border-scale-border p-12 text-center">
           <ClipboardList className="w-10 h-10 text-scale-muted-fg mx-auto mb-3" aria-hidden="true" />
           <p className="font-semibold text-scale-fg">Chưa có bản ghi nào</p>
           <p className="text-sm text-scale-muted-fg mt-1">
@@ -307,13 +307,13 @@ export default function RecordsClient() {
               <div className="flex gap-2">
                 <button
                   type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                  className="inline-flex items-center gap-1 min-h-touch px-4 rounded-lg border border-scale-input bg-white text-sm font-medium text-scale-fg hover:border-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1 min-h-touch px-4 rounded-lg border border-scale-input bg-scale-card text-sm font-medium text-scale-fg hover:border-scale-primary disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <ChevronLeft className="w-4 h-4" aria-hidden="true" /> Trước
                 </button>
                 <button
                   type="button" onClick={() => setPage((p) => Math.min(pages, p + 1))} disabled={page >= pages}
-                  className="inline-flex items-center gap-1 min-h-touch px-4 rounded-lg border border-scale-input bg-white text-sm font-medium text-scale-fg hover:border-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1 min-h-touch px-4 rounded-lg border border-scale-input bg-scale-card text-sm font-medium text-scale-fg hover:border-scale-primary disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Sau <ChevronRight className="w-4 h-4" aria-hidden="true" />
                 </button>

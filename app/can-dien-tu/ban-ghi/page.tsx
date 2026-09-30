@@ -13,8 +13,8 @@ export default async function RecordsPage() {
   return (
     <ScaleShell userName={user.fullName}>
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-slate-900">Bản ghi cân</h1>
-        <p className="text-sm text-slate-600 mt-1">
+        <h1 className="text-2xl font-bold text-scale-fg">Bản ghi cân</h1>
+        <p className="text-sm text-scale-muted-fg mt-1">
           Toàn bộ số liệu cân hàng của bạn. Lọc theo mặt hàng hoặc khoảng ngày.
         </p>
       </div>
