@@ -3,28 +3,38 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { Scale, ClipboardList, Package, LogOut, Menu, X } from 'lucide-react';
+import { Scale, LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import ThemeToggle from '@/components/scale/ThemeToggle';
 
+/**
+ * Năm mục đúng theo dự án digital-scale gốc.
+ *
+ * "Màn hình cân" và "Hướng dẫn" không cần đăng nhập: khách mới mua cân có thể
+ * xem số cân và đọc hướng dẫn ngay, chỉ khi muốn LƯU lại mới phải đăng nhập.
+ */
 const NAV = [
-  { href: '/can-dien-tu', label: 'Màn hình cân', icon: Scale },
-  { href: '/can-dien-tu/ban-ghi', label: 'Bản ghi cân', icon: ClipboardList },
-  { href: '/can-dien-tu/mat-hang', label: 'Mặt hàng', icon: Package },
+  { href: '/can-dien-tu', label: 'Màn hình cân', requiresAuth: false },
+  { href: '/can-dien-tu/ban-ghi', label: 'Bản ghi cân', requiresAuth: true },
+  { href: '/can-dien-tu/mat-hang', label: 'Sản phẩm', requiresAuth: true },
+  { href: '/can-dien-tu/nhan-vien', label: 'Nhân viên', requiresAuth: true },
+  { href: '/can-dien-tu/huong-dan', label: 'Hướng dẫn', requiresAuth: false },
 ];
 
 /**
  * Khung trang cho khu cân điện tử.
  *
- * Tách hẳn khỏi giao diện bán hàng: khách vào đây để làm việc, không phải để
- * xem hàng — thanh điều hướng của website (danh mục, tin tức, nút gọi) chỉ
- * làm rối và chiếm chỗ (tiêu chí 1 & 3).
+ * Giao diện chép từ dự án digital-scale: thanh trên gọn, menu ngang, nút đổi
+ * sáng/tối. Tách hẳn khỏi giao diện bán hàng — khách vào đây để làm việc,
+ * không phải để xem hàng.
  */
 export default function ScaleShell({
   children,
   userName,
 }: {
   children: React.ReactNode;
-  userName: string;
+  /** Bỏ trống khi chưa đăng nhập: các trang công khai vẫn dùng chung khung này. */
+  userName?: string | null;
 }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -32,83 +42,94 @@ export default function ScaleShell({
   const isActive = (href: string) =>
     href === '/can-dien-tu' ? pathname === href : pathname.startsWith(href);
 
+  // Chưa đăng nhập thì ẩn các mục cần đăng nhập, thay vì cho bấm rồi mới báo lỗi.
+  const visible = NAV.filter((n) => !n.requiresAuth || userName);
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <div className="min-h-screen bg-scale-bg text-scale-fg flex flex-col">
+      <header className="bg-scale-card border-b border-scale-border sticky top-0 z-40">
         <div className="max-w-shell mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16 gap-3">
-            <Link
-              href="/can-dien-tu"
-              /* min-w-touch: trên điện thoại chữ "Cân điện tử" bị ẩn, chỉ còn
-                 biểu tượng nên liên kết co lại 36px — hụt vùng chạm 44px. */
-              className="flex items-center gap-2 font-bold text-slate-900 min-h-touch min-w-touch"
-            >
-              <span className="w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center flex-shrink-0">
-                <Scale className="w-5 h-5" aria-hidden="true" />
-              </span>
-              <span className="hidden sm:inline">Cân điện tử</span>
-            </Link>
-
-            {/* Điều hướng trên máy tính */}
-            <nav aria-label="Điều hướng phần cân" className="hidden md:flex items-center gap-1">
-              {NAV.map(({ href, label, icon: Icon }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  aria-current={isActive(href) ? 'page' : undefined}
-                  className={`inline-flex items-center gap-2 min-h-touch px-4 rounded-lg text-sm font-medium transition-colors ${
-                    isActive(href)
-                      ? 'bg-brand-50 text-brand-700'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" aria-hidden="true" />
-                  {label}
-                </Link>
-              ))}
-            </nav>
-
-            <div className="flex items-center gap-2">
-              <span className="hidden lg:block text-sm text-slate-600 truncate max-w-[180px]">
-                {userName}
-              </span>
-              <button
-                type="button"
-                onClick={() => signOut({ callbackUrl: '/dang-nhap' })}
-                /* Tương tự nút đăng xuất: chữ ẩn trên điện thoại, còn lại
-                   biểu tượng 16px nên phải ép đủ bề ngang 44px. */
-                className="inline-flex items-center justify-center gap-1.5 min-h-touch min-w-touch px-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+            <div className="flex items-center gap-1 min-w-0">
+              <Link
+                href="/can-dien-tu"
+                className="flex items-center gap-2 font-bold text-scale-fg min-h-touch min-w-touch pr-2"
               >
-                <LogOut className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
-                <span className="hidden sm:inline">Đăng xuất</span>
-              </button>
+                <Scale className="w-6 h-6 text-scale-primary flex-shrink-0" aria-hidden="true" />
+                <span className="hidden sm:inline whitespace-nowrap">Cân điện tử</span>
+              </Link>
+
+              <nav aria-label="Điều hướng phần cân" className="hidden md:flex items-center gap-0.5">
+                {visible.map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    aria-current={isActive(href) ? 'page' : undefined}
+                    className={`inline-flex items-center min-h-touch px-3 rounded-lg text-sm font-medium transition-colors ${
+                      isActive(href)
+                        ? 'bg-scale-accent text-scale-accent-fg'
+                        : 'text-scale-muted-fg hover:bg-scale-muted hover:text-scale-fg'
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <ThemeToggle />
+
+              {userName ? (
+                <>
+                  <span className="hidden lg:block text-sm text-scale-muted-fg truncate max-w-[160px] px-2">
+                    {userName}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => signOut({ callbackUrl: '/dang-nhap' })}
+                    className="inline-flex items-center justify-center gap-1.5 min-h-touch min-w-touch px-3 rounded-lg text-sm font-medium text-scale-muted-fg hover:bg-scale-muted hover:text-scale-fg transition-colors"
+                  >
+                    <LogOut className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+                    <span className="hidden sm:inline">Đăng xuất</span>
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/dang-nhap"
+                  className="inline-flex items-center min-h-touch px-4 rounded-lg bg-scale-primary text-scale-primary-fg text-sm font-semibold hover:bg-scale-primary-hover transition-colors"
+                >
+                  Đăng nhập
+                </Link>
+              )}
+
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-expanded={menuOpen}
                 aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
-                className="md:hidden inline-flex items-center justify-center min-w-touch min-h-touch rounded-lg text-slate-700 hover:bg-slate-100"
+                className="md:hidden inline-flex items-center justify-center min-w-touch min-h-touch rounded-lg text-scale-fg hover:bg-scale-muted transition-colors"
               >
-                {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                {menuOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
               </button>
             </div>
           </div>
 
-          {/* Điều hướng trên điện thoại */}
           {menuOpen && (
-            <nav aria-label="Điều hướng phần cân" className="md:hidden border-t border-slate-200 py-2">
+            <nav aria-label="Điều hướng phần cân" className="md:hidden border-t border-scale-border py-2">
               <ul className="flex flex-col">
-                {NAV.map(({ href, label, icon: Icon }) => (
+                {visible.map(({ href, label }) => (
                   <li key={href}>
                     <Link
                       href={href}
                       onClick={() => setMenuOpen(false)}
                       aria-current={isActive(href) ? 'page' : undefined}
-                      className={`flex items-center gap-3 min-h-touch px-2 rounded-lg font-medium ${
-                        isActive(href) ? 'text-brand-700 bg-brand-50' : 'text-slate-700 hover:bg-slate-100'
+                      className={`flex items-center min-h-touch px-3 rounded-lg font-medium transition-colors ${
+                        isActive(href)
+                          ? 'bg-scale-accent text-scale-accent-fg'
+                          : 'text-scale-fg hover:bg-scale-muted'
                       }`}
                     >
-                      <Icon className="w-4 h-4" aria-hidden="true" />
                       {label}
                     </Link>
                   </li>

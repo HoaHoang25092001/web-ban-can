@@ -1,6 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./{app,components,libs,pages,hooks}/**/*.{html,js,ts,jsx,tsx}"],
+  /*
+   * Chế độ tối bật bằng class `dark` trên <html>, KHÔNG theo cài đặt hệ điều
+   * hành. Chỉ khu /can-dien-tu dùng; trang bán hàng và khu quản trị không bao
+   * giờ thêm class này nên không bị ảnh hưởng.
+   */
+  darkMode: 'class',
   theme: {
     // ── Tiêu chí 2: Typography có thang đo (ratio ~1.25) ────────────────────
     // body >= 16px, nội dung dài 18px, line-height đi kèm để nhịp dọc ổn định.
@@ -32,6 +38,41 @@ module.exports = {
       // surface/neutral = 60%, brand (cấu trúc: nav, footer, header) = 30%,
       // accent = 10% dành riêng cho hành động chính (CTA, giá, badge).
       colors: {
+        /*
+         * Bảng màu riêng cho khu cân điện tử (/can-dien-tu).
+         *
+         * Trỏ tới biến CSS thay vì ghi cứng mã màu: nhờ vậy một bộ lớp
+         * (`bg-scale-card`, `text-scale-fg`…) tự đổi giá trị khi bật chế độ
+         * tối, không phải viết `dark:` cho từng chỗ.
+         *
+         * Giá trị thật khai báo trong app/globals.css, lấy đúng theo dự án
+         * digital-scale gốc — kể cả các tỷ lệ tương phản đã kiểm.
+         */
+        scale: {
+          bg:        'var(--scale-background)',
+          fg:        'var(--scale-foreground)',
+          card:      'var(--scale-card)',
+          'card-fg': 'var(--scale-card-foreground)',
+          primary:   'var(--scale-primary)',
+          'primary-hover': 'var(--scale-primary-hover)',
+          'primary-fg':    'var(--scale-primary-foreground)',
+          secondary: 'var(--scale-secondary)',
+          muted:     'var(--scale-muted)',
+          'muted-fg': 'var(--scale-muted-foreground)',
+          accent:    'var(--scale-accent)',
+          'accent-fg': 'var(--scale-accent-foreground)',
+          danger:    'var(--scale-destructive)',
+          'danger-hover': 'var(--scale-destructive-hover)',
+          'danger-fg':    'var(--scale-destructive-foreground)',
+          'danger-soft':  'var(--scale-destructive-soft)',
+          success:      'var(--scale-success)',
+          'success-soft': 'var(--scale-success-soft)',
+          warning:      'var(--scale-warning)',
+          'warning-soft': 'var(--scale-warning-soft)',
+          border:    'var(--scale-border)',
+          input:     'var(--scale-input)',
+          ring:      'var(--scale-ring)',
+        },
         brand: {
           50:  '#EFF6FF',
           100: '#DBEAFE',
