@@ -65,16 +65,22 @@ export const BUSINESS = {
    * canvanthinhphat.com cũng không công bố công khai số tài khoản.
    */
   bank: {
-    name: 'Ngân hàng TMCP Kỹ Thương Việt Nam (Techcombank)',
-    shortName: 'Techcombank',
-    accountNumber: '19036255538018',
-    accountHolder: 'DANG QUANG THINH',
+    name: 'Ngân hàng TMCP Á Châu (ACB)',
+    shortName: 'ACB',
+    accountNumber: '199911115118',
+    /**
+     * Tên chủ tài khoản — lấy đúng như app ngân hàng hiển thị khi chuyển tiền
+     * tới số này. Viết KHÔNG DẤU và IN HOA: chuẩn VietQR chỉ nhận ký tự ASCII,
+     * có dấu sẽ làm hỏng mã QR.
+     */
+    accountHolder: 'CTY TNHH SXTMDV CAN DIEN TU VAN THINH PHAT',
     /**
      * Mã ngân hàng theo chuẩn VietQR (Napas) — dùng để sinh ảnh QR động.
-     * Sinh QR từ API thay vì nhúng ảnh tĩnh: khi đổi số tài khoản chỉ cần sửa
-     * ở file này, mã QR tự cập nhật theo, không lo QR cũ trỏ sai tài khoản.
+     * 970416 = ACB. Sinh QR từ API thay vì nhúng ảnh tĩnh: khi đổi số tài
+     * khoản chỉ cần sửa ở file này, mã QR tự cập nhật theo, không lo QR cũ
+     * trỏ sai tài khoản.
      */
-    bin: '970407',
+    bin: '970416',
   },
 
   /** Số năm hoạt động, theo mô tả trên canvanthinhphat.com ("hơn 4 năm"). */
