@@ -116,7 +116,7 @@ export default function MediaLibraryPicker({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-2 sm:p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -126,7 +126,7 @@ export default function MediaLibraryPicker({
         role="dialog"
         aria-modal="true"
         aria-labelledby="media-picker-title"
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[88vh] flex flex-col overflow-hidden"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[92vh] flex flex-col overflow-hidden"
       >
         {/* Đầu hộp thoại */}
         <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-200">
@@ -180,7 +180,7 @@ export default function MediaLibraryPicker({
             </div>
           ) : loading && files.length === 0 ? (
             // Khung xương thay vì màn trắng (tiêu chí 7)
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8 gap-2.5">
               {[...Array(12)].map((_, i) => (
                 <div key={i} className="aspect-square bg-gray-100 rounded-lg animate-pulse" />
               ))}
@@ -197,7 +197,7 @@ export default function MediaLibraryPicker({
             </div>
           ) : (
             <>
-              <ul className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+              <ul className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8 gap-2.5">
                 {visible.map((f) => {
                   const isSelected = selected.includes(f.url);
                   return (
