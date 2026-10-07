@@ -11,6 +11,13 @@ interface RichContentDisplayProps {
  * nằm sâu một cấp và không hề nhận được style — link hiện ra như chữ thường,
  * người đọc không biết bấm được. Nay dùng `[&_a]` (mọi cấp con) để style thật
  * sự có tác dụng.
+ *
+ * KHÔNG dùng biến thể `first:` cho tiêu đề. `[&_h2]:first:mt-0` biên dịch
+ * thành `.lớp:first-child h2`, tức `:first-child` áp lên chính khối bọc chứ
+ * không phải thẻ h2. Khối bọc luôn là con đầu tiên, nên MỌI h2 bên trong đều
+ * bị margin-top: 0 — đo ra toàn bộ khoảng cách trên tiêu đề biến mất, các mục
+ * dính sát vào đoạn văn phía trên. Dùng `[&>*:first-child]:mt-0` thay thế:
+ * chỉ bỏ khoảng cách cho đúng phần tử đầu tiên của nội dung.
  */
 export default function RichContentDisplay({ content, className = '' }: RichContentDisplayProps) {
   const processContent = (htmlContent: string) =>
@@ -26,9 +33,14 @@ export default function RichContentDisplay({ content, className = '' }: RichCont
     <div
       className={`
         text-base leading-relaxed text-slate-700
-        [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-slate-900 [&_h1]:mb-4 [&_h1]:mt-6
-        [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-slate-900 [&_h2]:mb-3 [&_h2]:mt-6
-        [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-slate-900 [&_h3]:mb-2 [&_h3]:mt-5
+        [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-slate-900 [&_h1]:leading-tight
+        [&_h1]:mb-4 [&_h1]:mt-10
+        [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-slate-900 [&_h2]:leading-snug
+        [&_h2]:mb-3 [&_h2]:mt-9
+        [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-surface-border
+        [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-slate-900 [&_h3]:leading-snug
+        [&_h3]:mb-2 [&_h3]:mt-7
+        [&>*:first-child]:mt-0
         [&_p]:mb-4 [&_p]:leading-7
         [&_strong]:font-semibold [&_strong]:text-slate-900
         [&_em]:italic
