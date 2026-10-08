@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 interface LogoProps {
   /** Kích thước hiển thị. */
   size?: 'sm' | 'md' | 'lg';
@@ -8,10 +10,14 @@ interface LogoProps {
   className?: string;
 }
 
+/*
+ * Khung logo rộng gấp ~2,9 lần chiều cao, theo đúng tỷ lệ ảnh gốc (1737×607).
+ * Đặt khung vuông như biểu tượng cũ sẽ làm logo bị bóp méo hoặc thừa nền.
+ */
 const SIZES = {
-  sm: { name: 'text-lg', icon: 'w-7 h-7 text-base', tagline: 'text-[10px]' },
-  md: { name: 'text-xl lg:text-2xl', icon: 'w-9 h-9 text-lg', tagline: 'text-xs' },
-  lg: { name: 'text-2xl', icon: 'w-10 h-10 text-xl', tagline: 'text-xs' },
+  sm: { name: 'text-lg', logo: 'w-[72px] p-0.5', tagline: 'text-[10px]' },
+  md: { name: 'text-xl lg:text-2xl', logo: 'w-[92px] p-1', tagline: 'text-xs' },
+  lg: { name: 'text-2xl', logo: 'w-[104px] p-1', tagline: 'text-xs' },
 };
 
 /**
@@ -35,14 +41,25 @@ export default function Logo({
 
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
-      {/* Biểu tượng cân: nhận diện ngay ngành hàng mà không cần đọc chữ */}
+      {/* Logo VTP thật của công ty.
+          Trước đây dùng biểu tượng cân chung chung — khách không nhận ra đây
+          là thương hiệu nào. Logo thật giúp nhớ mặt doanh nghiệp (tiêu chí 1).
+
+          Nền trắng bo góc cả khi đặt trên thanh xanh đậm: logo đỏ-vàng trên
+          nền xanh bị chìm và lem màu. */}
       <span
-        className={`${s.icon} flex-shrink-0 rounded-lg flex items-center justify-center ${
-          isLight ? 'bg-white/15 text-white' : 'bg-brand-700 text-white'
+        className={`${s.logo} flex-shrink-0 rounded-md bg-white flex items-center justify-center overflow-hidden ${
+          isLight ? '' : 'ring-1 ring-brand-100'
         }`}
-        aria-hidden="true"
       >
-        <i className="ri-scales-3-line"></i>
+        <Image
+          src="/logo-vtp.png"
+          alt="Logo Cân Vạn Thịnh Phát"
+          width={458}
+          height={160}
+          priority
+          className="w-full h-auto"
+        />
       </span>
 
       <span className="flex flex-col min-w-0">
