@@ -43,16 +43,15 @@ export const metadata: Metadata = {
   /*
    * Biểu tượng hiển thị cạnh tên miền trên kết quả tìm kiếm Google.
    *
-   * Trước đây chỉ có icon.svg. Google Search KHÔNG đọc được SVG — tài liệu
-   * chính thức chỉ liệt kê BMP, GIF, ICO, PNG, JPEG, PPM, TIFF — nên kết quả
-   * tìm kiếm hiện biểu tượng quả địa cầu mặc định thay vì logo công ty.
+   * Dùng logo VTP thật của công ty (sinh bằng scripts/gen-logo.mjs).
    *
-   * Thứ tự khai báo có chủ đích: SVG đứng trước cho trình duyệt (sắc nét ở
-   * mọi kích thước), PNG 512px đứng sau cho Google và các máy không đọc SVG.
+   * Chỉ khai báo PNG và ICO, KHÔNG còn icon.svg: Google Search không đọc được
+   * SVG (tài liệu chính thức chỉ liệt kê BMP, GIF, ICO, PNG, JPEG, PPM, TIFF),
+   * mà để SVG đứng trước thì trình duyệt lại ưu tiên nó — tab vẫn hiện biểu
+   * tượng cân cũ dù PNG đã đổi sang logo công ty. Đo ra mới thấy.
    */
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
       { url: '/icon.png', type: 'image/png', sizes: '512x512' },
       { url: '/favicon.ico', sizes: '48x48' },
     ],
