@@ -29,8 +29,17 @@ const geistMono = Geist_Mono({
 // Tiêu chí 1 + 9: tiêu đề/mô tả nói rõ trang này làm gì, cho ai.
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  /*
+   * Tên thương hiệu ĐỨNG ĐẦU tiêu đề trang chủ, từ khoá bán hàng theo sau.
+   *
+   * Ngày 16/09 tiêu đề từng bị đảo thành "Cân Điện Tử Giá Rẻ Chính Hãng – Cân
+   * Vạn Thịnh Phát". Sau khi Google thu thập lại, cangiare.com mất vị trí đầu
+   * (kèm các link con) cho từ khoá "cân vạn thịnh phát" vào tay
+   * canvanthinhphat.com — trang cũ có tên thương hiệu ở đầu tiêu đề. Tìm theo
+   * tên công ty là cách khách quen quay lại, không được để mất.
+   */
   title: {
-    default: 'Cân Điện Tử Giá Rẻ Chính Hãng – Cân Vạn Thịnh Phát',
+    default: 'Cân Vạn Thịnh Phát – Cân Điện Tử Giá Rẻ Chính Hãng',
     template: '%s | Cân Vạn Thịnh Phát',
   },
   description: `Cân điện tử giá rẻ chính hãng: cân bàn, cân sàn, cân treo, cân tính tiền. Bảo hành 12 tháng, hỗ trợ kiểm định, giao lắp tận nơi TP.HCM. Gọi ${PRIMARY_PHONE} báo giá ngay.`,
@@ -71,13 +80,13 @@ export const metadata: Metadata = {
     locale: 'vi_VN',
     url: SITE_URL,
     siteName: BUSINESS.name,
-    title: 'Cân Điện Tử Giá Rẻ Chính Hãng – Cân Vạn Thịnh Phát',
+    title: 'Cân Vạn Thịnh Phát – Cân Điện Tử Giá Rẻ Chính Hãng',
     description:
       'Cân bàn, cân sàn, cân treo, cân tính tiền giá rẻ chính hãng. Bảo hành 12 tháng, hỗ trợ kiểm định, giao lắp tận nơi.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Cân Điện Tử Giá Rẻ Chính Hãng – Cân Vạn Thịnh Phát',
+    title: 'Cân Vạn Thịnh Phát – Cân Điện Tử Giá Rẻ Chính Hãng',
     description:
       'Cân bàn, cân sàn, cân treo giá rẻ chính hãng. Bảo hành 12 tháng, hỗ trợ kiểm định.',
   },
