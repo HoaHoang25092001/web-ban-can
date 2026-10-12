@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { buildWebSiteJsonLd } from '@/lib/site';
 import HomeHero from '../components/HomeHero';
 import FeatureBadges from '../components/FeatureBadges';
 import FeaturedProductsDB from '../components/FeaturedProductsDB';
@@ -139,6 +140,12 @@ export default async function Home() {
 
   return (
     <>
+      {/* Tên website cho Google — xem buildWebSiteJsonLd trong lib/site.ts */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildWebSiteJsonLd()) }}
+      />
+
       {/* Hero: cột danh mục + slide giới thiệu, cùng một lưới (tiêu chí 1 & 3) */}
       <HomeHero categories={allCategories} />
 

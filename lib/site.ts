@@ -195,6 +195,24 @@ export function buildLocalBusinessJsonLd() {
 }
 
 /**
+ * Tên website (schema.org/WebSite) — chỉ đặt ở trang chủ.
+ *
+ * Không có khai báo này, Google tự lấy tên miền làm tên trang: kết quả tìm
+ * kiếm hiện "cangiare.com" thay vì "Cân Vạn Thịnh Phát". Tên công ty ở dòng
+ * đầu kết quả vừa dễ nhận ra, vừa nói với Google trang này LÀ thương hiệu đó.
+ * `alternateName` để Google vẫn hiểu khi khách gõ tắt hay gõ không dấu.
+ */
+export function buildWebSiteJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: BUSINESS.name,
+    alternateName: ['Vạn Thịnh Phát', 'Can Van Thinh Phat', 'VTP', 'cangiare.com'],
+    url: `${SITE_URL}/`,
+  };
+}
+
+/**
  * Dữ liệu có cấu trúc cho một sản phẩm (schema.org/Product).
  *
  * Giúp Google hiển thị sản phẩm kèm ảnh và tình trạng hàng ngay trên trang
