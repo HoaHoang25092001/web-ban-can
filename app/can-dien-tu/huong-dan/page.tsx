@@ -68,11 +68,11 @@ export default async function ScaleHelpPage() {
                 href="/can-dien-tu"
                 className="inline-flex items-center min-h-touch font-semibold text-scale-primary underline underline-offset-4"
               >
-                Màn hình cân
+                Phiếu cân
               </Link>{' '}
               bằng Google Chrome hoặc Microsoft Edge.
             </li>
-            <li>Chọn đúng &ldquo;Loại cân&rdquo;.</li>
+            <li>Chọn đúng loại cân ở ô bên cạnh nút &ldquo;Kết nối cân&rdquo;.</li>
             <li>Bấm &ldquo;Kết nối cân&rdquo;, chọn cổng của cân trong hộp thoại của trình duyệt.</li>
             <li>
               Khi thấy &ldquo;Đã ổn định&rdquo;, số trên màn hình là khối lượng hiện tại.
@@ -85,15 +85,25 @@ export default async function ScaleHelpPage() {
           className="rounded-2xl border border-scale-border bg-scale-card p-6"
         >
           <h2 id="help-save" className="text-xl font-semibold">
-            2. Lưu bản ghi cân
+            2. Cân và in phiếu
           </h2>
           <ol className="mt-3 list-decimal space-y-2 pl-6 leading-relaxed">
             <li>Đăng nhập bằng tài khoản Cân Vạn Thịnh Phát cấp.</li>
-            <li>Kết nối cân và đặt hàng lên bàn cân.</li>
-            <li>Chọn mặt hàng trong danh sách, hoặc gõ tay nếu chưa khai báo.</li>
-            <li>Nếu cần, chọn nhân viên cân và ghi chú.</li>
             <li>
-              Bấm &ldquo;Lưu lần cân&rdquo;. Khối lượng được lấy tự động từ cân tại thời điểm bấm.
+              Chọn <strong>Xuất kho</strong> hoặc <strong>Nhập kho</strong>, điền khách hàng (gõ tên để
+              chọn từ danh bạ), số xe, tài xế.
+            </li>
+            <li>
+              Đặt hàng lên cân, chọn loại hàng, số khay và bì một khay. Đơn giá tự điền nếu mặt hàng
+              đã khai giá.
+            </li>
+            <li>
+              Bấm &ldquo;Lưu lượt cân&rdquo; hoặc phím <strong>F2</strong>. Lượt cân đầu tiên tự tạo
+              phiếu. Lặp lại cho từng lượt.
+            </li>
+            <li>
+              Cân xong bấm &ldquo;Xong phiếu&rdquo; để khoá phiếu, rồi &ldquo;In phiếu&rdquo; để in
+              khổ A4 hoặc lưu PDF.
             </li>
           </ol>
         </section>
@@ -107,11 +117,14 @@ export default async function ScaleHelpPage() {
           </h2>
           <ul className="mt-3 list-disc space-y-2 pl-6 leading-relaxed">
             <li>
-              <strong>Bản ghi cân</strong> — xem lại toàn bộ số liệu, lọc theo mặt hàng hoặc khoảng
-              ngày, và xuất ra tệp Excel.
+              <strong>Bản ghi cân</strong> — mọi lượt cân trong các phiếu; lọc theo loại hàng, khách
+              hoặc khoảng ngày, và xuất ra tệp Excel.
             </li>
             <li>
-              <strong>Sản phẩm</strong> — khai báo sẵn mặt hàng để lúc cân chọn nhanh.
+              <strong>Sản phẩm</strong> — khai báo sẵn mặt hàng và đơn giá để lúc cân chọn nhanh.
+            </li>
+            <li>
+              <strong>Khách hàng</strong> — danh bạ khách, số điện thoại và địa chỉ tự điền lên phiếu.
             </li>
             <li>
               <strong>Nhân viên</strong> — khai báo tên người cân, chọn từ danh sách thay vì gõ tay.

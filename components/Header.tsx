@@ -140,9 +140,13 @@ export default function Header() {
           </Link>
 
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Dưới `sm` ẩn đi: thanh dưới cùng (MobileActionBar) đã có "Gọi ngay"
+                ngay dưới ngón cái. Để thêm nút này thì trùng chức năng, lại chiếm
+                chỗ làm tên "Cân Vạn Thịnh Phát" bị che mất một nửa trên điện
+                thoại. Từ `sm` thanh dưới ẩn nên nút này hiện lại. */}
             <a
               href={PHONE_HREF}
-              className="inline-flex items-center justify-center gap-1.5 min-h-touch px-3 rounded-control bg-accent-600 text-white font-semibold text-sm"
+              className="hidden sm:inline-flex items-center justify-center gap-1.5 min-h-touch px-3 rounded-control bg-accent-600 text-white font-semibold text-sm"
             >
               <i className="ri-phone-fill" aria-hidden="true"></i>
               <span className="sr-only-text">Gọi hotline {PHONE_DISPLAY}</span>

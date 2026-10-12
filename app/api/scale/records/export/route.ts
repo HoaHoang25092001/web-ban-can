@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
 import { prisma } from '@/lib/prisma';
 import { getScaleUser, unauthorizedScale } from '@/lib/scale-auth';
+import { lineWhere } from '@/lib/scale-ticket-server';
+import { TICKET_TYPE_LABEL, type TicketType } from '@/lib/scale-ticket';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -10,7 +12,7 @@ export const runtime = 'nodejs';
 const MAX_ROWS = 20_000;
 
 /**
- * Xuất bản ghi cân ra tệp Excel.
+ * Xuất bản ghi cân (mọi lượt cân trong các phiếu) ra tệp Excel.
  *
  * Nhận ĐÚNG bộ lọc mà khách đang xem trên màn hình (tìm kiếm, khoảng ngày):
  * bản gốc xuất toàn bộ bất kể đang lọc gì, nên khách lọc ra 30 dòng của tháng
@@ -22,45 +24,13 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search')?.trim();
-    const from = searchParams.get('from');
-    const to = searchParams.get('to');
-
-    // Cùng một cách dựng điều kiện với route danh sách, để tệp xuất ra khớp
-    // với những gì khách đang nhìn thấy.
-    const where: Record<string, unknown> = { userId: user.id };
-
-    if (search) {
-      where.OR = [
-        { productName: { contains: search, mode: 'insensitive' } },
-        { productCode: { contains: search, mode: 'insensitive' } },
-        { employeeName: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-    if (from || to) {
-      const range: Record<string, Date> = {};
-      if (from) range.gte = new Date(`${from}T00:00:00`);
-      if (to) {
-        const end = new Date(`${to}T00:00:00`);
-        end.setDate(end.getDate() + 1);
-        range.lt = end;
-      }
-      where.weighedAt = range;
-    }
-
-    const records = await prisma.weighingRecord.findMany({
-      where,
-      orderBy: { weighedAt: 'desc' },
+    // Cùng điều kiện với trang danh sách, để tệp xuất ra khớp với những gì
+    // khách đang nhìn thấy.
+    const records = await prisma.scaleTicketLine.findMany({
+      where: lineWhere(user.id, searchParams),
+      orderBy: [{ weighedAt: 'desc' }, { id: 'desc' }],
       take: MAX_ROWS,
-      select: {
-        productCode: true,
-        productName: true,
-        weight: true,
-        unit: true,
-        employeeName: true,
-        note: true,
-        weighedAt: true,
-      },
+      include: { ticket: { select: { ticketNo: true, type: true, customerName: true, vehiclePlate: true } } },
     });
 
     const wb = new ExcelJS.Workbook();
@@ -69,13 +39,19 @@ export async function GET(request: NextRequest) {
 
     const ws = wb.addWorksheet('Bản ghi cân');
     ws.columns = [
-      { header: 'Thời gian cân', key: 'weighedAt', width: 20 },
-      { header: 'Mã hàng', key: 'productCode', width: 16 },
-      { header: 'Tên mặt hàng', key: 'productName', width: 32 },
-      { header: 'Khối lượng', key: 'weight', width: 14 },
-      { header: 'Đơn vị', key: 'unit', width: 10 },
-      { header: 'Người cân', key: 'employeeName', width: 22 },
-      { header: 'Ghi chú', key: 'note', width: 34 },
+      { header: 'Thời gian cân', key: 'weighedAt', width: 18 },
+      { header: 'Số phiếu', key: 'ticketNo', width: 10 },
+      { header: 'Loại phiếu', key: 'type', width: 11 },
+      { header: 'Khách hàng', key: 'customer', width: 30 },
+      { header: 'Số xe', key: 'plate', width: 13 },
+      { header: 'Mã hàng', key: 'productCode', width: 12 },
+      { header: 'Loại hàng', key: 'productName', width: 26 },
+      { header: 'TL cân (kg)', key: 'gross', width: 12 },
+      { header: 'Số khay', key: 'trays', width: 9 },
+      { header: 'Trừ bì (kg)', key: 'tare', width: 12 },
+      { header: 'TL hàng (kg)', key: 'net', width: 13 },
+      { header: 'Đơn giá (đ/kg)', key: 'price', width: 14 },
+      { header: 'Thành tiền (đ)', key: 'amount', width: 16 },
     ];
 
     const header = ws.getRow(1);
@@ -87,33 +63,46 @@ export async function GET(request: NextRequest) {
     // Khoá dòng tiêu đề và bật bộ lọc: sổ vài nghìn dòng mà cuộn xuống là mất
     // tiêu đề thì không biết cột nào là cột nào.
     ws.views = [{ state: 'frozen', ySplit: 1 }];
-    ws.autoFilter = 'A1:G1';
+    ws.autoFilter = 'A1:M1';
 
+    const KG = '#,##0.###';
+    const VND = '#,##0';
     for (const r of records) {
       const row = ws.addRow({
-        weighedAt: r.weighedAt,
+        // Excel không có múi giờ: ghi sẵn giờ Việt Nam, nếu không máy chủ (giờ
+        // UTC) sẽ ghi 23:00 hôm trước cho lượt cân lúc 6 giờ sáng.
+        weighedAt: new Date(r.weighedAt.getTime() + 7 * 3600_000),
+        ticketNo: r.ticket.ticketNo,
+        type: TICKET_TYPE_LABEL[r.ticket.type as TicketType] ?? r.ticket.type,
+        customer: r.ticket.customerName ?? '',
+        plate: r.ticket.vehiclePlate ?? '',
         productCode: r.productCode,
         productName: r.productName,
-        weight: r.weight,
-        unit: r.unit,
-        employeeName: r.employeeName ?? '',
-        note: r.note ?? '',
+        gross: r.grossWeight,
+        trays: r.trayCount,
+        tare: r.tareWeight,
+        net: r.netWeight,
+        price: r.unitPrice,
+        amount: r.amount,
       });
       /* Định dạng ngày và số ngay trong tệp: nếu để Excel tự đoán, cột thời
        * gian ra dạng số serial còn khối lượng mất số lẻ. */
       row.getCell('weighedAt').numFmt = 'dd/mm/yyyy hh:mm';
-      row.getCell('weight').numFmt = '#,##0.000';
+      for (const k of ['gross', 'tare', 'net']) row.getCell(k).numFmt = KG;
+      for (const k of ['price', 'amount']) row.getCell(k).numFmt = VND;
     }
 
     // Dòng tổng cộng ở cuối — thứ chủ xưởng cần nhất khi đối chiếu sổ sách.
     if (records.length > 0) {
       const totalRow = ws.addRow({
-        productName: `TỔNG CỘNG (${records.length} lần cân)`,
-        weight: records.reduce((s, r) => s + r.weight, 0),
-        unit: records[0].unit,
+        productName: `TỔNG CỘNG (${records.length} lượt cân)`,
+        trays: records.reduce((s, r) => s + r.trayCount, 0),
+        net: records.reduce((s, r) => s + r.netWeight, 0),
+        amount: records.reduce((s, r) => s + r.amount, 0),
       });
       totalRow.font = { bold: true };
-      totalRow.getCell('weight').numFmt = '#,##0.000';
+      totalRow.getCell('net').numFmt = KG;
+      totalRow.getCell('amount').numFmt = VND;
       totalRow.border = { top: { style: 'double' } };
     }
 
