@@ -30,6 +30,7 @@ export default async function ScaleProductsPage() {
           emptyHint: 'Khai báo mặt hàng để lúc cân chọn nhanh, không phải gõ tay.',
           deleteNote: 'Các bản ghi cân cũ vẫn giữ nguyên tên và mã đã lưu.',
           listKey: 'products',
+          priceLabel: 'Đơn giá mặc định',
         }}
       />
     </ScaleShell>

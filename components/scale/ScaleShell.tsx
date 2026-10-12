@@ -8,14 +8,16 @@ import { useState } from 'react';
 import ThemeToggle from '@/components/scale/ThemeToggle';
 
 /**
- * Năm mục đúng theo dự án digital-scale gốc.
+ * "Phiếu cân" là chỗ cân duy nhất (đã gộp "Màn hình cân" cũ vào), "Bản ghi
+ * cân" là lịch sử mọi lượt cân trong các phiếu.
  *
- * "Màn hình cân" và "Hướng dẫn" không cần đăng nhập: khách mới mua cân có thể
- * xem số cân và đọc hướng dẫn ngay, chỉ khi muốn LƯU lại mới phải đăng nhập.
+ * "Phiếu cân" và "Hướng dẫn" không cần đăng nhập: khách mới mua cân có thể
+ * xem số cân và đọc hướng dẫn ngay, chỉ khi muốn lập phiếu mới phải đăng nhập.
  */
 const NAV = [
-  { href: '/can-dien-tu', label: 'Màn hình cân', requiresAuth: false },
+  { href: '/can-dien-tu', label: 'Phiếu cân', requiresAuth: false },
   { href: '/can-dien-tu/ban-ghi', label: 'Bản ghi cân', requiresAuth: true },
+  { href: '/can-dien-tu/khach-hang', label: 'Khách hàng', requiresAuth: true },
   { href: '/can-dien-tu/mat-hang', label: 'Sản phẩm', requiresAuth: true },
   { href: '/can-dien-tu/nhan-vien', label: 'Nhân viên', requiresAuth: true },
   { href: '/can-dien-tu/huong-dan', label: 'Hướng dẫn', requiresAuth: false },
@@ -59,7 +61,7 @@ export default function ScaleShell({
                 <span className="hidden sm:inline whitespace-nowrap">Cân điện tử</span>
               </Link>
 
-              <nav aria-label="Điều hướng phần cân" className="hidden md:flex items-center gap-0.5">
+              <nav aria-label="Điều hướng phần cân" className="hidden lg:flex items-center gap-0.5">
                 {visible.map(({ href, label }) => (
                   <Link
                     key={href}
@@ -82,7 +84,7 @@ export default function ScaleShell({
 
               {userName ? (
                 <>
-                  <span className="hidden lg:block text-sm text-scale-muted-fg truncate max-w-[160px] px-2">
+                  <span className="hidden xl:block text-sm text-scale-muted-fg truncate max-w-[160px] px-2">
                     {userName}
                   </span>
                   <button
@@ -108,7 +110,7 @@ export default function ScaleShell({
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-expanded={menuOpen}
                 aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
-                className="md:hidden inline-flex items-center justify-center min-w-touch min-h-touch rounded-lg text-scale-fg hover:bg-scale-muted transition-colors"
+                className="lg:hidden inline-flex items-center justify-center min-w-touch min-h-touch rounded-lg text-scale-fg hover:bg-scale-muted transition-colors"
               >
                 {menuOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
               </button>
@@ -116,7 +118,7 @@ export default function ScaleShell({
           </div>
 
           {menuOpen && (
-            <nav aria-label="Điều hướng phần cân" className="md:hidden border-t border-scale-border py-2">
+            <nav aria-label="Điều hướng phần cân" className="lg:hidden border-t border-scale-border py-2">
               <ul className="flex flex-col">
                 {visible.map(({ href, label }) => (
                   <li key={href}>

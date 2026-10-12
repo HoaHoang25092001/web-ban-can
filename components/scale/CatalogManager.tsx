@@ -7,7 +7,10 @@ interface Item {
   id: number;
   code: string;
   name: string;
+  unitPrice?: number | null;
 }
+
+const priceFormat = new Intl.NumberFormat('vi-VN');
 
 /**
  * Quản lý một danh mục đơn giản (mã + tên).
@@ -37,6 +40,11 @@ export default function CatalogManager({
     deleteNote: string;
     /** Khoá trong JSON trả về, ví dụ 'products' hoặc 'employees'. */
     listKey: string;
+    /**
+     * Có thì hiện thêm ô đơn giá mặc định (chỉ Sản phẩm dùng). Chọn mặt hàng
+     * lúc lập phiếu là điền sẵn giá này, khỏi gõ lại từng lượt cân.
+     */
+    priceLabel?: string;
   };
 }) {
   const [items, setItems] = useState<Item[]>([]);
@@ -45,7 +53,7 @@ export default function CatalogManager({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState<Item | null>(null);
-  const [form, setForm] = useState({ code: '', name: '' });
+  const [form, setForm] = useState({ code: '', name: '', unitPrice: '' });
   const [showForm, setShowForm] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
 
@@ -65,14 +73,14 @@ export default function CatalogManager({
 
   const openNew = () => {
     setEditing(null);
-    setForm({ code: '', name: '' });
+    setForm({ code: '', name: '', unitPrice: '' });
     setError('');
     setShowForm(true);
   };
 
   const openEdit = (it: Item) => {
     setEditing(it);
-    setForm({ code: it.code, name: it.name });
+    setForm({ code: it.code, name: it.name, unitPrice: it.unitPrice == null ? '' : String(it.unitPrice) });
     setError('');
     setShowForm(true);
   };
@@ -85,7 +93,12 @@ export default function CatalogManager({
       const res = await fetch(endpoint, {
         method: editing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editing ? { ...form, id: editing.id } : form),
+        body: JSON.stringify({
+          code: form.code,
+          name: form.name,
+          ...(labels.priceLabel ? { unitPrice: form.unitPrice } : {}),
+          ...(editing ? { id: editing.id } : {}),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -206,6 +219,24 @@ export default function CatalogManager({
                 className="w-full min-h-touch px-3 rounded-lg bg-scale-card border border-scale-input text-scale-fg text-sm focus:outline-none focus:ring-2 focus:ring-scale-ring"
               />
             </div>
+            {labels.priceLabel && (
+              <div>
+                <label htmlFor="cat-price" className="block text-sm font-medium text-scale-fg mb-1.5">
+                  {labels.priceLabel} <span className="text-scale-muted-fg font-normal">(đồng/kg, không bắt buộc)</span>
+                </label>
+                <input
+                  id="cat-price"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1}
+                  value={form.unitPrice}
+                  onChange={(e) => setForm({ ...form, unitPrice: e.target.value })}
+                  placeholder="VD: 28500"
+                  className="w-full min-h-touch px-3 rounded-lg bg-scale-card border border-scale-input text-scale-fg text-sm focus:outline-none focus:ring-2 focus:ring-scale-ring"
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2 justify-end">
@@ -252,6 +283,11 @@ export default function CatalogManager({
             <li key={it.id} className="bg-scale-card rounded-xl border border-scale-border p-4">
               <div className="font-semibold text-scale-fg truncate">{it.name}</div>
               <div className="text-xs text-scale-muted-fg font-mono mt-0.5">{it.code}</div>
+              {labels.priceLabel && it.unitPrice != null && (
+                <div className="text-sm text-scale-fg mt-1">
+                  {priceFormat.format(it.unitPrice)} <span className="text-scale-muted-fg">đ/kg</span>
+                </div>
+              )}
               <div className="flex gap-1 mt-3 pt-3 border-t border-scale-border">
                 <button
                   type="button"

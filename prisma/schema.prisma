@@ -214,6 +214,8 @@ model ScaleUser {
   products  ScaleProduct[]
   records   WeighingRecord[]
   employees ScaleEmployee[]
+  customers ScaleCustomer[]
+  tickets   ScaleTicket[]
 
   @@index([isActive, createdAt(sort: Desc)])
   @@map("scale_users")
@@ -227,6 +229,9 @@ model ScaleProduct {
   id     Int    @id @default(autoincrement())
   code   String
   name   String
+  /// Đơn giá mặc định (đồng/kg). Chọn mặt hàng lúc cân là điền sẵn giá này,
+  /// vẫn sửa được từng lượt — mỗi khách có thể có giá khác nhau.
+  unitPrice Float?
   userId Int
 
   user    ScaleUser        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -296,4 +301,97 @@ model ScaleEmployee {
   @@unique([userId, code])
   @@index([userId, name])
   @@map("scale_employees")
+}
+
+/// Khách hàng của một tài khoản cân (người mua/bán hàng qua cân).
+///
+/// Lưu sẵn để lúc lập phiếu chỉ việc chọn — điện thoại, địa chỉ tự điền,
+/// không phải gõ lại mỗi lần như cách ghi tay.
+model ScaleCustomer {
+  id      Int     @id @default(autoincrement())
+  /// Mã khách do người dùng tự đặt, ví dụ "KH00239" như ứng dụng cũ.
+  code    String
+  name    String
+  phone   String?
+  address String?
+  note    String?
+  userId  Int
+
+  user    ScaleUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tickets ScaleTicket[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, code])
+  @@index([userId, name])
+  @@map("scale_customers")
+}
+
+/// Một phiếu cân (phiếu xuất kho hoặc nhập kho), gồm nhiều lượt cân.
+///
+/// Thông tin khách được CHÉP vào phiếu lúc lập (customerName, phone,
+/// address) chứ không chỉ trỏ tới bảng khách hàng: sau này khách đổi số điện
+/// thoại hay bị xoá thì phiếu cũ in lại vẫn đúng như lúc giao hàng — chứng từ
+/// không được tự thay đổi theo thời gian.
+model ScaleTicket {
+  id       Int    @id @default(autoincrement())
+  /// Số phiếu, tăng dần RIÊNG cho từng tài khoản (khách A và B đều có phiếu số 1).
+  ticketNo Int
+  /// "XUAT" = xuất kho (bán ra), "NHAP" = nhập kho (mua vào).
+  type     String @default("XUAT")
+  /// "OPEN" = đang cân, còn thêm/xoá lượt được; "DONE" = đã xong, khoá lại.
+  status   String @default("OPEN")
+
+  customerId      Int?
+  customerName    String?
+  customerPhone   String?
+  customerAddress String?
+  driverName      String?
+  vehiclePlate    String?
+  note            String?
+
+  userId   Int
+  user     ScaleUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer ScaleCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  lines    ScaleTicketLine[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  @@unique([userId, ticketNo])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("scale_tickets")
+}
+
+/// Một lượt cân trong phiếu.
+///
+/// Lưu cả trọng lượng cân, trừ bì lẫn trọng lượng hàng đã tính sẵn, không
+/// chỉ lưu số cân rồi tính lại khi in: nếu sau này đổi cách làm tròn thì
+/// phiếu cũ in lại vẫn ra đúng con số đã giao cho khách.
+model ScaleTicketLine {
+  id          Int    @id @default(autoincrement())
+  ticketId    Int
+  productCode String
+  productName String
+  /// Khối lượng đọc trên cân (kg), gồm cả khay.
+  grossWeight Float
+  trayCount   Int    @default(0)
+  /// Khối lượng một khay (kg).
+  trayWeight  Float  @default(0)
+  /// Trừ bì = số khay × khối lượng một khay.
+  tareWeight  Float  @default(0)
+  /// Khối lượng hàng = cân − trừ bì.
+  netWeight   Float
+  /// Đơn giá (đồng/kg).
+  unitPrice   Float  @default(0)
+  /// Thành tiền (đồng), làm tròn tới đồng.
+  amount      Float  @default(0)
+
+  ticket    ScaleTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  weighedAt DateTime    @default(now())
+
+  @@index([ticketId, weighedAt])
+  @@map("scale_ticket_lines")
 }

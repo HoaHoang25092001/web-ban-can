@@ -4,6 +4,16 @@ import { getScaleUser, unauthorizedScale } from '@/lib/scale-auth';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Đơn giá mặc định: bỏ trống = chưa đặt giá (null), không phải 0đ — để lúc cân
+ * phân biệt được "hàng biếu, giá 0" với "chưa khai giá, nhớ hỏi lại".
+ */
+function parsePrice(value: unknown): number | null | 'invalid' {
+  if (value === undefined || value === null || String(value).trim() === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n) : 'invalid';
+}
+
 /** Danh mục mặt hàng của khách đang đăng nhập. */
 export async function GET(request: NextRequest) {
   const user = await getScaleUser();
@@ -48,6 +58,8 @@ export async function POST(request: NextRequest) {
 
     if (!code) return NextResponse.json({ error: 'Vui lòng nhập mã hàng' }, { status: 400 });
     if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên hàng' }, { status: 400 });
+    const unitPrice = parsePrice(body.unitPrice);
+    if (unitPrice === 'invalid') return NextResponse.json({ error: 'Đơn giá không hợp lệ' }, { status: 400 });
 
     /*
      * Mã hàng chỉ cần duy nhất TRONG PHẠM VI khách này — hai công ty khác nhau
@@ -67,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     const created = await prisma.scaleProduct.create({
-      data: { code: code.slice(0, 100), name: name.slice(0, 300), userId: user.id },
+      data: { code: code.slice(0, 100), name: name.slice(0, 300), unitPrice, userId: user.id },
     });
 
     return NextResponse.json(created, { status: 201 });
@@ -96,7 +108,7 @@ export async function PUT(request: NextRequest) {
     });
     if (!owned) return NextResponse.json({ error: 'Không tìm thấy mặt hàng' }, { status: 404 });
 
-    const data: Record<string, string> = {};
+    const data: { code?: string; name?: string; unitPrice?: number | null } = {};
     if (body.code !== undefined) {
       const code = String(body.code).trim();
       if (!code) return NextResponse.json({ error: 'Vui lòng nhập mã hàng' }, { status: 400 });
@@ -116,6 +128,11 @@ export async function PUT(request: NextRequest) {
       const name = String(body.name).trim();
       if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên hàng' }, { status: 400 });
       data.name = name.slice(0, 300);
+    }
+    if (body.unitPrice !== undefined) {
+      const unitPrice = parsePrice(body.unitPrice);
+      if (unitPrice === 'invalid') return NextResponse.json({ error: 'Đơn giá không hợp lệ' }, { status: 400 });
+      data.unitPrice = unitPrice;
     }
 
     const updated = await prisma.scaleProduct.update({ where: { id }, data });
