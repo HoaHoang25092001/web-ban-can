@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { Plus, Pencil, Trash2, Loader2, X, Check, Search, Phone, MapPin, FileText } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Check, Search, Phone, MapPin, FileText, Users } from 'lucide-react';
+import { useConfirm } from '@/components/scale/confirm';
+import { Badge, Card, EmptyState, Field, Notice, buttonClass, cx, inputClass } from '@/components/scale/ui';
 
 export interface Customer {
   id: number;
@@ -15,33 +17,44 @@ export interface Customer {
 }
 
 const EMPTY = { code: '', name: '', phone: '', address: '', note: '' };
-
-const INPUT =
-  'w-full min-h-touch px-3 rounded-lg bg-scale-card border border-scale-input text-scale-fg text-sm focus:outline-none focus:ring-2 focus:ring-scale-ring';
+type FieldName = 'code' | 'name' | 'phone';
 
 /**
  * Danh bạ khách hàng của phần cân.
  *
  * Tách riêng khỏi CatalogManager vì khách có thêm số điện thoại, địa chỉ,
  * ghi chú — nhét vào bộ quản lý mã + tên dùng chung thì bộ đó phải mọc thêm
- * cả chục tuỳ chọn chỉ để phục vụ một màn hình.
+ * cả chục tuỳ chọn chỉ để phục vụ một màn hình. Nhưng dùng cùng bộ thành
+ * phần giao diện (components/scale/ui.tsx) nên trông và thao tác y hệt.
  */
 export default function CustomerManager() {
+  const confirm = useConfirm();
   const [items, setItems] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState(EMPTY);
   const [showForm, setShowForm] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [notice, setNotice] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
+
+  const refs = { code: useRef<HTMLInputElement>(null), name: useRef<HTMLInputElement>(null), phone: useRef<HTMLInputElement>(null) };
+  const addButtonRef = useRef<HTMLButtonElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/scale/customers');
-      if (res.ok) setItems((await res.json()).customers ?? []);
+      if (!res.ok) throw new Error();
+      setItems((await res.json()).customers ?? []);
+      setLoadError(false);
+    } catch {
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -51,30 +64,40 @@ export default function CustomerManager() {
     load();
   }, [load]);
 
-  const openNew = () => {
-    setEditing(null);
-    setForm(EMPTY);
-    setError('');
+  const openForm = (c: Customer | null) => {
+    setEditing(c);
+    setForm(c ? { code: c.code, name: c.name, phone: c.phone ?? '', address: c.address ?? '', note: c.note ?? '' } : EMPTY);
+    setFormError('');
+    setFieldErrors({});
+    setNotice(null);
     setShowForm(true);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      refs.name.current?.focus({ preventScroll: true });
+    }, 0);
   };
 
-  const openEdit = (c: Customer) => {
-    setEditing(c);
-    setForm({
-      code: c.code,
-      name: c.name,
-      phone: c.phone ?? '',
-      address: c.address ?? '',
-      note: c.note ?? '',
-    });
-    setError('');
-    setShowForm(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const closeForm = () => {
+    setShowForm(false);
+    addButtonRef.current?.focus();
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    const errs: Partial<Record<FieldName, string>> = {};
+    if (!form.name.trim()) errs.name = 'Nhập tên khách hàng.';
+    if (editing && !form.code.trim()) errs.code = 'Nhập mã khách, ví dụ KH00001.';
+    // Số điện thoại: chỉ kiểm tra có đủ chữ số, vẫn cho gõ dấu cách, dấu chấm cho dễ đọc.
+    const digits = form.phone.replace(/\D/g, '');
+    if (form.phone.trim() && (digits.length < 9 || digits.length > 12)) errs.phone = 'Số điện thoại cần 9–12 chữ số, ví dụ 0909 123 456.';
+    setFieldErrors(errs);
+    const first = (['name', 'code', 'phone'] as FieldName[]).find((f) => errs[f]);
+    if (first) {
+      refs[first].current?.focus();
+      return;
+    }
+
+    setFormError('');
     setSaving(true);
     try {
       const res = await fetch('/api/scale/customers', {
@@ -85,19 +108,30 @@ export default function CustomerManager() {
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setShowForm(false);
+        setNotice({ tone: 'success', text: `${editing ? 'Đã cập nhật' : 'Đã thêm'} khách "${form.name.trim()}"${editing ? '' : ` — mã ${data.code}`}.` });
         load();
+        addButtonRef.current?.focus();
+      } else if (data.field && data.field in refs) {
+        setFieldErrors({ [data.field]: data.error });
+        refs[data.field as FieldName].current?.focus();
       } else {
-        setError(data.error ?? 'Không lưu được.');
+        setFormError(data.error ?? 'Không lưu được. Thử lại sau ít phút.');
       }
     } catch {
-      setError('Không kết nối được tới máy chủ.');
+      setFormError('Không kết nối được tới máy chủ. Kiểm tra mạng rồi thử lại.');
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async (c: Customer) => {
-    if (!confirm(`Xoá khách "${c.name}" khỏi danh bạ?\n\nCác phiếu cũ vẫn giữ nguyên tên, số điện thoại và địa chỉ đã in.`)) return;
+    const ok = await confirm({
+      title: `Xoá khách "${c.name}" khỏi danh bạ?`,
+      message: 'Các phiếu cũ vẫn giữ nguyên tên, số điện thoại và địa chỉ đã in.',
+      confirmLabel: 'Xoá khách hàng',
+      tone: 'danger',
+    });
+    if (!ok) return;
     setDeleting(c.id);
     try {
       const res = await fetch('/api/scale/customers', {
@@ -105,7 +139,12 @@ export default function CustomerManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: c.id }),
       });
-      if (res.ok) load();
+      if (res.ok) {
+        setNotice({ tone: 'success', text: `Đã xoá khách "${c.name}".` });
+        load();
+      } else setNotice({ tone: 'danger', text: `Không xoá được khách "${c.name}".` });
+    } catch {
+      setNotice({ tone: 'danger', text: 'Không kết nối được tới máy chủ. Chưa xoá được.' });
     } finally {
       setDeleting(null);
     }
@@ -117,187 +156,131 @@ export default function CustomerManager() {
       !q ||
       c.name.toLowerCase().includes(q) ||
       c.code.toLowerCase().includes(q) ||
-      (c.phone ?? '').includes(q) ||
+      (c.phone ?? '').replace(/\s/g, '').includes(q.replace(/\s/g, '')) ||
       (c.address ?? '').toLowerCase().includes(q)
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <label htmlFor="cus-search" className="sr-only">
-            Tìm khách hàng
-          </label>
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-scale-muted-fg pointer-events-none"
-            aria-hidden="true"
-          />
-          <input
-            id="cus-search"
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo tên, mã, số điện thoại, địa chỉ…"
-            className={`${INPUT} pl-9`}
-          />
-        </div>
-        <button
-          type="button"
-          onClick={openNew}
-          className="inline-flex items-center justify-center gap-2 min-h-touch px-5 rounded-lg bg-scale-primary text-scale-primary-fg text-sm font-semibold hover:bg-scale-primary-hover transition-colors flex-shrink-0"
-        >
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+        <Field id="cus-search" label="Tìm khách hàng" className="flex-1">
+          {(p) => (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-scale-muted-fg pointer-events-none" aria-hidden="true" />
+              <input {...p} type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Theo tên, mã, số điện thoại, địa chỉ" className={cx(inputClass(), 'pl-9')} />
+            </div>
+          )}
+        </Field>
+        <button ref={addButtonRef} type="button" onClick={() => openForm(null)} className={buttonClass({ variant: 'primary' })}>
           <Plus className="w-4 h-4" aria-hidden="true" /> Thêm khách hàng
         </button>
       </div>
 
+      <div aria-live="polite">{notice && <Notice tone={notice.tone}>{notice.text}</Notice>}</div>
+
       {showForm && (
-        <form onSubmit={submit} className="bg-scale-card rounded-xl border border-scale-border p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold text-scale-fg">{editing ? 'Sửa khách hàng' : 'Thêm khách hàng'}</h2>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              aria-label="Đóng biểu mẫu"
-              className="inline-flex items-center justify-center min-w-touch min-h-touch rounded-lg text-scale-muted-fg hover:bg-scale-muted transition-colors"
-            >
-              <X className="w-5 h-5" aria-hidden="true" />
-            </button>
-          </div>
-
-          {error && (
-            <p role="alert" className="text-sm text-scale-danger bg-scale-danger-soft border border-scale-danger rounded-lg p-3">
-              {error}
-            </p>
-          )}
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="cus-name" className="block text-sm font-medium text-scale-fg mb-1.5">
-                Tên khách hàng
-              </label>
-              <input
-                id="cus-name"
-                required
-                autoFocus
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="VD: Chị Hoa – vựa cá Bến Tre"
-                className={INPUT}
-              />
-            </div>
-            <div>
-              <label htmlFor="cus-code" className="block text-sm font-medium text-scale-fg mb-1.5">
-                Mã khách{' '}
-                <span className="text-scale-muted-fg font-normal">
-                  {editing ? '' : '(để trống để tự đánh mã)'}
-                </span>
-              </label>
-              <input
-                id="cus-code"
-                required={Boolean(editing)}
-                value={form.code}
-                onChange={(e) => setForm({ ...form, code: e.target.value })}
-                placeholder="VD: KH00001"
-                className={INPUT}
-              />
-            </div>
-            <div>
-              <label htmlFor="cus-phone" className="block text-sm font-medium text-scale-fg mb-1.5">
-                Điện thoại
-              </label>
-              <input
-                id="cus-phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="off"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="VD: 0909 123 456"
-                className={INPUT}
-              />
-            </div>
-            <div>
-              <label htmlFor="cus-address" className="block text-sm font-medium text-scale-fg mb-1.5">
-                Địa chỉ
-              </label>
-              <input
-                id="cus-address"
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                className={INPUT}
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label htmlFor="cus-note" className="block text-sm font-medium text-scale-fg mb-1.5">
-                Ghi chú <span className="text-scale-muted-fg font-normal">(không in ra phiếu)</span>
-              </label>
-              <input
-                id="cus-note"
-                value={form.note}
-                onChange={(e) => setForm({ ...form, note: e.target.value })}
-                placeholder="VD: Hay lấy khay nhựa xanh, giao trước 6 giờ sáng"
-                className={INPUT}
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-2 justify-end">
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="inline-flex items-center min-h-touch px-4 rounded-lg border border-scale-border text-sm font-medium text-scale-fg hover:bg-scale-muted transition-colors"
-            >
-              Huỷ
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 min-h-touch px-5 rounded-lg bg-scale-primary text-scale-primary-fg text-sm font-semibold hover:bg-scale-primary-hover disabled:opacity-60 transition-colors"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Check className="w-4 h-4" aria-hidden="true" />}
-              {saving ? 'Đang lưu…' : 'Lưu'}
-            </button>
-          </div>
-        </form>
+        <div ref={formRef} className="scroll-mt-24">
+          <Card title={editing ? 'Sửa khách hàng' : 'Thêm khách hàng'} titleId="cus-form-title">
+            <form onSubmit={submit} noValidate className="space-y-4">
+              {formError && <Notice tone="danger">{formError}</Notice>}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field id="cus-name" label="Tên khách hàng" error={fieldErrors.name}>
+                  {(p) => (
+                    <input ref={refs.name} {...p} autoComplete="off" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ví dụ: Chị Hoa – vựa cá Bến Tre" className={inputClass(Boolean(p['aria-invalid']))} />
+                  )}
+                </Field>
+                <Field id="cus-code" label="Mã khách" optional={!editing} error={fieldErrors.code} hint={editing ? undefined : 'Để trống, hệ thống tự đánh mã KH00001, KH00002…'}>
+                  {(p) => (
+                    <input ref={refs.code} {...p} autoComplete="off" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="KH00001" className={inputClass(Boolean(p['aria-invalid']))} />
+                  )}
+                </Field>
+                <Field id="cus-phone" label="Điện thoại" optional error={fieldErrors.phone}>
+                  {(p) => (
+                    <input ref={refs.phone} {...p} type="tel" inputMode="tel" autoComplete="off" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0909 123 456" className={inputClass(Boolean(p['aria-invalid']))} />
+                  )}
+                </Field>
+                <Field id="cus-address" label="Địa chỉ" optional>
+                  {(p) => <input {...p} autoComplete="off" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className={inputClass()} />}
+                </Field>
+                <Field id="cus-note" label="Ghi chú" optional hint="Chỉ để bạn xem, không in ra phiếu." className="sm:col-span-2">
+                  {(p) => (
+                    <input {...p} autoComplete="off" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Ví dụ: hay lấy khay nhựa xanh, giao trước 6 giờ sáng" className={inputClass()} />
+                  )}
+                </Field>
+              </div>
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+                <button type="button" onClick={closeForm} className={buttonClass()}>
+                  Huỷ
+                </button>
+                <button type="submit" disabled={saving} className={buttonClass({ variant: 'primary' })}>
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Check className="w-4 h-4" aria-hidden="true" />}
+                  {saving ? 'Đang lưu…' : editing ? 'Lưu thay đổi' : 'Thêm khách hàng'}
+                </button>
+              </div>
+            </form>
+          </Card>
+        </div>
       )}
 
-      {loading ? (
-        <div className="flex items-center justify-center py-16 gap-3 text-scale-muted-fg">
+      {loadError ? (
+        <Notice
+          tone="danger"
+          title="Không tải được danh bạ khách hàng"
+          action={
+            <button type="button" onClick={load} className={buttonClass({ variant: 'ghost' })}>
+              Thử lại
+            </button>
+          }
+        >
+          Kiểm tra kết nối mạng rồi thử lại.
+        </Notice>
+      ) : loading ? (
+        <div role="status" className="flex items-center justify-center py-16 gap-3 text-scale-muted-fg">
           <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
           <span className="text-sm">Đang tải…</span>
         </div>
       ) : visible.length === 0 ? (
-        <div className="bg-scale-card rounded-xl border border-scale-border p-12 text-center">
-          <p className="font-semibold text-scale-fg">{q ? 'Không tìm thấy khách nào' : 'Chưa có khách hàng nào'}</p>
-          <p className="text-sm text-scale-muted-fg mt-1">
-            {q
-              ? 'Thử từ khoá khác.'
-              : 'Thêm khách ở đây, hoặc gõ tên khách mới ngay lúc lập phiếu — hệ thống tự lưu vào danh bạ.'}
-          </p>
+        <div className="bg-scale-card rounded-2xl border border-scale-border">
+          <EmptyState
+            icon={<Users className="w-9 h-9" aria-hidden="true" />}
+            title={q ? 'Không tìm thấy khách nào' : 'Chưa có khách hàng nào'}
+            action={
+              q ? (
+                <button type="button" onClick={() => setSearch('')} className={buttonClass()}>
+                  Xoá từ khoá tìm
+                </button>
+              ) : (
+                <button type="button" onClick={() => openForm(null)} className={buttonClass({ variant: 'primary' })}>
+                  <Plus className="w-4 h-4" aria-hidden="true" /> Thêm khách đầu tiên
+                </button>
+              )
+            }
+          >
+            {q ? 'Thử từ khoá khác.' : 'Thêm khách ở đây, hoặc gõ tên khách mới ngay lúc lập phiếu — hệ thống tự lưu vào danh bạ.'}
+          </EmptyState>
         </div>
       ) : (
         <>
-          <p className="text-sm text-scale-muted-fg">{visible.length} khách hàng</p>
+          <p className="text-sm text-scale-muted-fg" aria-live="polite">
+            {q ? `${visible.length} / ${items.length}` : items.length} khách hàng
+          </p>
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {visible.map((c) => (
-              <li key={c.id} className="bg-scale-card rounded-xl border border-scale-border p-4 flex flex-col">
+              <li key={c.id} className="bg-scale-card rounded-2xl border border-scale-border p-4 flex flex-col shadow-sm min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="font-semibold text-scale-fg truncate">{c.name}</div>
-                    <div className="text-xs text-scale-muted-fg font-mono mt-0.5">{c.code}</div>
+                    <p className="font-semibold text-scale-fg break-words">{c.name}</p>
+                    <p className="text-xs text-scale-muted-fg tabular-nums mt-0.5">{c.code}</p>
                   </div>
-                  {c._count && c._count.tickets > 0 && (
-                    <span className="flex-shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-scale-accent text-scale-accent-fg">
-                      {c._count.tickets} phiếu
-                    </span>
-                  )}
+                  {c._count && c._count.tickets > 0 && <Badge tone="info">{c._count.tickets} phiếu</Badge>}
                 </div>
 
-                <div className="mt-2 space-y-1 text-sm flex-1">
+                <div className="mt-2 space-y-1 text-sm flex-1 min-w-0">
                   {c.phone && (
                     <a
                       href={`tel:${c.phone.replace(/[^\d+]/g, '')}`}
-                      className="inline-flex items-center gap-1.5 min-h-touch -my-2 text-scale-fg hover:text-scale-primary"
+                      aria-label={`Gọi ${c.name}: ${c.phone}`}
+                      className="inline-flex items-center gap-1.5 min-h-touch -my-2 rounded text-scale-fg hover:text-scale-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-scale-ring"
                     >
                       <Phone className="w-3.5 h-3.5 text-scale-muted-fg flex-shrink-0" aria-hidden="true" />
                       {c.phone}
@@ -305,39 +288,28 @@ export default function CustomerManager() {
                   )}
                   {c.address && (
                     <p className="flex items-start gap-1.5 text-scale-muted-fg">
-                      <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                      <span className="line-clamp-2">{c.address}</span>
+                      <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-1" aria-hidden="true" />
+                      <span className="line-clamp-2 break-words">{c.address}</span>
                     </p>
                   )}
-                  {c.note && <p className="text-xs text-scale-muted-fg italic line-clamp-2">{c.note}</p>}
+                  {c.note && <p className="text-xs text-scale-muted-fg italic line-clamp-2 break-words">{c.note}</p>}
                 </div>
 
-                <div className="flex gap-1 mt-3 pt-3 border-t border-scale-border">
-                  <Link
-                    href={`/can-dien-tu?khach=${c.id}`}
-                    className="inline-flex items-center gap-1.5 min-h-touch px-3 rounded-lg text-sm font-medium text-scale-primary hover:bg-scale-accent transition-colors"
-                  >
+                <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-scale-border">
+                  <Link href={`/can-dien-tu?khach=${c.id}`} aria-label={`Lập phiếu cho ${c.name}`} className={cx(buttonClass({ variant: 'ghost' }), 'text-scale-primary')}>
                     <FileText className="w-4 h-4" aria-hidden="true" /> Lập phiếu
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => openEdit(c)}
-                    className="inline-flex items-center gap-1.5 min-h-touch px-3 rounded-lg text-sm text-scale-muted-fg hover:text-scale-primary hover:bg-scale-accent transition-colors"
-                  >
+                  <button type="button" onClick={() => openForm(c)} aria-label={`Sửa khách ${c.name}`} className={buttonClass({ variant: 'ghost' })}>
                     <Pencil className="w-4 h-4" aria-hidden="true" /> Sửa
                   </button>
                   <button
                     type="button"
                     onClick={() => remove(c)}
                     disabled={deleting === c.id}
-                    aria-label={`Xoá ${c.name}`}
-                    className="inline-flex items-center justify-center min-h-touch min-w-touch rounded-lg text-sm text-scale-muted-fg hover:text-scale-danger hover:bg-scale-danger-soft ml-auto disabled:opacity-40 transition-colors"
+                    aria-label={`Xoá khách ${c.name}`}
+                    className={cx(buttonClass({ variant: 'danger-ghost', iconOnly: true }), 'ml-auto')}
                   >
-                    {deleting === c.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" aria-hidden="true" />
-                    )}
+                    {deleting === c.id ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Trash2 className="w-4 h-4" aria-hidden="true" />}
                   </button>
                 </div>
               </li>

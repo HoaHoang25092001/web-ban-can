@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getScaleUser } from '@/lib/scale-auth';
 import ScaleShell from '@/components/scale/ScaleShell';
+import { PageHeader } from '@/components/scale/ui';
 import CatalogManager from '@/components/scale/CatalogManager';
 
 export const dynamic = 'force-dynamic';
@@ -12,12 +13,10 @@ export default async function ScaleEmployeesPage() {
 
   return (
     <ScaleShell userName={user.fullName}>
-      <div className="mb-5">
-        <h1 className="text-2xl font-bold text-scale-fg">Nhân viên</h1>
-        <p className="text-sm text-scale-muted-fg mt-1">
-          Khai báo sẵn nhân viên để lúc cân chỉ việc chọn tên từ danh sách.
-        </p>
-      </div>
+      <PageHeader
+        title="Nhân viên"
+        description="Khai báo sẵn nhân viên để lúc cân chỉ việc chọn tên từ danh sách."
+      />
       <CatalogManager
         endpoint="/api/scale/employees"
         labels={{

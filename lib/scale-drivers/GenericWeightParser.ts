@@ -43,10 +43,19 @@ export class GenericWeightParser implements IScaleParser {
       return null;
     }
 
-    const stable = /\b(S|STABLE)\b/i.test(rawLine);
+    /*
+     * Ổn định khi có "ST" (chuẩn chung của đầu cân: "ST,GS,+0012.50kg"; còn
+     * "US" là đang dao động), "S" hoặc "STABLE". Bản trước thiếu "ST" nên cân
+     * đứng yên vẫn báo "Đang dao động" và mỗi lần bấm lưu đều bị hỏi lại.
+     */
+    const stable = /\b(ST|S|STABLE)\b/i.test(rawLine);
+
+    // Đếm số lẻ trên chuỗi gốc, trước khi đổi sang số: "+0012.500" → 3.
+    const decimals = match[1].split(".")[1]?.length ?? 0;
 
     return {
       valueKg,
+      decimals,
       stable,
       status: stable ? "stable" : "unstable",
       timestamp: Date.now(),

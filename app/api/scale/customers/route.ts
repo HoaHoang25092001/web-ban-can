@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const name = String(body.name ?? '').trim();
-    if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên khách hàng' }, { status: 400 });
+    if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên khách hàng', field: 'name' }, { status: 400 });
 
     let code = String(body.code ?? '').trim().slice(0, 50);
     if (!code) code = await nextCustomerCode(user.id);
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     });
     if (existing) {
       return NextResponse.json(
-        { error: `Mã "${code}" đã dùng cho khách "${existing.name}"` },
+        { error: `Mã "${code}" đã dùng cho khách "${existing.name}"`, field: 'code' },
         { status: 409 }
       );
     }
@@ -80,16 +80,16 @@ export async function PUT(request: NextRequest) {
     if (!owned) return NextResponse.json({ error: 'Không tìm thấy khách hàng' }, { status: 404 });
 
     const name = String(body.name ?? '').trim();
-    if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên khách hàng' }, { status: 400 });
+    if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên khách hàng', field: 'name' }, { status: 400 });
     const code = String(body.code ?? '').trim().slice(0, 50);
-    if (!code) return NextResponse.json({ error: 'Vui lòng nhập mã khách hàng' }, { status: 400 });
+    if (!code) return NextResponse.json({ error: 'Vui lòng nhập mã khách hàng', field: 'code' }, { status: 400 });
 
     const dup = await prisma.scaleCustomer.findFirst({
       where: { userId: user.id, code, NOT: { id } },
       select: { name: true },
     });
     if (dup) {
-      return NextResponse.json({ error: `Mã "${code}" đã dùng cho khách "${dup.name}"` }, { status: 409 });
+      return NextResponse.json({ error: `Mã "${code}" đã dùng cho khách "${dup.name}"`, field: 'code' }, { status: 409 });
     }
 
     /* Chỉ sửa danh bạ. Phiếu cũ đã chép sẵn tên, số điện thoại, địa chỉ lúc

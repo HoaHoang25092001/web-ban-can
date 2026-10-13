@@ -2,6 +2,7 @@ import { getScaleUser } from '@/lib/scale-auth';
 import ScaleShell from '@/components/scale/ScaleShell';
 import ScaleConsole from '@/components/scale/ScaleConsole';
 import TicketWorkbench from '@/components/scale/TicketWorkbench';
+import { PageHeader } from '@/components/scale/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,12 +26,10 @@ export default async function ScaleHomePage({
   if (!user) {
     return (
       <ScaleShell>
-        <div className="mb-5">
-          <h1 className="text-2xl font-bold text-scale-fg">Cân điện tử</h1>
-          <p className="text-sm text-scale-muted-fg mt-1">
-            Kết nối cân để đọc khối lượng trực tiếp. Đăng nhập để lập phiếu cân và in phiếu.
-          </p>
-        </div>
+        <PageHeader
+          title="Cân điện tử"
+          description="Kết nối cân để xem khối lượng trực tiếp. Đăng nhập để lập phiếu cân, trừ bì, tính tiền và in phiếu."
+        />
         {/* Kết nối cân do ScaleProvider ở app/can-dien-tu/layout.tsx giữ, để
             không bị ngắt khi chuyển sang trang khác rồi quay lại. */}
         <ScaleConsole />
@@ -44,12 +43,10 @@ export default async function ScaleHomePage({
 
   return (
     <ScaleShell userName={user.fullName}>
-      <div className="mb-5">
-        <h1 className="text-2xl font-bold text-scale-fg">Phiếu cân</h1>
-        <p className="text-sm text-scale-muted-fg mt-1">
-          Cân từng lượt, trừ bì theo số khay, tự tính tiền — xong phiếu là in ngay khổ A4.
-        </p>
-      </div>
+      <PageHeader
+        title="Phiếu cân"
+        description="Đặt hàng lên cân, chọn loại hàng rồi bấm F2 để lưu từng lượt. Cân xong bấm Xong phiếu và In phiếu."
+      />
       <TicketWorkbench
         initialTicketId={Number.isInteger(ticketId) && ticketId > 0 ? ticketId : undefined}
         initialCustomerId={Number.isInteger(customerId) && customerId > 0 ? customerId : undefined}

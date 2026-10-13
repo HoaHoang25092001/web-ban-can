@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getScaleUser } from '@/lib/scale-auth';
 import ScaleShell from '@/components/scale/ScaleShell';
 import { PRIMARY_PHONE, telHref } from '@/lib/site';
+import { PageHeader, buttonClass } from '@/components/scale/ui';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Hướng dẫn' };
@@ -16,8 +17,8 @@ export const metadata: Metadata = { title: 'Hướng dẫn' };
  */
 const TROUBLESHOOTING = [
   {
-    problem: 'Nút "Kết nối cân" bị mờ, báo trình duyệt không hỗ trợ',
-    fix: 'Mở trang bằng Google Chrome hoặc Microsoft Edge, trên chính máy tính đang nối với cân. Firefox, Safari và điện thoại iPhone/iPad không kết nối được với cân.',
+    problem: 'Báo "Trình duyệt này không đọc số tự động từ cân được"',
+    fix: 'Mở trang bằng Google Chrome hoặc Microsoft Edge, trên chính máy tính đang nối với cân. Firefox, Safari và điện thoại iPhone/iPad không đọc cân tự động được — vẫn cân được bằng cách gõ tay số trên màn hình cân vào ô khối lượng.',
   },
   {
     problem: 'Báo "Bạn chưa chọn cổng của cân"',
@@ -29,7 +30,11 @@ const TROUBLESHOOTING = [
   },
   {
     problem: 'Đã kết nối nhưng số cân không đổi hoặc sai',
-    fix: 'Kiểm tra "Loại cân" đã chọn đúng model chưa. Đổi loại cân sẽ ngắt kết nối — bấm "Kết nối cân" lại sau khi đổi.',
+    fix: 'Kiểm tra ô loại cân (cạnh nút "Kết nối cân") đã chọn đúng model chưa. Muốn đổi loại cân thì bấm "Ngắt kết nối" trước, đổi xong bấm "Kết nối cân" lại.',
+  },
+  {
+    problem: 'Số cân cứ báo "Đang dao động", bấm lưu bị hỏi lại',
+    fix: 'Đợi hàng trên bàn cân đứng yên vài giây cho tới khi hiện "Ổn định" rồi mới bấm Lưu lượt cân (F2). Nếu cân đã đứng yên mà vẫn báo dao động, kiểm tra lại loại cân đã chọn.',
   },
   {
     problem: 'Đăng nhập báo sai tên đăng nhập hoặc mật khẩu',
@@ -43,17 +48,12 @@ export default async function ScaleHelpPage() {
 
   return (
     <ScaleShell userName={user?.fullName}>
-      <div className="mb-5">
-        <h1 className="text-2xl font-bold text-scale-fg">Hướng dẫn sử dụng</h1>
-        <p className="text-sm text-scale-muted-fg mt-1">
-          Các bước cơ bản và cách xử lý lỗi thường gặp.
-        </p>
-      </div>
+      <PageHeader title="Hướng dẫn sử dụng" description="Các bước cơ bản và cách xử lý lỗi thường gặp." />
 
       <div className="grid max-w-3xl gap-5 text-scale-fg">
         <section
           aria-labelledby="help-connect"
-          className="rounded-2xl border border-scale-border bg-scale-card p-6"
+          className="rounded-2xl border border-scale-border bg-scale-card p-6 shadow-sm"
         >
           <h2 id="help-connect" className="text-xl font-semibold">
             1. Kết nối cân
@@ -82,7 +82,7 @@ export default async function ScaleHelpPage() {
 
         <section
           aria-labelledby="help-save"
-          className="rounded-2xl border border-scale-border bg-scale-card p-6"
+          className="rounded-2xl border border-scale-border bg-scale-card p-6 shadow-sm"
         >
           <h2 id="help-save" className="text-xl font-semibold">
             2. Cân và in phiếu
@@ -110,7 +110,7 @@ export default async function ScaleHelpPage() {
 
         <section
           aria-labelledby="help-manage"
-          className="rounded-2xl border border-scale-border bg-scale-card p-6"
+          className="rounded-2xl border border-scale-border bg-scale-card p-6 shadow-sm"
         >
           <h2 id="help-manage" className="text-xl font-semibold">
             3. Quản lý dữ liệu
@@ -138,7 +138,7 @@ export default async function ScaleHelpPage() {
 
         <section
           aria-labelledby="help-trouble"
-          className="rounded-2xl border border-scale-border bg-scale-card p-6"
+          className="rounded-2xl border border-scale-border bg-scale-card p-6 shadow-sm"
         >
           <h2 id="help-trouble" className="text-xl font-semibold">
             4. Lỗi thường gặp
@@ -153,14 +153,14 @@ export default async function ScaleHelpPage() {
           </dl>
         </section>
 
-        <section className="rounded-2xl border border-scale-border bg-scale-card p-6">
+        <section className="rounded-2xl border border-scale-border bg-scale-card p-6 shadow-sm">
           <h2 className="text-xl font-semibold">Cần hỗ trợ thêm?</h2>
           <p className="mt-2 text-scale-muted-fg leading-relaxed">
             Gọi cho Cân Vạn Thịnh Phát để được hướng dẫn trực tiếp.
           </p>
           <a
             href={telHref(PRIMARY_PHONE)}
-            className="mt-4 inline-flex items-center justify-center min-h-touch px-5 rounded-lg bg-scale-primary text-scale-primary-fg font-semibold hover:bg-scale-primary-hover transition-colors"
+            className={`${buttonClass({ variant: 'primary' })} mt-4`}
           >
             Gọi {PRIMARY_PHONE}
           </a>
