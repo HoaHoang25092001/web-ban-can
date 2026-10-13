@@ -25,6 +25,7 @@ export class MockSerialScaleDriver implements IScaleDriver {
       const stable = Math.abs(value - rounded) < STABLE_THRESHOLD;
       const reading: WeightReading = {
         valueKg: rounded,
+        decimals: 2,
         stable,
         status: stable ? "stable" : "unstable",
         timestamp: Date.now(),

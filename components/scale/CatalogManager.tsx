@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Loader2, X, Check, Search } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Plus, Pencil, Trash2, Loader2, Check, Search, PackageOpen } from 'lucide-react';
+import { useConfirm } from '@/components/scale/confirm';
+import { Card, EmptyState, Field, Notice, buttonClass, cx, inputClass } from '@/components/scale/ui';
 
 interface Item {
   id: number;
@@ -10,16 +12,16 @@ interface Item {
   unitPrice?: number | null;
 }
 
+type FieldName = 'code' | 'name' | 'unitPrice';
+
 const priceFormat = new Intl.NumberFormat('vi-VN');
 
 /**
- * Quản lý một danh mục đơn giản (mã + tên).
+ * Quản lý một danh mục đơn giản (mã + tên, tuỳ chọn đơn giá).
  *
  * Dùng chung cho Sản phẩm và Nhân viên: hai màn hình này giống nhau tới từng
  * ô nhập, chỉ khác nhãn chữ. Viết hai bản riêng thì mỗi lần sửa một chi tiết
  * lại phải nhớ sửa cả hai nơi — quên một chỗ là hai màn hình lệch nhau.
- *
- * Dự án gốc cũng dùng đúng cách này (components/catalog-manager.tsx).
  */
 export default function CatalogManager({
   endpoint,
@@ -47,21 +49,38 @@ export default function CatalogManager({
     priceLabel?: string;
   };
 }) {
+  const confirm = useConfirm();
+  const singular = labels.singular.toLowerCase();
+
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [editing, setEditing] = useState<Item | null>(null);
   const [form, setForm] = useState({ code: '', name: '', unitPrice: '' });
   const [showForm, setShowForm] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [notice, setNotice] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
+
+  const refs = {
+    code: useRef<HTMLInputElement>(null),
+    name: useRef<HTMLInputElement>(null),
+    unitPrice: useRef<HTMLInputElement>(null),
+  };
+  const addButtonRef = useRef<HTMLButtonElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(endpoint);
-      if (res.ok) setItems((await res.json())[labels.listKey] ?? []);
+      if (!res.ok) throw new Error();
+      setItems((await res.json())[labels.listKey] ?? []);
+      setLoadError(false);
+    } catch {
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -71,23 +90,38 @@ export default function CatalogManager({
     load();
   }, [load]);
 
-  const openNew = () => {
-    setEditing(null);
-    setForm({ code: '', name: '', unitPrice: '' });
-    setError('');
+  const openForm = (it: Item | null) => {
+    setEditing(it);
+    setForm(it ? { code: it.code, name: it.name, unitPrice: it.unitPrice == null ? '' : String(it.unitPrice) } : { code: '', name: '', unitPrice: '' });
+    setFormError('');
+    setFieldErrors({});
+    setNotice(null);
     setShowForm(true);
+    // Đưa con trỏ vào ô đầu tiên để gõ ngay, không phải bấm chuột thêm lần nữa.
+    setTimeout(() => refs.code.current?.focus(), 0);
   };
 
-  const openEdit = (it: Item) => {
-    setEditing(it);
-    setForm({ code: it.code, name: it.name, unitPrice: it.unitPrice == null ? '' : String(it.unitPrice) });
-    setError('');
-    setShowForm(true);
+  const closeForm = () => {
+    setShowForm(false);
+    addButtonRef.current?.focus();
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    // Kiểm tra trước ngay trên máy, báo đúng ô thiếu.
+    const errs: Partial<Record<FieldName, string>> = {};
+    if (!form.code.trim()) errs.code = `Nhập ${labels.codeLabel.toLowerCase()}.`;
+    if (!form.name.trim()) errs.name = `Nhập ${labels.nameLabel.toLowerCase()}.`;
+    if (labels.priceLabel && form.unitPrice.trim() && !/^\d+$/.test(form.unitPrice.trim()))
+      errs.unitPrice = 'Đơn giá chỉ gồm chữ số, không dấu chấm, ví dụ 28500.';
+    setFieldErrors(errs);
+    const first = (['code', 'name', 'unitPrice'] as FieldName[]).find((f) => errs[f]);
+    if (first) {
+      refs[first].current?.focus();
+      return;
+    }
+
+    setFormError('');
     setSaving(true);
     try {
       const res = await fetch(endpoint, {
@@ -103,19 +137,30 @@ export default function CatalogManager({
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setShowForm(false);
+        setNotice({ tone: 'success', text: `${editing ? 'Đã cập nhật' : 'Đã thêm'} ${singular} "${form.name.trim()}".` });
         load();
+        addButtonRef.current?.focus();
+      } else if (data.field && data.field in refs) {
+        setFieldErrors({ [data.field]: data.error });
+        refs[data.field as FieldName].current?.focus();
       } else {
-        setError(data.error ?? 'Không lưu được.');
+        setFormError(data.error ?? 'Không lưu được. Thử lại sau ít phút.');
       }
     } catch {
-      setError('Không kết nối được tới máy chủ.');
+      setFormError('Không kết nối được tới máy chủ. Kiểm tra mạng rồi thử lại.');
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async (it: Item) => {
-    if (!confirm(`Xoá "${it.name}"?\n\n${labels.deleteNote}`)) return;
+    const ok = await confirm({
+      title: `Xoá ${singular} "${it.name}"?`,
+      message: labels.deleteNote,
+      confirmLabel: `Xoá ${singular}`,
+      tone: 'danger',
+    });
+    if (!ok) return;
     setDeleting(it.id);
     try {
       const res = await fetch(endpoint, {
@@ -123,7 +168,12 @@ export default function CatalogManager({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: it.id }),
       });
-      if (res.ok) load();
+      if (res.ok) {
+        setNotice({ tone: 'success', text: `Đã xoá ${singular} "${it.name}".` });
+        load();
+      } else setNotice({ tone: 'danger', text: `Không xoá được ${singular} "${it.name}".` });
+    } catch {
+      setNotice({ tone: 'danger', text: 'Không kết nối được tới máy chủ. Chưa xoá được.' });
     } finally {
       setDeleting(null);
     }
@@ -131,188 +181,143 @@ export default function CatalogManager({
 
   // Lọc ngay trên trình duyệt: danh sách tối đa 500 mục nên không cần gọi lại
   // máy chủ mỗi lần gõ một chữ.
-  const visible = items.filter(
-    (it) =>
-      !search.trim() ||
-      it.name.toLowerCase().includes(search.toLowerCase().trim()) ||
-      it.code.toLowerCase().includes(search.toLowerCase().trim())
-  );
+  const q = search.toLowerCase().trim();
+  const visible = items.filter((it) => !q || it.name.toLowerCase().includes(q) || it.code.toLowerCase().includes(q));
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <label htmlFor="cat-search" className="sr-only">
-            Tìm kiếm
-          </label>
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-scale-muted-fg pointer-events-none"
-            aria-hidden="true"
-          />
-          <input
-            id="cat-search"
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Tìm ${labels.singular.toLowerCase()}…`}
-            className="w-full min-h-touch pl-9 pr-3 rounded-lg bg-scale-card border border-scale-input text-scale-fg text-sm focus:outline-none focus:ring-2 focus:ring-scale-ring"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={openNew}
-          className="inline-flex items-center justify-center gap-2 min-h-touch px-5 rounded-lg bg-scale-primary text-scale-primary-fg text-sm font-semibold hover:bg-scale-primary-hover transition-colors flex-shrink-0"
-        >
-          <Plus className="w-4 h-4" aria-hidden="true" /> Thêm {labels.singular.toLowerCase()}
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+        <Field id="cat-search" label={`Tìm ${singular}`} className="flex-1">
+          {(p) => (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-scale-muted-fg pointer-events-none" aria-hidden="true" />
+              <input {...p} type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={`Theo ${labels.codeLabel.toLowerCase()} hoặc ${labels.nameLabel.toLowerCase()}`} className={cx(inputClass(), 'pl-9')} />
+            </div>
+          )}
+        </Field>
+        <button ref={addButtonRef} type="button" onClick={() => openForm(null)} className={buttonClass({ variant: 'primary' })}>
+          <Plus className="w-4 h-4" aria-hidden="true" /> Thêm {singular}
         </button>
       </div>
 
+      <div aria-live="polite">{notice && <Notice tone={notice.tone}>{notice.text}</Notice>}</div>
+
       {showForm && (
-        <form onSubmit={submit} className="bg-scale-card rounded-xl border border-scale-border p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold text-scale-fg">
-              {editing ? `Sửa ${labels.singular.toLowerCase()}` : `Thêm ${labels.singular.toLowerCase()}`}
-            </h2>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              aria-label="Đóng biểu mẫu"
-              className="inline-flex items-center justify-center min-w-touch min-h-touch rounded-lg text-scale-muted-fg hover:bg-scale-muted transition-colors"
-            >
-              <X className="w-5 h-5" aria-hidden="true" />
-            </button>
-          </div>
-
-          {error && (
-            <p
-              role="alert"
-              className="text-sm text-scale-danger bg-scale-danger-soft border border-scale-danger rounded-lg p-3"
-            >
-              {error}
-            </p>
-          )}
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="cat-code" className="block text-sm font-medium text-scale-fg mb-1.5">
-                {labels.codeLabel}
-              </label>
-              <input
-                id="cat-code"
-                required
-                value={form.code}
-                onChange={(e) => setForm({ ...form, code: e.target.value })}
-                placeholder={labels.codePlaceholder}
-                className="w-full min-h-touch px-3 rounded-lg bg-scale-card border border-scale-input text-scale-fg text-sm focus:outline-none focus:ring-2 focus:ring-scale-ring"
-              />
-            </div>
-            <div>
-              <label htmlFor="cat-name" className="block text-sm font-medium text-scale-fg mb-1.5">
-                {labels.nameLabel}
-              </label>
-              <input
-                id="cat-name"
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder={labels.namePlaceholder}
-                className="w-full min-h-touch px-3 rounded-lg bg-scale-card border border-scale-input text-scale-fg text-sm focus:outline-none focus:ring-2 focus:ring-scale-ring"
-              />
-            </div>
-            {labels.priceLabel && (
-              <div>
-                <label htmlFor="cat-price" className="block text-sm font-medium text-scale-fg mb-1.5">
-                  {labels.priceLabel} <span className="text-scale-muted-fg font-normal">(đồng/kg, không bắt buộc)</span>
-                </label>
-                <input
-                  id="cat-price"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  step={1}
-                  value={form.unitPrice}
-                  onChange={(e) => setForm({ ...form, unitPrice: e.target.value })}
-                  placeholder="VD: 28500"
-                  className="w-full min-h-touch px-3 rounded-lg bg-scale-card border border-scale-input text-scale-fg text-sm focus:outline-none focus:ring-2 focus:ring-scale-ring"
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="flex gap-2 justify-end">
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="inline-flex items-center min-h-touch px-4 rounded-lg border border-scale-border text-sm font-medium text-scale-fg hover:bg-scale-muted transition-colors"
-            >
-              Huỷ
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 min-h-touch px-5 rounded-lg bg-scale-primary text-scale-primary-fg text-sm font-semibold hover:bg-scale-primary-hover disabled:opacity-60 transition-colors"
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <Check className="w-4 h-4" aria-hidden="true" />
+        <Card title={editing ? `Sửa ${singular}` : `Thêm ${singular}`} titleId="cat-form-title">
+          <form onSubmit={submit} noValidate className="space-y-4">
+            {formError && <Notice tone="danger">{formError}</Notice>}
+            <div className={cx('grid gap-4', labels.priceLabel ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
+              <Field id="cat-code" label={labels.codeLabel} error={fieldErrors.code}>
+                {(p) => (
+                  <input ref={refs.code} {...p} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder={labels.codePlaceholder} autoComplete="off" className={inputClass(Boolean(p['aria-invalid']))} />
+                )}
+              </Field>
+              <Field id="cat-name" label={labels.nameLabel} error={fieldErrors.name}>
+                {(p) => (
+                  <input ref={refs.name} {...p} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={labels.namePlaceholder} autoComplete="off" className={inputClass(Boolean(p['aria-invalid']))} />
+                )}
+              </Field>
+              {labels.priceLabel && (
+                <Field id="cat-price" label={`${labels.priceLabel} (đ/kg)`} optional error={fieldErrors.unitPrice} hint="Tự điền khi chọn hàng lúc cân.">
+                  {(p) => (
+                    <input ref={refs.unitPrice} {...p} inputMode="numeric" value={form.unitPrice} onChange={(e) => setForm({ ...form, unitPrice: e.target.value })} placeholder="28500" autoComplete="off" className={cx(inputClass(Boolean(p['aria-invalid'])), 'text-right tabular-nums')} />
+                  )}
+                </Field>
               )}
-              {saving ? 'Đang lưu…' : 'Lưu'}
-            </button>
-          </div>
-        </form>
+            </div>
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <button type="button" onClick={closeForm} className={buttonClass()}>
+                Huỷ
+              </button>
+              <button type="submit" disabled={saving} className={buttonClass({ variant: 'primary' })}>
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Check className="w-4 h-4" aria-hidden="true" />}
+                {saving ? 'Đang lưu…' : editing ? 'Lưu thay đổi' : `Thêm ${singular}`}
+              </button>
+            </div>
+          </form>
+        </Card>
       )}
 
-      {loading ? (
-        <div className="flex items-center justify-center py-16 gap-3 text-scale-muted-fg">
+      {loadError ? (
+        <Notice
+          tone="danger"
+          title="Không tải được danh sách"
+          action={
+            <button type="button" onClick={load} className={buttonClass({ variant: 'ghost' })}>
+              Thử lại
+            </button>
+          }
+        >
+          Kiểm tra kết nối mạng rồi thử lại.
+        </Notice>
+      ) : loading ? (
+        <div role="status" className="flex items-center justify-center py-16 gap-3 text-scale-muted-fg">
           <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
           <span className="text-sm">Đang tải…</span>
         </div>
       ) : visible.length === 0 ? (
-        <div className="bg-scale-card rounded-xl border border-scale-border p-12 text-center">
-          <p className="font-semibold text-scale-fg">
-            {search.trim() ? 'Không tìm thấy kết quả nào' : labels.emptyTitle}
-          </p>
-          <p className="text-sm text-scale-muted-fg mt-1">
-            {search.trim() ? 'Thử từ khoá khác.' : labels.emptyHint}
-          </p>
+        <div className="bg-scale-card rounded-2xl border border-scale-border">
+          <EmptyState
+            icon={<PackageOpen className="w-9 h-9" aria-hidden="true" />}
+            title={q ? 'Không tìm thấy kết quả nào' : labels.emptyTitle}
+            action={
+              q ? (
+                <button type="button" onClick={() => setSearch('')} className={buttonClass()}>
+                  Xoá từ khoá tìm
+                </button>
+              ) : (
+                <button type="button" onClick={() => openForm(null)} className={buttonClass({ variant: 'primary' })}>
+                  <Plus className="w-4 h-4" aria-hidden="true" /> Thêm {singular} đầu tiên
+                </button>
+              )
+            }
+          >
+            {q ? 'Thử từ khoá khác.' : labels.emptyHint}
+          </EmptyState>
         </div>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((it) => (
-            <li key={it.id} className="bg-scale-card rounded-xl border border-scale-border p-4">
-              <div className="font-semibold text-scale-fg truncate">{it.name}</div>
-              <div className="text-xs text-scale-muted-fg font-mono mt-0.5">{it.code}</div>
-              {labels.priceLabel && it.unitPrice != null && (
-                <div className="text-sm text-scale-fg mt-1">
-                  {priceFormat.format(it.unitPrice)} <span className="text-scale-muted-fg">đ/kg</span>
-                </div>
-              )}
-              <div className="flex gap-1 mt-3 pt-3 border-t border-scale-border">
-                <button
-                  type="button"
-                  onClick={() => openEdit(it)}
-                  className="inline-flex items-center gap-1.5 min-h-touch px-3 rounded-lg text-sm text-scale-muted-fg hover:text-scale-primary hover:bg-scale-accent transition-colors"
-                >
-                  <Pencil className="w-4 h-4" aria-hidden="true" /> Sửa
-                </button>
-                <button
-                  type="button"
-                  onClick={() => remove(it)}
-                  disabled={deleting === it.id}
-                  className="inline-flex items-center gap-1.5 min-h-touch px-3 rounded-lg text-sm text-scale-muted-fg hover:text-scale-danger hover:bg-scale-danger-soft ml-auto disabled:opacity-40 transition-colors"
-                >
-                  {deleting === it.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  ) : (
-                    <Trash2 className="w-4 h-4" aria-hidden="true" />
+        <>
+          <p className="text-sm text-scale-muted-fg" aria-live="polite">
+            {q ? `${visible.length} / ${items.length}` : items.length} {singular}
+          </p>
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {visible.map((it) => (
+              <li key={it.id} className="bg-scale-card rounded-2xl border border-scale-border p-4 flex flex-col shadow-sm">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-scale-fg break-words">{it.name}</p>
+                  <p className="text-xs text-scale-muted-fg tabular-nums mt-0.5">{it.code}</p>
+                  {labels.priceLabel && (
+                    <p className="text-sm mt-1.5">
+                      {it.unitPrice != null ? (
+                        <>
+                          <span className="tabular-nums font-semibold text-scale-fg">{priceFormat.format(it.unitPrice)}</span>{' '}
+                          <span className="text-scale-muted-fg">đ/kg</span>
+                        </>
+                      ) : (
+                        <span className="text-scale-muted-fg">Chưa đặt giá</span>
+                      )}
+                    </p>
                   )}
-                  Xoá
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                </div>
+                <div className="flex gap-1 mt-3 pt-3 border-t border-scale-border">
+                  <button type="button" onClick={() => openForm(it)} aria-label={`Sửa ${singular} ${it.name}`} className={buttonClass({ variant: 'ghost' })}>
+                    <Pencil className="w-4 h-4" aria-hidden="true" /> Sửa
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(it)}
+                    disabled={deleting === it.id}
+                    aria-label={`Xoá ${singular} ${it.name}`}
+                    className={cx(buttonClass({ variant: 'danger-ghost' }), 'ml-auto')}
+                  >
+                    {deleting === it.id ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Trash2 className="w-4 h-4" aria-hidden="true" />}
+                    Xoá
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );

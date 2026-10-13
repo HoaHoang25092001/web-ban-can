@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { THEME_STORAGE_KEY } from '@/lib/scale-theme';
+import { buttonClass } from '@/components/scale/ui';
 
 /**
  * Theo dõi class `dark` trên <html>.
@@ -52,7 +53,7 @@ export default function ThemeToggle() {
       aria-label={label}
       title={label}
       onClick={() => setDarkMode(!isDark)}
-      className="inline-flex items-center justify-center min-w-touch min-h-touch rounded-lg text-scale-fg hover:bg-scale-muted transition-colors"
+      className={buttonClass({ variant: 'ghost', iconOnly: true })}
     >
       {isDark ? <Sun className="w-5 h-5" aria-hidden="true" /> : <Moon className="w-5 h-5" aria-hidden="true" />}
     </button>

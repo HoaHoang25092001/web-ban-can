@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { Badge, buttonClass } from '@/components/scale/ui';
 import { Printer, ArrowLeft } from 'lucide-react';
 import {
   formatKg,
@@ -83,19 +84,19 @@ export default function PrintableTicket({ ticket, autoPrint }: { ticket: PrintTi
       <div className="print:hidden max-w-[210mm] mx-auto px-4 sm:px-0 mb-4 flex flex-wrap items-center gap-2">
         <Link
           href={`/can-dien-tu?id=${ticket.id}`}
-          className="inline-flex items-center gap-2 min-h-touch px-4 rounded-lg border border-scale-border bg-scale-card text-scale-fg text-sm font-medium hover:bg-scale-muted transition-colors"
+          className={buttonClass()}
         >
           <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Về phiếu cân
         </Link>
         <button
           type="button"
           onClick={() => window.print()}
-          className="inline-flex items-center gap-2 min-h-touch px-5 rounded-lg bg-scale-primary text-scale-primary-fg text-sm font-semibold hover:bg-scale-primary-hover transition-colors"
+          className={buttonClass({ variant: 'primary' })}
         >
           <Printer className="w-4 h-4" aria-hidden="true" /> In phiếu
         </button>
         {ticket.status !== 'DONE' && (
-          <p className="text-sm text-scale-warning">Phiếu chưa bấm &quot;Xong phiếu&quot; — vẫn có thể còn thay đổi.</p>
+          <Badge tone="warning">Phiếu chưa xong — số liệu vẫn có thể thay đổi</Badge>
         )}
       </div>
 

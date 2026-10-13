@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getScaleUser } from '@/lib/scale-auth';
 import ScaleShell from '@/components/scale/ScaleShell';
+import { PageHeader } from '@/components/scale/ui';
 import RecordsClient from '@/components/scale/RecordsClient';
 
 export const dynamic = 'force-dynamic';
@@ -12,12 +13,10 @@ export default async function RecordsPage() {
 
   return (
     <ScaleShell userName={user.fullName}>
-      <div className="mb-5">
-        <h1 className="text-2xl font-bold text-scale-fg">Bản ghi cân</h1>
-        <p className="text-sm text-scale-muted-fg mt-1">
-          Mọi lượt cân trong các phiếu của bạn. Lọc theo loại hàng, khách hoặc khoảng ngày, rồi xuất Excel.
-        </p>
-      </div>
+      <PageHeader
+        title="Bản ghi cân"
+        description="Mọi lượt cân trong các phiếu của bạn. Lọc theo loại hàng, khách hoặc khoảng ngày, rồi xuất Excel."
+      />
       <RecordsClient />
     </ScaleShell>
   );

@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
     const code = String(body.code ?? '').trim();
     const name = String(body.name ?? '').trim();
 
-    if (!code) return NextResponse.json({ error: 'Vui lòng nhập mã nhân viên' }, { status: 400 });
-    if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên nhân viên' }, { status: 400 });
+    if (!code) return NextResponse.json({ error: 'Vui lòng nhập mã nhân viên', field: 'code' }, { status: 400 });
+    if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên nhân viên', field: 'name' }, { status: 400 });
 
     // Báo lỗi dễ hiểu thay vì để database ném ra lỗi kỹ thuật khi trùng mã.
     const existing = await prisma.scaleEmployee.findFirst({
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     });
     if (existing) {
       return NextResponse.json(
-        { error: `Mã "${code}" đã dùng cho nhân viên "${existing.name}"` },
+        { error: `Mã "${code}" đã dùng cho nhân viên "${existing.name}"`, field: 'code' },
         { status: 409 }
       );
     }
@@ -98,14 +98,14 @@ export async function PUT(request: NextRequest) {
     const data: Record<string, string> = {};
     if (body.code !== undefined) {
       const code = String(body.code).trim();
-      if (!code) return NextResponse.json({ error: 'Vui lòng nhập mã nhân viên' }, { status: 400 });
+      if (!code) return NextResponse.json({ error: 'Vui lòng nhập mã nhân viên', field: 'code' }, { status: 400 });
       const dup = await prisma.scaleEmployee.findFirst({
         where: { userId: user.id, code, NOT: { id } },
         select: { name: true },
       });
       if (dup) {
         return NextResponse.json(
-          { error: `Mã "${code}" đã dùng cho nhân viên "${dup.name}"` },
+          { error: `Mã "${code}" đã dùng cho nhân viên "${dup.name}"`, field: 'code' },
           { status: 409 }
         );
       }
@@ -113,7 +113,7 @@ export async function PUT(request: NextRequest) {
     }
     if (body.name !== undefined) {
       const name = String(body.name).trim();
-      if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên nhân viên' }, { status: 400 });
+      if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên nhân viên', field: 'name' }, { status: 400 });
       data.name = name.slice(0, 200);
     }
 

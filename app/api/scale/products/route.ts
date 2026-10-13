@@ -56,10 +56,10 @@ export async function POST(request: NextRequest) {
     const code = String(body.code ?? '').trim();
     const name = String(body.name ?? '').trim();
 
-    if (!code) return NextResponse.json({ error: 'Vui lòng nhập mã hàng' }, { status: 400 });
-    if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên hàng' }, { status: 400 });
+    if (!code) return NextResponse.json({ error: 'Vui lòng nhập mã hàng', field: 'code' }, { status: 400 });
+    if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên hàng', field: 'name' }, { status: 400 });
     const unitPrice = parsePrice(body.unitPrice);
-    if (unitPrice === 'invalid') return NextResponse.json({ error: 'Đơn giá không hợp lệ' }, { status: 400 });
+    if (unitPrice === 'invalid') return NextResponse.json({ error: 'Đơn giá không hợp lệ', field: 'unitPrice' }, { status: 400 });
 
     /*
      * Mã hàng chỉ cần duy nhất TRONG PHẠM VI khách này — hai công ty khác nhau
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     });
     if (existing) {
       return NextResponse.json(
-        { error: `Mã "${code}" đã dùng cho mặt hàng "${existing.name}"` },
+        { error: `Mã "${code}" đã dùng cho mặt hàng "${existing.name}"`, field: 'code' },
         { status: 409 }
       );
     }
@@ -111,14 +111,14 @@ export async function PUT(request: NextRequest) {
     const data: { code?: string; name?: string; unitPrice?: number | null } = {};
     if (body.code !== undefined) {
       const code = String(body.code).trim();
-      if (!code) return NextResponse.json({ error: 'Vui lòng nhập mã hàng' }, { status: 400 });
+      if (!code) return NextResponse.json({ error: 'Vui lòng nhập mã hàng', field: 'code' }, { status: 400 });
       const dup = await prisma.scaleProduct.findFirst({
         where: { userId: user.id, code, NOT: { id } },
         select: { name: true },
       });
       if (dup) {
         return NextResponse.json(
-          { error: `Mã "${code}" đã dùng cho mặt hàng "${dup.name}"` },
+          { error: `Mã "${code}" đã dùng cho mặt hàng "${dup.name}"`, field: 'code' },
           { status: 409 }
         );
       }
@@ -126,12 +126,12 @@ export async function PUT(request: NextRequest) {
     }
     if (body.name !== undefined) {
       const name = String(body.name).trim();
-      if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên hàng' }, { status: 400 });
+      if (!name) return NextResponse.json({ error: 'Vui lòng nhập tên hàng', field: 'name' }, { status: 400 });
       data.name = name.slice(0, 300);
     }
     if (body.unitPrice !== undefined) {
       const unitPrice = parsePrice(body.unitPrice);
-      if (unitPrice === 'invalid') return NextResponse.json({ error: 'Đơn giá không hợp lệ' }, { status: 400 });
+      if (unitPrice === 'invalid') return NextResponse.json({ error: 'Đơn giá không hợp lệ', field: 'unitPrice' }, { status: 400 });
       data.unitPrice = unitPrice;
     }
 
