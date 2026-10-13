@@ -1,10 +1,11 @@
 'use client';
 
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import { CircleCheck, Activity, Unplug, Usb, TriangleAlert } from 'lucide-react';
 import { useScaleContext } from '@/components/scale/scale-context';
 import { formatWeightByScaleModel, SCALE_MODEL_LABELS, type ScaleModel } from '@/lib/scale-drivers/ScaleModel';
 import { buttonClass, cx, inputClass } from '@/components/scale/ui';
+import { detectPlatform, unsupportedReason, type Platform } from '@/lib/scale-drivers/platform';
 
 /**
  * Màn hình số cân — chữ số rất lớn, đọc được từ xa vài bước chân, giữa lúc
@@ -132,16 +133,20 @@ export const WeightDisplay = forwardRef<
 export function ConnectionBar() {
   const { status, error, connect, disconnect, isConnected, hasWebSerial, scaleModel, setScaleModel } =
     useScaleContext();
+  // Chỉ đọc được tên thiết bị trên trình duyệt — máy chủ không biết khách dùng máy gì.
+  const [platform, setPlatform] = useState<Platform | null>(null);
+  useEffect(() => setPlatform(detectPlatform()), []);
+  const onPhone = platform?.os === 'android';
 
   if (hasWebSerial === false) {
+    const reason = unsupportedReason(platform ?? detectPlatform(''));
     return (
       <div role="status" className="flex items-start gap-3 rounded-xl border border-scale-warning bg-scale-warning-soft p-4 text-sm">
         <TriangleAlert className="w-5 h-5 flex-shrink-0 text-scale-warning" aria-hidden="true" />
-        <p className="text-scale-fg">
-          <strong>Trình duyệt này không đọc số tự động từ cân được.</strong> Vẫn cân được bằng cách nhập tay số
-          trên màn hình cân. Muốn đọc tự động, mở trang bằng <strong>Google Chrome</strong> hoặc{' '}
-          <strong>Microsoft Edge</strong> trên máy tính.
-        </p>
+        <div className="text-scale-fg">
+          <p className="font-semibold">{reason.title}</p>
+          <p className="mt-1">{reason.fix}</p>
+        </div>
       </div>
     );
   }
@@ -162,15 +167,19 @@ export function ConnectionBar() {
           <p className="font-semibold text-scale-fg">
             {isConnected ? 'Đã kết nối cân' : connecting ? 'Đang kết nối…' : 'Chưa kết nối cân'}
           </p>
-          <p className="text-xs text-scale-muted-fg truncate">
-            {error ? (
-              <span className="text-scale-danger font-medium">{error}</span>
-            ) : isConnected ? (
-              SCALE_MODEL_LABELS[scaleModel]
-            ) : (
-              'Cắm cân vào máy tính, chọn loại cân rồi bấm Kết nối.'
-            )}
-          </p>
+          {/* Lỗi được xuống dòng đầy đủ — bản trước cắt cụt bằng "…", người
+              dùng không đọc được hướng dẫn khắc phục ở cuối câu. */}
+          {error ? (
+            <p className="text-sm text-scale-danger font-medium mt-0.5">{error}</p>
+          ) : (
+            <p className="text-xs text-scale-muted-fg">
+              {isConnected
+                ? SCALE_MODEL_LABELS[scaleModel]
+                : onPhone
+                  ? 'Cắm cân vào điện thoại bằng cáp OTG (hoặc bật Bluetooth của cân), rồi bấm Kết nối.'
+                  : 'Cắm cân vào máy tính, chọn loại cân rồi bấm Kết nối.'}
+            </p>
+          )}
         </div>
       </div>
 

@@ -18,11 +18,11 @@ export const metadata: Metadata = { title: 'Hướng dẫn' };
 const TROUBLESHOOTING = [
   {
     problem: 'Báo "Trình duyệt này không đọc số tự động từ cân được"',
-    fix: 'Mở trang bằng Google Chrome hoặc Microsoft Edge, trên chính máy tính đang nối với cân. Firefox, Safari và điện thoại iPhone/iPad không đọc cân tự động được — vẫn cân được bằng cách gõ tay số trên màn hình cân vào ô khối lượng.',
+    fix: 'Trên máy tính: mở bằng Google Chrome hoặc Microsoft Edge. Trên điện thoại Android: mở bằng Google Chrome và cập nhật lên bản mới nhất. iPhone/iPad, Firefox, Safari, Samsung Internet không đọc cân tự động được — vẫn cân được bằng cách gõ tay số trên màn hình cân vào ô khối lượng.',
   },
   {
-    problem: 'Báo "Bạn chưa chọn cổng của cân"',
-    fix: 'Bấm "Kết nối cân" lại, chọn cổng COM hoặc USB của cân trong hộp thoại của trình duyệt rồi bấm "Kết nối".',
+    problem: 'Bấm "Kết nối cân" nhưng danh sách trống, không thấy cân',
+    fix: 'Máy tính: kiểm tra cáp đã cắm chặt, thử cổng USB khác. Điện thoại Android: kiểm tra cáp OTG (thử rút ra cắm lại), hoặc với cân Bluetooth thì vào Cài đặt → Bluetooth ghép đôi với cân trước rồi mới bấm Kết nối.',
   },
   {
     problem: 'Báo cổng đang được mở ở nơi khác',
@@ -75,9 +75,55 @@ export default async function ScaleHelpPage() {
             <li>Chọn đúng loại cân ở ô bên cạnh nút &ldquo;Kết nối cân&rdquo;.</li>
             <li>Bấm &ldquo;Kết nối cân&rdquo;, chọn cổng của cân trong hộp thoại của trình duyệt.</li>
             <li>
-              Khi thấy &ldquo;Đã ổn định&rdquo;, số trên màn hình là khối lượng hiện tại.
+              Khi thấy &ldquo;Ổn định&rdquo;, số trên màn hình là khối lượng hiện tại.
             </li>
           </ol>
+        </section>
+
+        {/* Chrome 148 (4/2026) trở lên trên Android đã đọc được cân qua USB và
+            Bluetooth — cùng một cách với máy tính, không cần cài ứng dụng. */}
+        <section
+          aria-labelledby="help-android"
+          className="rounded-2xl border border-scale-border bg-scale-card p-6 shadow-sm"
+        >
+          <h2 id="help-android" className="text-xl font-semibold">
+            Dùng trên điện thoại Android
+          </h2>
+          <p className="mt-2 text-scale-muted-fg leading-relaxed">
+            Không cần cài ứng dụng — mở trang bằng Google Chrome là cân được, giống trên máy tính.
+          </p>
+
+          <h3 className="mt-4 font-semibold">Cần chuẩn bị</h3>
+          <ul className="mt-2 list-disc space-y-1.5 pl-6 leading-relaxed">
+            <li>
+              <strong>Google Chrome bản 148 trở lên.</strong> Mở CH Play, tìm &ldquo;Google Chrome&rdquo;, bấm Cập nhật nếu có.
+              Samsung Internet, Cốc Cốc, Firefox chưa đọc được cân.
+            </li>
+            <li>
+              <strong>Cân cắm dây:</strong> cáp <strong>RS232 sang USB</strong> (loại đang dùng với máy tính) và một{' '}
+              <strong>đầu chuyển OTG</strong> (USB-C hoặc micro-USB tuỳ điện thoại).
+            </li>
+            <li>
+              <strong>Cân Bluetooth:</strong> bật Bluetooth của cân, rồi vào <em>Cài đặt → Bluetooth</em> trên điện thoại ghép
+              đôi với cân trước (mã ghép thường là 1234 hoặc 0000).
+            </li>
+            <li>
+              Đầu cân cài chế độ <strong>gửi số liên tục, tốc độ 9600</strong> — giống khi dùng với máy tính.
+            </li>
+          </ul>
+
+          <h3 className="mt-4 font-semibold">Các bước</h3>
+          <ol className="mt-2 list-decimal space-y-1.5 pl-6 leading-relaxed">
+            <li>Nối đầu cân → cáp RS232-USB → đầu OTG → điện thoại (hoặc ghép đôi Bluetooth như trên), bật cân.</li>
+            <li>Mở Chrome, vào cangiare.com/can-dien-tu và đăng nhập.</li>
+            <li>Chọn loại cân, bấm &ldquo;Kết nối cân&rdquo;, chọn cân trong danh sách hiện ra, bấm &ldquo;Kết nối&rdquo;.</li>
+            <li>Nếu điện thoại hỏi quyền dùng thiết bị USB, bấm &ldquo;Cho phép&rdquo;.</li>
+          </ol>
+          <p className="mt-3 text-sm text-scale-muted-fg leading-relaxed">
+            Khi đang kết nối cân, màn hình điện thoại được giữ sáng để không tự tắt giữa lúc cân. Nên dùng đầu OTG có cổng
+            sạc phụ nếu cân lâu. iPhone và iPad không đọc được cân (Apple chưa cho phép) — trên các máy đó vẫn cân được bằng
+            cách gõ tay số.
+          </p>
         </section>
 
         <section
